@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "RNScriptManagerSpec_autolinked_build",
+		"source" : "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni"
+	}
+}
