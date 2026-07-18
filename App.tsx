@@ -26,68 +26,75 @@ const navTheme = {
 };
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+      <AppInner />
+    </SafeAreaProvider>
+  );
+}
+
+function AppInner() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const base = Math.min(width, height);
   const responsiveIconSize = Math.max(20, Math.round(base * 0.06));
   const tabBarHeight = 56 + (insets.bottom || 8);
+
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-      <NavigationContainer theme={navTheme}>
-        <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: {
-              backgroundColor: theme.colors.surface,
-              borderTopColor: theme.colors.border,
-              borderTopWidth: 1,
-              height: tabBarHeight,
-              paddingBottom: insets.bottom || 8,
-              paddingTop: 8,
-            },
-            tabBarActiveTintColor: theme.colors.primary,
-            tabBarInactiveTintColor: theme.colors.textSecondary,
-            tabBarLabelStyle: {
-              fontSize: 12,
-              fontWeight: '600',
-            },
+    <NavigationContainer theme={navTheme}>
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: theme.colors.surface,
+            borderTopColor: theme.colors.border,
+            borderTopWidth: 1,
+            height: tabBarHeight,
+            paddingBottom: insets.bottom || 8,
+            paddingTop: 8,
+          },
+          tabBarActiveTintColor: theme.colors.primary,
+          tabBarInactiveTintColor: theme.colors.textSecondary,
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
+          },
+        }}
+      >
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            tabBarLabel: 'Viewer',
+            tabBarIcon: ({ color }) => <Icon name="home-outline" size={responsiveIconSize} color={color} />,
           }}
-        >
-          <Tab.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              tabBarLabel: 'Viewer',
-              tabBarIcon: ({ color }) => <Icon name="home-outline" size={responsiveIconSize} color={color} />,
-            }}
-          />
-          <Tab.Screen
-            name="Scan"
-            component={CaptureScreen}
-            options={{
-              tabBarLabel: 'Scan',
-              tabBarIcon: ({ color }) => <Icon name="camera-outline" size={responsiveIconSize} color={color} />,
-            }}
-          />
-          <Tab.Screen
-            name="History"
-            component={HistoryScreen}
-            options={{
-              tabBarLabel: 'History',
-              tabBarIcon: ({ color }) => <Icon name="time-outline" size={responsiveIconSize} color={color} />,
-            }}
-          />
-          <Tab.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{
-              tabBarLabel: 'Settings',
-              tabBarIcon: ({ color }) => <Icon name="settings-outline" size={responsiveIconSize} color={color} />,
-            }}
-          />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+        />
+        <Tab.Screen
+          name="Scan"
+          component={CaptureScreen}
+          options={{
+            tabBarLabel: 'Scan',
+            tabBarIcon: ({ color }) => <Icon name="camera-outline" size={responsiveIconSize} color={color} />,
+          }}
+        />
+        <Tab.Screen
+          name="History"
+          component={HistoryScreen}
+          options={{
+            tabBarLabel: 'History',
+            tabBarIcon: ({ color }) => <Icon name="time-outline" size={responsiveIconSize} color={color} />,
+          }}
+        />
+        <Tab.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{
+            tabBarLabel: 'Settings',
+            tabBarIcon: ({ color }) => <Icon name="settings-outline" size={responsiveIconSize} color={color} />,
+          }}
+        />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
