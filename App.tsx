@@ -29,7 +29,7 @@ export default function App() {
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
       <NavigationContainer theme={navTheme}>
         <Tab.Navigator
-          screenOptions={({ route }) => ({
+          screenOptions={{
             headerShown: false,
             tabBarStyle: {
               backgroundColor: theme.colors.surface,
@@ -45,42 +45,39 @@ export default function App() {
               fontSize: 12,
               fontWeight: '600',
             },
-            tabBarIcon: ({ color, size }) => {
-              let iconName = '❓';
-
-              if (route.name === 'Home') {
-                iconName = '🏠';
-              } else if (route.name === 'Scan') {
-                iconName = '📷';
-              } else if (route.name === 'History') {
-                iconName = '📜';
-              } else if (route.name === 'Settings') {
-                iconName = '⚙️';
-              }
-
-              return <Text style={{ color, fontSize: size }}>{iconName}</Text>;
-            },
-          })}
+          }}
         >
           <Tab.Screen
             name="Home"
             component={HomeScreen}
-            options={{ tabBarLabel: 'Viewer' }}
+            options={{
+              tabBarLabel: 'Viewer',
+              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>🏠</Text>,
+            }}
           />
           <Tab.Screen
             name="Scan"
             component={CaptureScreen}
-            options={{ tabBarLabel: 'Scan' }}
+            options={{
+              tabBarLabel: 'Scan',
+              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>📷</Text>,
+            }}
           />
           <Tab.Screen
             name="History"
             component={HistoryScreen}
-            options={{ tabBarLabel: 'History' }}
+            options={{
+              tabBarLabel: 'History',
+              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>📜</Text>,
+            }}
           />
           <Tab.Screen
             name="Settings"
             component={SettingsScreen}
-            options={{ tabBarLabel: 'Settings' }}
+            options={{
+              tabBarLabel: 'Settings',
+              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>⚙️</Text>,
+            }}
           />
         </Tab.Navigator>
       </NavigationContainer>
