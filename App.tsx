@@ -5,6 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
+// Ensure icon fonts are loaded on startup for release builds
+if (Icon && typeof Icon.loadFont === 'function') {
+  Icon.loadFont();
+}
 import { HomeScreen } from './src/ui/screens/HomeScreen';
 import { CaptureScreen } from './src/ui/screens/CaptureScreen';
 import { HistoryScreen } from './src/ui/screens/HistoryScreen';

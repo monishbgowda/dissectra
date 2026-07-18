@@ -18,6 +18,7 @@ export function CaptureScreen({ navigation }: any) {
   const [asset, setAsset] = useState<ImageAssetInfo | null>(null);
   const [selectedCount, setSelectedCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+    const [assets, setAssets] = useState<ImageAssetInfo[]>([]);
 
   const options: ImageLibraryOptions & CameraOptions = {
     mediaType: 'photo',
@@ -41,10 +42,12 @@ export function CaptureScreen({ navigation }: any) {
             // allow multi-selection from gallery (0 = unlimited)
             pickerOptions.selectionLimit = 0;
           }
-          const result = kind === 'camera' ? await launchCamera(pickerOptions) : await launchImageLibrary(pickerOptions);
-          const assets = result.assets || [];
-          const assetItem = assets[0];
-          setSelectedCount(assets.length);
+            const result = kind === 'camera' ? await launchCamera(pickerOptions) : await launchImageLibrary(pickerOptions);
+            const assetsFound = result.assets || [];
+            const assetItem = assetsFound[0];
+            setSelectedCount(assetsFound.length);
+            // store all selected assets
+            setAssets(assetsFound.map(a => ({ uri: a.uri!, fileName: a.fileName, fileSize: a.fileSize, type: a.type })));
       if (!assetItem?.uri) return;
       if (assetItem.fileSize && assetItem.fileSize > MAX_IMAGE_BYTES) {
         Alert.alert('Image too large', `Please choose an image smaller than ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB.`);
@@ -56,6 +59,48 @@ export function CaptureScreen({ navigation }: any) {
     }
   }
 
+    async function multiCapture(maxCount = 0) {
+      const collected: ImageAssetInfo[] = [];
+      try {
+        if (Platform.OS === 'android') {
+          const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert('Permission required', 'Camera permission is required to capture images.');
+            return;
+          }
+        }
+
+        let keepGoing = true;
+        while (keepGoing) {
+          const res = await launchCamera(options);
+          const a = res.assets?.[0];
+          if (!a || res.didCancel) break;
+          if (a.fileSize && a.fileSize > MAX_IMAGE_BYTES) {
+            Alert.alert('Image too large', `Please choose an image smaller than ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB.`);
+            break;
+          }
+          collected.push({ uri: a.uri!, fileName: a.fileName, fileSize: a.fileSize, type: a.type });
+          if (maxCount > 0 && collected.length >= maxCount) break;
+
+          // ask user if they want to take another
+          const another = await new Promise<boolean>((resolve) => {
+            Alert.alert('Take another?', 'Capture another photo?', [
+              { text: 'Yes', onPress: () => resolve(true) },
+              { text: 'No', onPress: () => resolve(false) },
+            ], { cancelable: true });
+          });
+          keepGoing = !!another;
+        }
+
+        if (collected.length > 0) {
+          setAssets(collected);
+          setSelectedCount(collected.length);
+          setAsset(collected[0]);
+        }
+      } catch (err: any) {
+        Alert.alert('Capture failed', err.message || 'Please try again.');
+      }
+    }
   async function process() {
     if (!asset?.uri) return;
     setLoading(true);
@@ -116,6 +161,13 @@ export function CaptureScreen({ navigation }: any) {
             disabled={loading}
           >
             <Text style={styles.secondaryButtonText}>📷 Camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.secondaryButton} 
+            onPress={() => multiCapture()}
+            disabled={loading}
+          >
+            <Text style={styles.secondaryButtonText}>📷 Camera (multi)</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.secondaryButton} 
