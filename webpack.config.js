@@ -1,4 +1,3 @@
-const path = require('path');
 const { getDefaultConfig } = require('@callstack/repack');
 
 module.exports = async function (env, argv) {

@@ -12,30 +12,6 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/CMakeFiles/cmake.verify_globs")
 endif()
 
-# react_codegen_SRCS at E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
-file(GLOB NEW_GLOB LIST_DIRECTORIES true "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/*.cpp")
-set(OLD_GLOB
-  "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/RNScriptManagerSpec-generated.cpp"
-  )
-if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
-  message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/CMakeFiles/cmake.verify_globs")
-endif()
-
-# react_codegen_SRCS at E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
-file(GLOB NEW_GLOB LIST_DIRECTORIES true "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/react/renderer/components/RNScriptManagerSpec/*.cpp")
-set(OLD_GLOB
-  "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/react/renderer/components/RNScriptManagerSpec/ComponentDescriptors.cpp"
-  "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/react/renderer/components/RNScriptManagerSpec/EventEmitters.cpp"
-  "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/react/renderer/components/RNScriptManagerSpec/Props.cpp"
-  "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/react/renderer/components/RNScriptManagerSpec/ShadowNodes.cpp"
-  "E:/dissectra/node_modules/@callstack/repack/android/build/generated/source/codegen/jni/react/renderer/components/RNScriptManagerSpec/States.cpp"
-  )
-if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
-  message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/CMakeFiles/cmake.verify_globs")
-endif()
-
 # react_codegen_SRCS at E:/dissectra/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "E:/dissectra/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/*.cpp")
 set(OLD_GLOB
@@ -78,30 +54,6 @@ set(OLD_GLOB
   "E:/dissectra/node_modules/react-native-image-picker/android/build/generated/source/codegen/jni/react/renderer/components/RNImagePickerSpec/Props.cpp"
   "E:/dissectra/node_modules/react-native-image-picker/android/build/generated/source/codegen/jni/react/renderer/components/RNImagePickerSpec/ShadowNodes.cpp"
   "E:/dissectra/node_modules/react-native-image-picker/android/build/generated/source/codegen/jni/react/renderer/components/RNImagePickerSpec/States.cpp"
-  )
-if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
-  message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/CMakeFiles/cmake.verify_globs")
-endif()
-
-# react_codegen_SRCS at E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
-file(GLOB NEW_GLOB LIST_DIRECTORIES true "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/*.cpp")
-set(OLD_GLOB
-  "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/NitroModulesSpec-generated.cpp"
-  )
-if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
-  message("-- GLOB mismatch!")
-  file(TOUCH_NOCREATE "E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/CMakeFiles/cmake.verify_globs")
-endif()
-
-# react_codegen_SRCS at E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
-file(GLOB NEW_GLOB LIST_DIRECTORIES true "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/react/renderer/components/NitroModulesSpec/*.cpp")
-set(OLD_GLOB
-  "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/react/renderer/components/NitroModulesSpec/ComponentDescriptors.cpp"
-  "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/react/renderer/components/NitroModulesSpec/EventEmitters.cpp"
-  "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/react/renderer/components/NitroModulesSpec/Props.cpp"
-  "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/react/renderer/components/NitroModulesSpec/ShadowNodes.cpp"
-  "E:/dissectra/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/react/renderer/components/NitroModulesSpec/States.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")

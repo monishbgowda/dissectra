@@ -46,10 +46,8 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/rnasyncstorage_autolinked_build/cmake_install.cmake")
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/RNImagePickerSpec_autolinked_build/cmake_install.cmake")
-  include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/NitroModulesSpec_autolinked_build/cmake_install.cmake")
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/safeareacontext_autolinked_build/cmake_install.cmake")
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/rnscreens_autolinked_build/cmake_install.cmake")
-  include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/RNScriptManagerSpec_autolinked_build/cmake_install.cmake")
 
 endif()
 

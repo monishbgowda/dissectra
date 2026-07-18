@@ -45,14 +45,16 @@ export async function runScanPipeline(imageUri: string): Promise<StoredScan> {
   let upload;
   try {
     upload = await uploadImage(imageUri, `${id}.jpg`);
-  } catch (error) {
+  } catch (_error) {
+    void _error;
     return saveOfflineScan(id, imageUri, localImagePath);
   }
 
   let analysis: AnatomyAnalysis;
   try {
     analysis = await analyzeImage(upload.uploadId);
-  } catch (error) {
+  } catch (_error) {
+    void _error;
     analysis = {
       ...OFFLINE_ANALYSIS,
       description: 'Analysis failed, but this scan was saved locally. Retry when online.',
@@ -65,7 +67,8 @@ export async function runScanPipeline(imageUri: string): Promise<StoredScan> {
     model = initialModel.status === 'queued' || initialModel.status === 'processing'
       ? await pollModelStatus(initialModel.jobId)
       : initialModel;
-  } catch (error) {
+  } catch (_error) {
+    void _error;
     model = { jobId: '', status: 'failed' };
   }
 

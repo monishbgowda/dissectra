@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../theme/theme';
+import { theme } from '../../theme/theme';
 
 interface LoadingStateProps {
   label?: string;

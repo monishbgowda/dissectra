@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { theme } from '../theme/theme';
+import { theme } from '../../theme/theme';
 
 interface GlassCardProps extends PropsWithChildren {
   style?: ViewStyle;

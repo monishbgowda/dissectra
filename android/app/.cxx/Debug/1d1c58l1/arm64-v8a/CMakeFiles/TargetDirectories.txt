@@ -7,15 +7,9 @@ E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/rnasyncstorage_autolinked
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/RNImagePickerSpec_autolinked_build/CMakeFiles/react_codegen_RNImagePickerSpec.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/RNImagePickerSpec_autolinked_build/CMakeFiles/edit_cache.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/RNImagePickerSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
-E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/NitroModulesSpec_autolinked_build/CMakeFiles/react_codegen_NitroModulesSpec.dir
-E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/NitroModulesSpec_autolinked_build/CMakeFiles/edit_cache.dir
-E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/NitroModulesSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/react_codegen_safeareacontext.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/edit_cache.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/safeareacontext_autolinked_build/CMakeFiles/rebuild_cache.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/edit_cache.dir
 E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/rnscreens_autolinked_build/CMakeFiles/rebuild_cache.dir
-E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/RNScriptManagerSpec_autolinked_build/CMakeFiles/react_codegen_RNScriptManagerSpec.dir
-E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/RNScriptManagerSpec_autolinked_build/CMakeFiles/edit_cache.dir
-E:/dissectra/android/app/.cxx/Debug/1d1c58l1/arm64-v8a/RNScriptManagerSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
