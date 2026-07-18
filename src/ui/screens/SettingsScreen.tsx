@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { GlassCard } from '../components/GlassCard';
-import { theme } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
 
 interface SettingItemProps {
   title: string;
@@ -10,19 +10,25 @@ interface SettingItemProps {
   showArrow?: boolean;
 }
 
-function SettingItem({ title, description, onPress, showArrow = true }: SettingItemProps) {
-  return (
-    <TouchableOpacity style={styles.settingItem} onPress={onPress}>
-      <View style={styles.settingContent}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        {description && <Text style={styles.settingDescription}>{description}</Text>}
-      </View>
-      {showArrow && <Text style={styles.arrow}>›</Text>}
-    </TouchableOpacity>
-  );
-}
-
 export function SettingsScreen() {
+  const { theme, appearance, setAppearance } = useTheme();
+  const styles = makeStyles(theme);
+
+  function toggleDark() {
+    setAppearance(appearance === 'dark' ? 'light' : 'dark');
+  }
+
+  function SettingItem({ title, description, onPress, showArrow = true }: SettingItemProps) {
+    return (
+      <TouchableOpacity style={styles.settingItem} onPress={onPress}>
+        <View style={styles.settingContent}>
+          <Text style={styles.settingTitle}>{title}</Text>
+          {description && <Text style={styles.settingDescription}>{description}</Text>}
+        </View>
+        {showArrow && <Text style={styles.arrow}>›</Text>}
+      </TouchableOpacity>
+    );
+  }
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Settings</Text>
@@ -30,9 +36,9 @@ export function SettingsScreen() {
       <GlassCard variant="elevated">
         <Text style={styles.sectionTitle}>Appearance</Text>
         <SettingItem
-          title="Dark Mode"
-          description="Currently enabled"
-          onPress={() => {}}
+          title={appearance === 'dark' ? 'Dark Mode' : 'Light Mode'}
+          description={appearance === 'dark' ? 'Currently enabled' : 'Currently disabled'}
+          onPress={toggleDark}
         />
         <View style={styles.divider} />
         <SettingItem
@@ -94,52 +100,17 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  title: {
-    ...theme.typography.h2,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  sectionTitle: {
-    ...theme.typography.overline,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.md,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-  },
-  settingContent: {
-    flex: 1,
-  },
-  settingTitle: {
-    ...theme.typography.body1,
-    color: theme.colors.text,
-    fontWeight: '500',
-  },
-  settingDescription: {
-    ...theme.typography.body2,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  arrow: {
-    ...theme.typography.h3,
-    color: theme.colors.textSecondary,
-    marginLeft: theme.spacing.md,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.divider,
-    marginVertical: theme.spacing.sm,
-  },
-});
+function makeStyles(themeObj: any) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: themeObj.colors.background },
+    content: { padding: themeObj.spacing.lg, gap: themeObj.spacing.lg },
+    title: { ...themeObj.typography.h2, color: themeObj.colors.text, marginBottom: themeObj.spacing.sm },
+    sectionTitle: { ...themeObj.typography.overline, color: themeObj.colors.primary, marginBottom: themeObj.spacing.md },
+    settingItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: themeObj.spacing.md },
+    settingContent: { flex: 1 },
+    settingTitle: { ...themeObj.typography.body1, color: themeObj.colors.text, fontWeight: '500' },
+    settingDescription: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary, marginTop: 2 },
+    arrow: { ...themeObj.typography.h3, color: themeObj.colors.textSecondary, marginLeft: themeObj.spacing.md },
+    divider: { height: 1, backgroundColor: themeObj.colors.divider, marginVertical: themeObj.spacing.sm },
+  });
+}

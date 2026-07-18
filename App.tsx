@@ -14,26 +14,30 @@ import { CaptureScreen } from './src/ui/screens/CaptureScreen';
 import { HistoryScreen } from './src/ui/screens/HistoryScreen';
 import { SettingsScreen } from './src/ui/screens/SettingsScreen';
 import { theme } from './src/theme/theme';
+import ThemeProvider, { useTheme } from './src/theme/ThemeProvider';
 import type { RootTabParamList } from './src/types/navigation';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
-const navTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: theme.colors.background,
-    card: theme.colors.surface,
-    text: theme.colors.text,
-    border: theme.colors.border,
-    primary: theme.colors.primary,
-  },
-};
+function makeNavTheme(t: typeof theme) {
+  return {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: t.colors.background,
+      card: t.colors.surface,
+      text: t.colors.text,
+      border: t.colors.border,
+      primary: t.colors.primary,
+    },
+  };
+}
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-      <AppInner />
+      <ThemeProvider>
+        <AppInner />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -41,25 +45,26 @@ export default function App() {
 function AppInner() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { theme: activeTheme } = useTheme() || { theme };
   const base = Math.min(width, height);
   const responsiveIconSize = Math.max(20, Math.round(base * 0.06));
   const tabBarHeight = 56 + (insets.bottom || 8);
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={makeNavTheme(activeTheme)}>
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: theme.colors.surface,
-            borderTopColor: theme.colors.border,
+            backgroundColor: activeTheme.colors.surface,
+            borderTopColor: activeTheme.colors.border,
             borderTopWidth: 1,
             height: tabBarHeight,
             paddingBottom: insets.bottom || 8,
             paddingTop: 8,
           },
-          tabBarActiveTintColor: theme.colors.primary,
-          tabBarInactiveTintColor: theme.colors.textSecondary,
+          tabBarActiveTintColor: activeTheme.colors.primary,
+          tabBarInactiveTintColor: activeTheme.colors.textSecondary,
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '600',

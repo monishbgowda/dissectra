@@ -49,3 +49,24 @@ export async function saveScan(scan: StoredScan) {
 export async function updateScan(scan: StoredScan) {
   await saveScan(scan);
 }
+
+export async function deleteScans(ids: string[]) {
+  const scans = await listScans();
+  const keep = scans.filter(s => !ids.includes(s.id));
+  await AsyncStorage.setItem(KEY, JSON.stringify(keep));
+  // remove files
+  await Promise.all(ids.map(async (id) => {
+    await RNFS.unlink(`${ROOT}/results/${id}.json`).catch(() => undefined);
+    // try to delete image and model files with id base name
+    const imagePath = `${ROOT}/images/${id}`;
+    await RNFS.unlink(imagePath).catch(() => undefined);
+    await RNFS.unlink(`${imagePath}.jpg`).catch(() => undefined);
+    await RNFS.unlink(`${ROOT}/models/${id}`).catch(() => undefined);
+  }));
+}
+
+export async function clearAllScans() {
+  await AsyncStorage.removeItem(KEY);
+  // remove storage folders
+  await RNFS.unlink(ROOT).catch(() => undefined);
+}

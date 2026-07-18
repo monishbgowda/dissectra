@@ -4,8 +4,18 @@ import { launchCamera, launchImageLibrary, ImageLibraryOptions, CameraOptions } 
 import { GlassCard } from '../components/GlassCard';
 import { LoadingState } from '../components/LoadingState';
 import { runScanPipeline } from '../../services/scanPipeline';
+import { copyToStorage, saveScan } from '../../storage/localStorage';
+import type { StoredScan } from '../../types/dissectra';
+// small local uuid generator to avoid extra dependency
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.floor(Math.random() * 16);
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 import { MAX_IMAGE_BYTES } from '../../config/env';
-import { theme } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeProvider';
 
 interface ImageAssetInfo {
   uri: string;
@@ -15,10 +25,12 @@ interface ImageAssetInfo {
 }
 
 export function CaptureScreen({ navigation }: any) {
+  const { theme } = useTheme();
   const [asset, setAsset] = useState<ImageAssetInfo | null>(null);
   const [selectedCount, setSelectedCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
-    const [assets, setAssets] = useState<ImageAssetInfo[]>([]);
+  const [assets, setAssets] = useState<ImageAssetInfo[]>([]);
+  const styles = makeStyles(theme);
 
   const options: ImageLibraryOptions & CameraOptions = {
     mediaType: 'photo',
@@ -37,17 +49,25 @@ export function CaptureScreen({ navigation }: any) {
           return;
         }
       }
-          const pickerOptions = { ...options } as any;
-          if (kind === 'gallery') {
-            // allow multi-selection from gallery (0 = unlimited)
-            pickerOptions.selectionLimit = 0;
-          }
-            const result = kind === 'camera' ? await launchCamera(pickerOptions) : await launchImageLibrary(pickerOptions);
-            const assetsFound = result.assets || [];
-            const assetItem = assetsFound[0];
-            setSelectedCount(assetsFound.length);
-            // store all selected assets
-            setAssets(assetsFound.map(a => ({ uri: a.uri!, fileName: a.fileName, fileSize: a.fileSize, type: a.type })));
+
+      const pickerOptions = { ...options } as any;
+      if (kind === 'gallery') {
+        // allow multi-selection from gallery (0 = unlimited)
+        pickerOptions.selectionLimit = 0;
+      }
+
+      const result =
+        kind === 'camera'
+          ? await launchCamera(pickerOptions)
+          : await launchImageLibrary(pickerOptions);
+
+      const assetsFound = result.assets || [];
+      const assetItem = assetsFound[0];
+
+      setSelectedCount(assetsFound.length);
+      const mapped = assetsFound.map(a => ({ uri: a.uri!, fileName: a.fileName, fileSize: a.fileSize, type: a.type }));
+      setAssets(mapped);
+
       if (!assetItem?.uri) return;
       if (assetItem.fileSize && assetItem.fileSize > MAX_IMAGE_BYTES) {
         Alert.alert('Image too large', `Please choose an image smaller than ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB.`);
@@ -59,8 +79,8 @@ export function CaptureScreen({ navigation }: any) {
     }
   }
 
-    async function multiCapture(maxCount = 0) {
-      const collected: ImageAssetInfo[] = [];
+  async function multiCapture(maxCount = 0) {
+    const collected: ImageAssetInfo[] = [];
       try {
         if (Platform.OS === 'android') {
           const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
@@ -102,11 +122,45 @@ export function CaptureScreen({ navigation }: any) {
       }
     }
   async function process() {
-    if (!asset?.uri) return;
+    if (assets.length === 0) return;
     setLoading(true);
     try {
-      const scan = await runScanPipeline(asset.uri);
-      navigation.navigate('Home', { scan });
+      const storedIds: string[] = [];
+      for (const a of assets) {
+        const id = uuidv4();
+        const ext = a.fileName?.split('.').pop() || 'jpg';
+        const filename = `${id}.${ext}`;
+        const localPath = await copyToStorage(a.uri, 'images', filename);
+        const scan: StoredScan = {
+          id,
+          imageUri: a.uri,
+          localImagePath: localPath,
+          modelUri: null,
+          localModelPath: null,
+          analysis: { object: 'Unknown', labels: [] },
+          createdAt: new Date().toISOString(),
+          status: 'processing',
+        };
+        await saveScan(scan);
+        storedIds.push(id);
+      }
+      // run pipeline on first image for immediate UX
+      const first = assets[0];
+      const result = await runScanPipeline(first.uri);
+      // merge result into stored scan
+      const firstId = storedIds[0];
+      const updated: StoredScan = {
+        id: firstId,
+        imageUri: first.uri,
+        localImagePath: undefined,
+        modelUri: null,
+        localModelPath: null,
+        analysis: result.analysis || { object: 'Unknown', labels: [] },
+        createdAt: new Date().toISOString(),
+        status: 'complete',
+      };
+      await saveScan(updated);
+      navigation.navigate('Home', { scan: result });
     } catch (error: any) {
       Alert.alert('Processing failed', error.message || 'Scan cached locally, try again later.');
     } finally {
@@ -116,6 +170,16 @@ export function CaptureScreen({ navigation }: any) {
 
   function clearSelection() {
     setAsset(null);
+    setAssets([]);
+    setSelectedCount(0);
+  }
+
+  function removeAssetAt(index: number) {
+    const next = assets.slice();
+    next.splice(index, 1);
+    setAssets(next);
+    setSelectedCount(next.length);
+    setAsset(next[0] || null);
   }
 
   return (
@@ -140,6 +204,18 @@ export function CaptureScreen({ navigation }: any) {
                 <Text style={styles.infoValue}>{asset.fileSize ? `${Math.round(asset.fileSize / 1024)} KB` : 'Unknown'}</Text>
               </View>
             </View>
+            {assets.length > 1 && (
+              <ScrollView horizontal style={styles.thumbRow} contentContainerStyle={{ gap: theme.spacing.sm }}>
+                {assets.map((a, i) => (
+                  <View key={i} style={styles.thumbWrap}>
+                    <Image source={{ uri: a.uri }} style={styles.thumbSmall} />
+                    <TouchableOpacity style={styles.thumbRemove} onPress={() => removeAssetAt(i)}>
+                      <Text style={styles.thumbRemoveText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </View>
         ) : (
           <View style={styles.placeholder}>
@@ -179,7 +255,7 @@ export function CaptureScreen({ navigation }: any) {
         </View>
 
         <TouchableOpacity 
-          disabled={!asset?.uri || loading} 
+          disabled={assets.length === 0 || loading} 
           style={[styles.primaryButton, (!asset?.uri || loading) && styles.disabled]} 
           onPress={process}
         >
@@ -215,156 +291,80 @@ export function CaptureScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing.lg, gap: theme.spacing.lg },
-  title: {
-    ...theme.typography.h1,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-  },
-  subtitle: {
-    ...theme.typography.body1,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.sm,
-  },
-  previewContainer: {
-    position: 'relative',
-  },
-  preview: {
-    height: 280,
-    borderRadius: theme.radius.lg,
-    width: '100%',
-    marginBottom: theme.spacing.md,
-  },
-  clearButton: {
-    position: 'absolute',
-    top: theme.spacing.md,
-    right: theme.spacing.md,
-    width: 32,
-    height: 32,
-    borderRadius: theme.radius.full,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clearButtonText: {
-    color: theme.colors.text,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  imageInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: theme.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.divider,
-  },
-  infoItem: {
-    alignItems: 'center',
-  },
-  infoLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.textSecondary,
-    marginBottom: 2,
-  },
-  infoValue: {
-    ...theme.typography.subtitle2,
-    color: theme.colors.text,
-    fontWeight: '500',
-  },
-  placeholder: {
-    height: 280,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: theme.radius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed',
-  },
-  placeholderIcon: {
-    fontSize: 48,
-    marginBottom: theme.spacing.md,
-  },
-  placeholderTitle: {
-    ...theme.typography.h5,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-  },
-  placeholderText: {
-    ...theme.typography.body2,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  selectedCount: {
-    marginTop: 8,
-    color: theme.colors.textSecondary,
-    ...theme.typography.caption,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.lg,
-  },
-  secondaryButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surfaceVariant,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  secondaryButtonText: {
-    ...theme.typography.subtitle1,
-    color: theme.colors.text,
-    fontWeight: '500',
-  },
-  primaryButton: {
-    marginTop: theme.spacing.md,
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    ...theme.shadows.md,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  primaryButtonText: {
-    ...theme.typography.subtitle1,
-    color: theme.colors.onPrimary,
-    fontWeight: '600',
-  },
-  tipsTitle: {
-    ...theme.typography.h6,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-  },
-  tipIcon: {
-    fontSize: 20,
-  },
-  tipText: {
-    ...theme.typography.body2,
-    color: theme.colors.textSecondary,
-    flex: 1,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+
+
+function makeStyles(themeObj: any) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: themeObj.colors.background },
+    content: { padding: themeObj.spacing.lg, gap: themeObj.spacing.lg },
+    title: {
+      ...themeObj.typography.h1,
+      color: themeObj.colors.text,
+      marginBottom: themeObj.spacing.xs,
+    },
+    subtitle: {
+      ...themeObj.typography.body1,
+      color: themeObj.colors.textSecondary,
+      marginBottom: themeObj.spacing.sm,
+    },
+    previewContainer: { position: 'relative' },
+    preview: {
+      height: 280,
+      borderRadius: themeObj.radius.lg,
+      width: '100%',
+      marginBottom: themeObj.spacing.md,
+    },
+    clearButton: {
+      position: 'absolute',
+      top: themeObj.spacing.md,
+      right: themeObj.spacing.md,
+      width: 32,
+      height: 32,
+      borderRadius: themeObj.radius.full,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    clearButtonText: { color: themeObj.colors.text, fontSize: 18, fontWeight: '600' },
+    imageInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingVertical: themeObj.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: themeObj.colors.divider,
+    },
+    infoItem: { alignItems: 'center' },
+    infoLabel: { ...themeObj.typography.caption, color: themeObj.colors.textSecondary, marginBottom: 2 },
+    infoValue: { ...themeObj.typography.subtitle2, color: themeObj.colors.text, fontWeight: '500' },
+    placeholder: {
+      height: 280,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: themeObj.colors.surfaceVariant,
+      borderRadius: themeObj.radius.lg,
+      borderWidth: 2,
+      borderColor: themeObj.colors.border,
+      borderStyle: 'dashed',
+    },
+    placeholderIcon: { fontSize: 48, marginBottom: themeObj.spacing.md },
+    placeholderTitle: { ...themeObj.typography.h5, color: themeObj.colors.text, marginBottom: themeObj.spacing.xs },
+    placeholderText: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary, textAlign: 'center', paddingHorizontal: themeObj.spacing.lg },
+    selectedCount: { marginTop: 8, color: themeObj.colors.textSecondary, ...themeObj.typography.caption },
+    actionRow: { flexDirection: 'row', gap: themeObj.spacing.md, marginTop: themeObj.spacing.lg },
+    secondaryButton: { flex: 1, paddingVertical: themeObj.spacing.md, borderRadius: themeObj.radius.md, backgroundColor: themeObj.colors.surfaceVariant, alignItems: 'center', borderWidth: 1, borderColor: themeObj.colors.border },
+    secondaryButtonText: { ...themeObj.typography.subtitle1, color: themeObj.colors.text, fontWeight: '500' },
+    primaryButton: { marginTop: themeObj.spacing.md, paddingVertical: themeObj.spacing.lg, borderRadius: themeObj.radius.md, backgroundColor: themeObj.colors.primary, alignItems: 'center' },
+    disabled: { opacity: 0.5 },
+    primaryButtonText: { ...themeObj.typography.subtitle1, color: themeObj.colors.onPrimary, fontWeight: '600' },
+    tipsTitle: { ...themeObj.typography.h6, color: themeObj.colors.text, marginBottom: themeObj.spacing.md },
+    tipItem: { flexDirection: 'row', alignItems: 'center', gap: themeObj.spacing.md, marginBottom: themeObj.spacing.sm },
+    tipIcon: { fontSize: 20 },
+    tipText: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary, flex: 1 },
+    loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: themeObj.colors.overlay, justifyContent: 'center', alignItems: 'center' },
+    thumbRow: { marginTop: themeObj.spacing.sm },
+    thumbWrap: { position: 'relative' },
+    thumbSmall: { width: 84, height: 84, borderRadius: themeObj.radius.md, marginRight: themeObj.spacing.sm },
+    thumbRemove: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.5)', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+    thumbRemoveText: { color: '#fff', fontSize: 12 },
+  });
+}
