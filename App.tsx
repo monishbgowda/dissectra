@@ -1,8 +1,10 @@
 import React from 'react';
-import { StatusBar, Text } from 'react-native';
+import { StatusBar, useWindowDimensions } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { HomeScreen } from './src/ui/screens/HomeScreen';
 import { CaptureScreen } from './src/ui/screens/CaptureScreen';
 import { HistoryScreen } from './src/ui/screens/HistoryScreen';
@@ -24,6 +26,11 @@ const navTheme = {
 };
 
 export default function App() {
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const base = Math.min(width, height);
+  const responsiveIconSize = Math.max(20, Math.round(base * 0.06));
+  const tabBarHeight = 56 + (insets.bottom || 8);
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
@@ -35,8 +42,8 @@ export default function App() {
               backgroundColor: theme.colors.surface,
               borderTopColor: theme.colors.border,
               borderTopWidth: 1,
-              height: 64,
-              paddingBottom: 8,
+              height: tabBarHeight,
+              paddingBottom: insets.bottom || 8,
               paddingTop: 8,
             },
             tabBarActiveTintColor: theme.colors.primary,
@@ -52,7 +59,7 @@ export default function App() {
             component={HomeScreen}
             options={{
               tabBarLabel: 'Viewer',
-              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>🏠</Text>,
+              tabBarIcon: ({ color }) => <Icon name="home-outline" size={responsiveIconSize} color={color} />,
             }}
           />
           <Tab.Screen
@@ -60,7 +67,7 @@ export default function App() {
             component={CaptureScreen}
             options={{
               tabBarLabel: 'Scan',
-              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>📷</Text>,
+              tabBarIcon: ({ color }) => <Icon name="camera-outline" size={responsiveIconSize} color={color} />,
             }}
           />
           <Tab.Screen
@@ -68,7 +75,7 @@ export default function App() {
             component={HistoryScreen}
             options={{
               tabBarLabel: 'History',
-              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>📜</Text>,
+              tabBarIcon: ({ color }) => <Icon name="time-outline" size={responsiveIconSize} color={color} />,
             }}
           />
           <Tab.Screen
@@ -76,7 +83,7 @@ export default function App() {
             component={SettingsScreen}
             options={{
               tabBarLabel: 'Settings',
-              tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>⚙️</Text>,
+              tabBarIcon: ({ color }) => <Icon name="settings-outline" size={responsiveIconSize} color={color} />,
             }}
           />
         </Tab.Navigator>
