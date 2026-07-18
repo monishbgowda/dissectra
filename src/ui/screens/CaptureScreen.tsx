@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform, PermissionsAndroid } from 'react-native';
 import { launchCamera, launchImageLibrary, ImageLibraryOptions, CameraOptions } from 'react-native-image-picker';
 import { GlassCard } from '../components/GlassCard';
 import { LoadingState } from '../components/LoadingState';
@@ -28,6 +28,13 @@ export function CaptureScreen({ navigation }: any) {
 
   async function pick(kind: 'camera' | 'gallery') {
     try {
+      if (kind === 'camera' && Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permission required', 'Camera permission is required to capture images.');
+          return;
+        }
+      }
       const result = kind === 'camera' ? await launchCamera(options) : await launchImageLibrary(options);
       const assetItem = result.assets?.[0];
       if (!assetItem?.uri) return;
