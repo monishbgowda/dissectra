@@ -1,0 +1,4 @@
+E:/dissectra/android/app/.cxx/Debug/1d1c58l1/armeabi-v7a/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/foo.dir
+E:/dissectra/android/app/.cxx/Debug/1d1c58l1/armeabi-v7a/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/boo.dir
+E:/dissectra/android/app/.cxx/Debug/1d1c58l1/armeabi-v7a/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/edit_cache.dir
+E:/dissectra/android/app/.cxx/Debug/1d1c58l1/armeabi-v7a/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/rebuild_cache.dir

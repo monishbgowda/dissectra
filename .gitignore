@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Gradle files
 .gradle/
 build/
@@ -32,6 +33,8 @@ google-services.json
 
 # Android Profiling
 *.hprof
+=======
+>>>>>>> master
 # dependencies
 node_modules/
 
@@ -43,6 +46,10 @@ node_modules/
 android/.gradle/
 android/build/
 android/app/build/
+<<<<<<< HEAD
+=======
+android/my-release-key.keystore
+>>>>>>> master
 *.apk
 *.aab
 
@@ -70,4 +77,8 @@ yarn-error.log*
 .metro-health-check*
 
 # Misc
+<<<<<<< HEAD
 coverage/
+=======
+coverage/
+>>>>>>> master
