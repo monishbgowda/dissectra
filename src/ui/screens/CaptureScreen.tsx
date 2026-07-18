@@ -16,6 +16,7 @@ interface ImageAssetInfo {
 
 export function CaptureScreen({ navigation }: any) {
   const [asset, setAsset] = useState<ImageAssetInfo | null>(null);
+  const [selectedCount, setSelectedCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   const options: ImageLibraryOptions & CameraOptions = {
@@ -35,8 +36,15 @@ export function CaptureScreen({ navigation }: any) {
           return;
         }
       }
-      const result = kind === 'camera' ? await launchCamera(options) : await launchImageLibrary(options);
-      const assetItem = result.assets?.[0];
+          const pickerOptions = { ...options } as any;
+          if (kind === 'gallery') {
+            // allow multi-selection from gallery (0 = unlimited)
+            pickerOptions.selectionLimit = 0;
+          }
+          const result = kind === 'camera' ? await launchCamera(pickerOptions) : await launchImageLibrary(pickerOptions);
+          const assets = result.assets || [];
+          const assetItem = assets[0];
+          setSelectedCount(assets.length);
       if (!assetItem?.uri) return;
       if (assetItem.fileSize && assetItem.fileSize > MAX_IMAGE_BYTES) {
         Alert.alert('Image too large', `Please choose an image smaller than ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB.`);
@@ -92,6 +100,9 @@ export function CaptureScreen({ navigation }: any) {
           <View style={styles.placeholder}>
             <Text style={styles.placeholderIcon}>📷</Text>
             <Text style={styles.placeholderTitle}>No Image Selected</Text>
+            {selectedCount > 1 && (
+              <Text style={styles.selectedCount}>{selectedCount} images selected</Text>
+            )}
             <Text style={styles.placeholderText}>
               Capture a photo or choose from your gallery to begin analysis
             </Text>
@@ -234,6 +245,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: theme.spacing.lg,
+  },
+  selectedCount: {
+    marginTop: 8,
+    color: theme.colors.textSecondary,
+    ...theme.typography.caption,
   },
   actionRow: {
     flexDirection: 'row',
