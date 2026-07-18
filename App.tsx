@@ -29,7 +29,7 @@ export default function App() {
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
       <NavigationContainer theme={navTheme}>
         <Tab.Navigator
-          screenOptions={{
+          screenOptions={({ route }) => ({
             headerShown: false,
             tabBarStyle: {
               backgroundColor: theme.colors.surface,
@@ -45,7 +45,22 @@ export default function App() {
               fontSize: 12,
               fontWeight: '600',
             },
-          }}
+            tabBarIcon: ({ color, size }) => {
+              let iconName = '❓';
+
+              if (route.name === 'Home') {
+                iconName = '🏠';
+              } else if (route.name === 'Scan') {
+                iconName = '📷';
+              } else if (route.name === 'History') {
+                iconName = '📜';
+              } else if (route.name === 'Settings') {
+                iconName = '⚙️';
+              }
+
+              return <Text style={{ color, fontSize: size }}>{iconName}</Text>;
+            },
+          })}
         >
           <Tab.Screen
             name="Home"

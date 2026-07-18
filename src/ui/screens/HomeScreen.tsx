@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { GlassCard } from '../components/GlassCard';
 import { ModelCanvas } from '../components/ModelCanvas';
+import { BrandHeader } from '../components/BrandHeader';
 import { theme } from '../../theme/theme';
 
 interface FeatureCardProps {
@@ -30,8 +31,7 @@ export function HomeScreen({ route, navigation }: any) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Dissectra</Text>
-      <Text style={styles.subtitle}>AI-Powered 3D Anatomy Analysis</Text>
+      <BrandHeader />
 
       {/* Feature Cards */}
       <View style={styles.featureRow}>

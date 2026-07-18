@@ -1,10 +1,15 @@
-# Dissectra Stable Release v1.0.0
+# Dissectra Stable Release v1.0.1
 
-Date: 2026-05-20
+Date: 2026-07-18
 
 ## Release status
 
 Stable release candidate prepared and validated for the React Native CLI + Metro application and Express backend.
+
+## Updated version
+
+- App version bumped to `1.0.1`
+- Android `versionCode` updated to `2`
 
 ## Included
 
