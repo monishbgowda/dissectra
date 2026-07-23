@@ -1,4 +1,7 @@
-import React from 'react';
+import React, {
+  useRef,
+  useState,
+} from 'react';
 
 import {
   Pressable,
@@ -7,8 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import Icon from
-  'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 import {
   useSafeAreaInsets,
@@ -18,6 +20,19 @@ import {
   useTheme,
 } from '../../theme/ThemeProvider';
 
+import {
+  Demo3DViewer,
+  Demo3DViewerRef,
+} from '../components/Demo3DViewer';
+
+
+type SelectedComponent = {
+  name: string;
+  material: string;
+  description: string;
+};
+
+
 export function Demo3DScreen({
   navigation,
 }: any) {
@@ -25,6 +40,46 @@ export function Demo3DScreen({
 
   const insets =
     useSafeAreaInsets();
+
+  const viewerRef =
+    useRef<Demo3DViewerRef>(
+      null,
+    );
+
+  const [
+    selectedComponent,
+    setSelectedComponent,
+  ] =
+    useState<SelectedComponent | null>(
+      null,
+    );
+
+  const [
+    exploded,
+    setExploded,
+  ] =
+    useState(false);
+
+
+  function toggleExploded() {
+    viewerRef.current?.explode();
+
+    setExploded(
+      value => !value,
+    );
+  }
+
+
+  function resetViewer() {
+    viewerRef.current?.reset();
+
+    setExploded(false);
+
+    setSelectedComponent(
+      null,
+    );
+  }
+
 
   return (
     <View
@@ -39,6 +94,9 @@ export function Demo3DScreen({
         },
       ]}
     >
+
+      {/* HEADER */}
+
       <View
         style={[
           styles.header,
@@ -49,7 +107,9 @@ export function Demo3DScreen({
         ]}
       >
         <Pressable
-          style={styles.iconButton}
+          style={
+            styles.iconButton
+          }
           onPress={() =>
             navigation.goBack()
           }
@@ -63,8 +123,11 @@ export function Demo3DScreen({
           />
         </Pressable>
 
+
         <View
-          style={styles.headerText}
+          style={
+            styles.headerText
+          }
         >
           <Text
             style={[
@@ -92,75 +155,80 @@ export function Demo3DScreen({
           </Text>
         </View>
 
+
+        {/* Keeps title centered */}
+
         <View
-          style={styles.iconButton}
+          style={
+            styles.iconButton
+          }
         />
+
       </View>
 
+
+      {/* MAIN CONTENT */}
+
       <View
-        style={styles.content}
+        style={
+          styles.content
+        }
       >
+
+        {/* 3D VIEWER */}
+
         <View
           style={[
             styles.viewer,
             {
               backgroundColor:
                 theme.colors.surface,
+
               borderColor:
                 theme.colors.border,
             },
           ]}
         >
-          <Icon
-            name="cube-outline"
-            size={72}
-            color={
-              theme.colors
-                .textSecondary
+          <Demo3DViewer
+            ref={viewerRef}
+            onComponentSelected={
+              setSelectedComponent
             }
           />
-
-          <Text
-            style={[
-              styles.viewerTitle,
-              {
-                color:
-                  theme.colors.text,
-              },
-            ]}
-          >
-            3D Viewer Ready
-          </Text>
-
-          <Text
-            style={[
-              styles.viewerText,
-              {
-                color:
-                  theme.colors
-                    .textSecondary,
-              },
-            ]}
-          >
-            The interactive renderer
-            will be mounted here.
-          </Text>
         </View>
 
+
+        {/* CONTROLS */}
+
         <View
-          style={styles.controls}
+          style={
+            styles.controls
+          }
         >
-          <View
+
+          {/* EXPLODE / ASSEMBLE */}
+
+          <Pressable
+            onPress={
+              toggleExploded
+            }
             style={[
               styles.control,
               {
+                backgroundColor:
+                  theme.colors.surface,
+
                 borderColor:
                   theme.colors.border,
               },
             ]}
           >
             <Icon
-              name="scan-outline"
+              name={
+                exploded
+                  ? 'contract-outline'
+                  : 'expand-outline'
+              }
               size={20}
               color={
                 theme.colors.text
@@ -176,14 +244,25 @@ export function Demo3DScreen({
                 },
               ]}
             >
-              EXPLODE
+              {exploded
+                ? 'ASSEMBLE'
+                : 'EXPLODE'}
             </Text>
-          </View>
+          </Pressable>
 
-          <View
+
+          {/* RESET */}
+
+          <Pressable
+            onPress={
+              resetViewer
+            }
             style={[
               styles.control,
               {
+                backgroundColor:
+                  theme.colors.surface,
+
                 borderColor:
                   theme.colors.border,
               },
@@ -208,8 +287,12 @@ export function Demo3DScreen({
             >
               RESET
             </Text>
-          </View>
+          </Pressable>
+
         </View>
+
+
+        {/* COMPONENT INSPECTOR */}
 
         <View
           style={[
@@ -217,11 +300,13 @@ export function Demo3DScreen({
             {
               backgroundColor:
                 theme.colors.surface,
+
               borderColor:
                 theme.colors.border,
             },
           ]}
         >
+
           <Text
             style={[
               styles.inspectorLabel,
@@ -235,6 +320,7 @@ export function Demo3DScreen({
             SELECTED COMPONENT
           </Text>
 
+
           <Text
             style={[
               styles.componentName,
@@ -244,34 +330,86 @@ export function Demo3DScreen({
               },
             ]}
           >
-            No component selected
+            {selectedComponent
+              ?.name ??
+              'No component selected'}
           </Text>
 
-          <Text
-            style={[
-              styles.componentDescription,
-              {
-                color:
-                  theme.colors
-                    .textSecondary,
-              },
-            ]}
-          >
-            Tap a component in the
-            3D model to inspect its
-            function and material.
-          </Text>
+
+          {selectedComponent ? (
+            <>
+
+              <Text
+                style={[
+                  styles.material,
+                  {
+                    color:
+                      theme.colors
+                        .textSecondary,
+                  },
+                ]}
+              >
+                Material:{' '}
+                {
+                  selectedComponent
+                    .material
+                }
+              </Text>
+
+
+              <Text
+                style={[
+                  styles.componentDescription,
+                  {
+                    color:
+                      theme.colors
+                        .textSecondary,
+                  },
+                ]}
+              >
+                {
+                  selectedComponent
+                    .description
+                }
+              </Text>
+
+            </>
+          ) : (
+
+            <Text
+              style={[
+                styles.componentDescription,
+                {
+                  color:
+                    theme.colors
+                      .textSecondary,
+                },
+              ]}
+            >
+              Tap the 3D model to inspect
+              its internal components.
+            </Text>
+
+          )}
+
         </View>
+
       </View>
+
     </View>
   );
 }
 
+
 const styles =
   StyleSheet.create({
+
     screen: {
       flex: 1,
     },
+
+
+    /* HEADER */
 
     header: {
       minHeight: 64,
@@ -316,6 +454,9 @@ const styles =
       fontSize: 11,
     },
 
+
+    /* CONTENT */
+
     content: {
       flex: 1,
 
@@ -324,41 +465,23 @@ const styles =
       gap: 14,
     },
 
+
+    /* VIEWER */
+
     viewer: {
       flex: 1,
 
-      minHeight: 330,
+      minHeight: 300,
 
       borderWidth: 1,
 
       borderRadius: 20,
 
-      alignItems: 'center',
-
-      justifyContent: 'center',
-
-      padding: 30,
+      overflow: 'hidden',
     },
 
-    viewerTitle: {
-      marginTop: 18,
 
-      fontSize: 19,
-
-      fontWeight: '700',
-    },
-
-    viewerText: {
-      marginTop: 7,
-
-      maxWidth: 250,
-
-      fontSize: 13,
-
-      lineHeight: 19,
-
-      textAlign: 'center',
-    },
+    /* CONTROLS */
 
     controls: {
       flexDirection: 'row',
@@ -392,12 +515,17 @@ const styles =
       letterSpacing: 0.5,
     },
 
+
+    /* INSPECTOR */
+
     inspector: {
       borderWidth: 1,
 
       borderRadius: 18,
 
       padding: 18,
+
+      minHeight: 120,
     },
 
     inspectorLabel: {
@@ -416,6 +544,14 @@ const styles =
       fontWeight: '700',
     },
 
+    material: {
+      marginTop: 5,
+
+      fontSize: 12,
+
+      fontWeight: '600',
+    },
+
     componentDescription: {
       marginTop: 6,
 
@@ -423,4 +559,5 @@ const styles =
 
       lineHeight: 19,
     },
+
   });
