@@ -1,4 +1,10 @@
-export type AppearanceMode = 'dark' | 'light' | 'system';
+export type ThemeMode = 'light' | 'dark';
+
+export type AppearanceMode =
+  | 'system'
+  | 'light'
+  | 'dark';
+
 export type AccentName =
   | 'monochrome'
   | 'blue'
@@ -6,221 +12,252 @@ export type AccentName =
   | 'green'
   | 'orange';
 
-export const accents = {
-  monochrome: {
-    dark: '#FFFFFF',
-    light: '#111111',
-  },
-  blue: {
-    dark: '#4C9AFF',
-    light: '#1677FF',
-  },
-  violet: {
-    dark: '#B277FF',
-    light: '#8B3DFF',
-  },
-  green: {
-    dark: '#3DDC84',
-    light: '#13A653',
-  },
-  orange: {
-    dark: '#FF7448',
-    light: '#F4511E',
-  },
-};
+// Compatibility alias
+export type AccentColor = AccentName;
 
-const common = {
-  spacing: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 48,
-  },
-
-  radius: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 24,
-    full: 9999,
-  },
-
-  typography: {
-    h1: {
-      fontSize: 30,
-      fontWeight: '700' as const,
-      lineHeight: 36,
-    },
-    h2: {
-      fontSize: 26,
-      fontWeight: '700' as const,
-      lineHeight: 32,
-    },
-    h3: {
-      fontSize: 22,
-      fontWeight: '600' as const,
-      lineHeight: 28,
-    },
-    h4: {
-      fontSize: 20,
-      fontWeight: '600' as const,
-      lineHeight: 26,
-    },
-    h5: {
-      fontSize: 18,
-      fontWeight: '600' as const,
-      lineHeight: 24,
-    },
-    h6: {
-      fontSize: 16,
-      fontWeight: '600' as const,
-      lineHeight: 22,
-    },
-    body1: {
-      fontSize: 16,
-      fontWeight: '400' as const,
-      lineHeight: 23,
-    },
-    body2: {
-      fontSize: 14,
-      fontWeight: '400' as const,
-      lineHeight: 20,
-    },
-    subtitle1: {
-      fontSize: 14,
-      fontWeight: '600' as const,
-      lineHeight: 20,
-    },
-    subtitle2: {
-      fontSize: 12,
-      fontWeight: '600' as const,
-      lineHeight: 16,
-    },
-    caption: {
-      fontSize: 12,
-      fontWeight: '400' as const,
-      lineHeight: 16,
-    },
-    overline: {
-      fontSize: 11,
-      fontWeight: '600' as const,
-      lineHeight: 16,
-      textTransform: 'uppercase' as const,
-    },
-  },
+export const accents: Record<
+  AccentName,
+  string
+> = {
+  monochrome: '#FFFFFF',
+  blue: '#3488F5',
+  violet: '#A855F7',
+  green: '#22C55E',
+  orange: '#FF6846',
 };
 
 export function createTheme(
-  mode: 'dark' | 'light',
-  accentName: AccentName = 'monochrome',
+  mode: ThemeMode,
+  accent: AccentName = 'monochrome',
 ) {
-  const isDark = mode === 'dark';
-  const accent = accents[accentName][mode];
+  const dark = mode === 'dark';
+
+  const accentColor =
+    accent === 'monochrome'
+      ? dark
+        ? '#FFFFFF'
+        : '#111111'
+      : accents[accent];
 
   return {
-    ...common,
-
     mode,
-    accentName,
+    dark,
 
-    colors: isDark
-      ? {
-          background: '#000000',
-          surface: '#0B0B0B',
-          surfaceVariant: '#151515',
-          elevated: '#1B1B1B',
+    colors: {
+      background:
+        dark
+          ? '#000000'
+          : '#F7F7F7',
 
-          primary: accent,
-          onPrimary:
-            accentName === 'monochrome' ? '#000000' : '#FFFFFF',
+      surface:
+        dark
+          ? '#111111'
+          : '#FFFFFF',
 
-          text: '#FFFFFF',
-          textSecondary: '#9A9A9A',
-          textDisabled: '#5C5C5C',
+      surfaceVariant:
+        dark
+          ? '#181818'
+          : '#F2F2F2',
 
-          border: '#292929',
-          divider: '#202020',
+      elevated:
+        dark
+          ? '#1A1A1A'
+          : '#FFFFFF',
+       card:
+    dark
+      ? '#111111'
+      : '#FFFFFF',
 
-          card: '#121212',
-          overlay: 'rgba(0,0,0,0.72)',
 
-          success: '#4ADE80',
-          error: '#FF5A5F',
-          warning: '#F5C451',
+      primary: accentColor,
 
-          tabBar: '#080808',
-          input: '#151515',
+      onPrimary:
+        accent === 'monochrome'
+          ? dark
+            ? '#000000'
+            : '#FFFFFF'
+          : '#FFFFFF',
 
-          inverseBackground: '#FFFFFF',
-          inverseText: '#000000',
-        }
-      : {
-          background: '#FFFFFF',
-          surface: '#FFFFFF',
-          surfaceVariant: '#F4F4F4',
-          elevated: '#FAFAFA',
+      text:
+        dark
+          ? '#FFFFFF'
+          : '#111111',
 
-          primary: accent,
-          onPrimary:
-            accentName === 'monochrome' ? '#FFFFFF' : '#FFFFFF',
+      textSecondary:
+        dark
+          ? '#A3A3A3'
+          : '#666666',
 
-          text: '#111111',
-          textSecondary: '#6F6F6F',
-          textDisabled: '#A5A5A5',
+      textDisabled:
+        dark
+          ? '#666666'
+          : '#AAAAAA',
 
-          border: '#E7E7E7',
-          divider: '#ECECEC',
+      border:
+        dark
+          ? '#292929'
+          : '#E5E5E5',
 
-          card: '#F8F8F8',
-          overlay: 'rgba(255,255,255,0.78)',
+      divider:
+        dark
+          ? '#202020'
+          : '#EBEBEB',
 
-          success: '#16883E',
-          error: '#D9363E',
-          warning: '#A96C00',
+      success: '#22C55E',
+      warning: '#F59E0B',
+      error: '#EF4444',
 
-          tabBar: '#FFFFFF',
-          input: '#F4F4F4',
+      overlay:
+        'rgba(0,0,0,0.55)',
 
-          inverseBackground: '#111111',
-          inverseText: '#FFFFFF',
+      tabBar:
+        dark
+          ? '#080808'
+          : '#FFFFFF',
+
+      tabInactive:
+        dark
+          ? '#858585'
+          : '#777777',
+
+      inverseSurface:
+        dark
+          ? '#FFFFFF'
+          : '#111111',
+
+      inverseBackground:
+        dark
+          ? '#FFFFFF'
+          : '#111111',
+
+      inverseText:
+        dark
+          ? '#111111'
+          : '#FFFFFF',
+    },
+
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      xxl: 32,
+    },
+
+    radius: {
+      sm: 10,
+      md: 16,
+      lg: 22,
+      xl: 28,
+      pill: 999,
+    },
+
+typography: {
+  display: {
+    fontSize: 28,
+    fontWeight: '800' as const,
+  },
+
+  h1: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+  },
+
+  h2: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+
+  // Legacy compatibility
+  h4: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+
+  h6: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+
+  subtitle1: {
+    fontSize: 15,
+    fontWeight: '400' as const,
+  },
+
+  caption: {
+    fontSize: 12,
+    fontWeight: '400' as const,
+  },
+
+  body1: {
+    fontSize: 15,
+    fontWeight: '400' as const,
+  },
+
+  body2: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+  },
+
+  label: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+  },
+},
+
+    shadows: {
+      sm: {
+        shadowColor: '#000000',
+
+        shadowOffset: {
+          width: 0,
+          height: 2,
         },
 
-    shadows: isDark
-      ? {
-          sm: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 2,
-          },
-          md: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 5 },
-            shadowOpacity: 0.35,
-            shadowRadius: 12,
-            elevation: 5,
-          },
-        }
-      : {
-          sm: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06,
-            shadowRadius: 8,
-            elevation: 2,
-          },
-          md: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.08,
-            shadowRadius: 16,
-            elevation: 4,
-          },
+        shadowOpacity:
+          dark ? 0.35 : 0.08,
+
+        shadowRadius: 5,
+
+        elevation: 2,
+      },
+
+      md: {
+        shadowColor: '#000000',
+
+        shadowOffset: {
+          width: 0,
+          height: 6,
         },
+
+        shadowOpacity:
+          dark ? 0.4 : 0.12,
+
+        shadowRadius: 12,
+
+        elevation: 5,
+      },
+    },
   };
 }
 
-export const theme = createTheme('dark', 'monochrome');
+export type AppTheme =
+  ReturnType<typeof createTheme>;
+
+/*
+ * Legacy compatibility theme.
+ *
+ * Older components that still do:
+ *
+ * import { theme } from '../../theme/theme'
+ *
+ * can continue compiling.
+ *
+ * New screens should use useTheme().
+ */
+export const theme =
+  createTheme(
+    'dark',
+    'monochrome',
+  );

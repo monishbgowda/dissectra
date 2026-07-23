@@ -1,429 +1,1751 @@
-import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform, PermissionsAndroid } from 'react-native';
-import { launchCamera, launchImageLibrary, ImageLibraryOptions, CameraOptions } from 'react-native-image-picker';
-import { GlassCard } from '../components/GlassCard';
-import { LoadingState } from '../components/LoadingState';
-import { runScanPipeline } from '../../services/scanPipeline';
-import { copyToStorage, saveScan } from '../../storage/localStorage';
-import type { StoredScan } from '../../types/dissectra';
-// small local uuid generator to avoid extra dependency
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.floor(Math.random() * 16);
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-import { MAX_IMAGE_BYTES } from '../../config/env';
-import { useTheme } from '../../theme/ThemeProvider';
+import React, {
+  useState,
+} from 'react';
+
+import {
+  Alert,
+  Image,
+  PermissionsAndroid,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import {
+  launchCamera,
+  launchImageLibrary,
+  ImageLibraryOptions,
+  CameraOptions,
+} from 'react-native-image-picker';
+
+import Icon from
+  'react-native-vector-icons/Ionicons';
+
+import {
+  AppScreen,
+} from '../components/AppScreen';
+
+import {
+  LoadingState,
+} from '../components/LoadingState';
+
+import {
+  useTheme,
+} from '../../theme/ThemeProvider';
+
+import {
+  runScanPipeline,
+} from '../../services/scanPipeline';
+
+import {
+  copyToStorage,
+  saveScan,
+} from '../../storage/localStorage';
+
+import type {
+  StoredScan,
+} from '../../types/dissectra';
+
+import {
+  MAX_IMAGE_BYTES,
+} from '../../config/env';
+
+
+/* --------------------------------------------------
+   TYPES
+-------------------------------------------------- */
 
 interface ImageAssetInfo {
   uri: string;
+
   fileName?: string;
+
   fileSize?: number;
+
   type?: string;
 }
 
-export function CaptureScreen({ navigation }: any) {
+
+/* --------------------------------------------------
+   UUID
+-------------------------------------------------- */
+
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    .replace(
+      /[xy]/g,
+      c => {
+        const r =
+          Math.floor(
+            Math.random() * 16,
+          );
+
+        const v =
+          c === 'x'
+            ? r
+            : (r & 0x3) | 0x8;
+
+        return v.toString(16);
+      },
+    );
+}
+
+
+/* --------------------------------------------------
+   SCREEN
+-------------------------------------------------- */
+
+export function CaptureScreen({
+  navigation,
+}: any) {
   const { theme } = useTheme();
-  const [asset, setAsset] = useState<ImageAssetInfo | null>(null);
-  const [selectedCount, setSelectedCount] = useState<number>(0);
-  const [loading, setLoading] = useState(false);
-  const [assets, setAssets] = useState<ImageAssetInfo[]>([]);
-  const styles = makeStyles(theme);
 
-  const options: ImageLibraryOptions & CameraOptions = {
-    mediaType: 'photo',
-    quality: 0.8,
-    maxWidth: 1920,
-    maxHeight: 1920,
-    saveToPhotos: false,
-  };
+  const styles =
+    createStyles(theme);
 
-  async function pick(kind: 'camera' | 'gallery') {
+  const [assets, setAssets] =
+    useState<ImageAssetInfo[]>([]);
+
+  const [loading, setLoading] =
+    useState(false);
+
+
+  /*
+   * The latest captured/selected image
+   * becomes the large preview.
+   */
+  const selected =
+    assets.length > 0
+      ? assets[assets.length - 1]
+      : undefined;
+
+
+  /* ------------------------------------------------
+     IMAGE OPTIONS
+  ------------------------------------------------ */
+
+  const options:
+    ImageLibraryOptions &
+    CameraOptions = {
+      mediaType: 'photo',
+
+      quality: 0.8,
+
+      maxWidth: 1920,
+
+      maxHeight: 1920,
+
+      /*
+       * Captures remain in app storage.
+       *
+       * We do NOT automatically put
+       * every photo into the user's gallery.
+       */
+      saveToPhotos: false,
+    };
+
+
+  /* ------------------------------------------------
+     CAMERA PERMISSION
+  ------------------------------------------------ */
+
+  async function ensureCameraPermission() {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+
     try {
-      if (kind === 'camera' && Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Permission required', 'Camera permission is required to capture images.');
-          return;
-        }
-      }
+      const permission =
+        PermissionsAndroid.PERMISSIONS.CAMERA;
 
-      const pickerOptions = { ...options } as any;
-      if (kind === 'gallery') {
-        // allow multi-selection from gallery (0 = unlimited)
-        pickerOptions.selectionLimit = 0;
+      const alreadyGranted =
+        await PermissionsAndroid.check(
+          permission,
+        );
+
+      if (alreadyGranted) {
+        return true;
       }
 
       const result =
-        kind === 'camera'
-          ? await launchCamera(pickerOptions)
-          : await launchImageLibrary(pickerOptions);
+        await PermissionsAndroid.request(
+          permission,
+          {
+            title:
+              'Camera Permission',
 
-      const assetsFound = result.assets || [];
-      const assetItem = assetsFound[0];
+            message:
+              'Dissectra needs camera access to photograph objects for analysis.',
 
-      setSelectedCount(assetsFound.length);
-      const mapped = assetsFound.map(a => ({ uri: a.uri!, fileName: a.fileName, fileSize: a.fileSize, type: a.type }));
-      setAssets(mapped);
+            buttonPositive:
+              'Allow',
 
-      if (!assetItem?.uri) return;
-      if (assetItem.fileSize && assetItem.fileSize > MAX_IMAGE_BYTES) {
-        Alert.alert('Image too large', `Please choose an image smaller than ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB.`);
+            buttonNegative:
+              'Cancel',
+          },
+        );
+
+      if (
+        result ===
+        PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        return true;
+      }
+
+      Alert.alert(
+        'Camera permission required',
+        'Camera access is required to capture an object. You can enable it from Android Settings.',
+      );
+
+      return false;
+    } catch (error: any) {
+      Alert.alert(
+        'Permission error',
+        error?.message ||
+          'Unable to request camera permission.',
+      );
+
+      return false;
+    }
+  }
+
+
+  /* ------------------------------------------------
+     VALIDATE IMAGE
+  ------------------------------------------------ */
+
+  function isValidImage(
+    image: {
+      fileSize?: number;
+    },
+  ) {
+    if (
+      image.fileSize &&
+      image.fileSize >
+        MAX_IMAGE_BYTES
+    ) {
+      Alert.alert(
+        'Image too large',
+
+        `Please choose an image smaller than ${Math.round(
+          MAX_IMAGE_BYTES /
+            1024 /
+            1024,
+        )} MB.`,
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+
+  /* ------------------------------------------------
+     SINGLE CAMERA CAPTURE
+
+     We APPEND the image instead of replacing
+     previous captures.
+
+     This allows:
+       Photo 1
+       Photo 2
+       Photo 3
+  ------------------------------------------------ */
+
+  async function capturePhoto() {
+    if (loading) {
+      return;
+    }
+
+    try {
+      const granted =
+        await ensureCameraPermission();
+
+      if (!granted) {
         return;
       }
-      setAsset({ uri: assetItem.uri, fileName: assetItem.fileName, fileSize: assetItem.fileSize, type: assetItem.type });
-    } catch (error: any) {
-      Alert.alert('Image selection failed', error.message || 'Please try again.');
-    }
-  }
 
-  async function multiCapture(maxCount = 0) {
-    const collected: ImageAssetInfo[] = [];
-      try {
-        if (Platform.OS === 'android') {
-          const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert('Permission required', 'Camera permission is required to capture images.');
-            return;
-          }
-        }
+      const result =
+        await launchCamera(
+          options,
+        );
 
-        let keepGoing = true;
-        while (keepGoing) {
-          const res = await launchCamera(options);
-          const a = res.assets?.[0];
-          if (!a || res.didCancel) break;
-          if (a.fileSize && a.fileSize > MAX_IMAGE_BYTES) {
-            Alert.alert('Image too large', `Please choose an image smaller than ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB.`);
-            break;
-          }
-          collected.push({ uri: a.uri!, fileName: a.fileName, fileSize: a.fileSize, type: a.type });
-          if (maxCount > 0 && collected.length >= maxCount) break;
-
-          // ask user if they want to take another
-          const another = await new Promise<boolean>((resolve) => {
-            Alert.alert('Take another?', 'Capture another photo?', [
-              { text: 'Yes', onPress: () => resolve(true) },
-              { text: 'No', onPress: () => resolve(false) },
-            ], { cancelable: true });
-          });
-          keepGoing = !!another;
-        }
-
-        if (collected.length > 0) {
-          setAssets(collected);
-          setSelectedCount(collected.length);
-          setAsset(collected[0]);
-        }
-      } catch (err: any) {
-        Alert.alert('Capture failed', err.message || 'Please try again.');
+      if (
+        result.didCancel ||
+        !result.assets?.length
+      ) {
+        return;
       }
-    }
-async function process() {
-  if (assets.length === 0) {
-    return;
-  }
 
-  setLoading(true);
+      if (result.errorCode) {
+        Alert.alert(
+          'Camera error',
 
-  try {
-    /*
-     * Run the existing pipeline on the primary image.
-     *
-     * runScanPipeline() already:
-     * - copies the image to local storage
-     * - uploads the image
-     * - performs AI analysis
-     * - requests the 3D model
-     * - downloads the model when available
-     * - creates a complete StoredScan
-     * - saves the StoredScan
-     *
-     * Therefore we should NOT duplicate that work here.
-     */
+          result.errorMessage ||
+            'Unable to capture image.',
+        );
 
-    const primaryImage = assets[0];
+        return;
+      }
 
-    const result = await runScanPipeline(
-      primaryImage.uri,
-    );
+      const image =
+        result.assets[0];
 
-    /*
-     * Save additional selected snapshots locally.
-     *
-     * We are keeping them as individual StoredScan
-     * records temporarily because the current data
-     * model does not yet support multiple snapshots
-     * inside one scan.
-     *
-     * We will redesign this later when we work on
-     * the image-analysis pipeline.
-     */
+      if (!image?.uri) {
+        return;
+      }
 
-    if (assets.length > 1) {
-      for (let index = 1; index < assets.length; index++) {
-        const image = assets[index];
+      if (!isValidImage(image)) {
+        return;
+      }
 
-        const id = uuidv4();
+      const captured:
+        ImageAssetInfo = {
+          uri: image.uri,
 
-        const ext =
-          image.fileName?.split('.').pop() ||
-          'jpg';
+          fileName:
+            image.fileName,
 
-        const filename = `${id}.${ext}`;
+          fileSize:
+            image.fileSize,
 
-        const localPath =
-          await copyToStorage(
-            image.uri,
-            'images',
-            filename,
-          );
-
-        const additionalScan: StoredScan = {
-          id,
-
-          imageUri: image.uri,
-
-          localImagePath: localPath,
-
-          analysis: {
-            object:
-              result.analysis.object,
-
-            description:
-              'Additional snapshot captured for this scan.',
-
-            labels:
-              result.analysis.labels,
-
-            confidence:
-              result.analysis.confidence,
-          },
-
-          createdAt:
-            new Date().toISOString(),
-
-          status: 'processing',
+          type:
+            image.type,
         };
 
-        await saveScan(additionalScan);
-      }
+      /*
+       * Maximum three angle captures,
+       * matching the approved UI.
+       *
+       * Once three exist, the next capture
+       * replaces the oldest one.
+       */
+      setAssets(previous => {
+        if (
+          previous.length >= 3
+        ) {
+          return [
+            ...previous.slice(1),
+            captured,
+          ];
+        }
+
+        return [
+          ...previous,
+          captured,
+        ];
+      });
+    } catch (error: any) {
+      Alert.alert(
+        'Capture failed',
+
+        error?.message ||
+          'Please try again.',
+      );
+    }
+  }
+
+
+  /* ------------------------------------------------
+     GALLERY
+
+     Uses Android/iOS system picker.
+
+     On supported Android versions this does
+     not require broad gallery/storage access.
+  ------------------------------------------------ */
+
+  async function openGallery() {
+    if (loading) {
+      return;
     }
 
-    navigation.navigate('Home', {
-      scan: result,
-    });
-  } catch (error: any) {
-    Alert.alert(
-      'Processing failed',
+    try {
+      const galleryOptions:
+        ImageLibraryOptions = {
+          mediaType: 'photo',
 
-      error?.message ||
-        'The scan could not be processed. Please try again.',
-    );
-  } finally {
-    setLoading(false);
+          quality: 0.8,
+
+          maxWidth: 1920,
+
+          maxHeight: 1920,
+
+          /*
+           * User may select up to
+           * three object angles.
+           */
+          selectionLimit: 3,
+        };
+
+      const result =
+        await launchImageLibrary(
+          galleryOptions,
+        );
+
+      if (
+        result.didCancel ||
+        !result.assets?.length
+      ) {
+        return;
+      }
+
+      if (result.errorCode) {
+        Alert.alert(
+          'Gallery error',
+
+          result.errorMessage ||
+            'Unable to open gallery.',
+        );
+
+        return;
+      }
+
+      const mapped:
+        ImageAssetInfo[] =
+        result.assets
+          .filter(
+            image =>
+              !!image.uri &&
+              isValidImage(
+                image,
+              ),
+          )
+          .slice(0, 3)
+          .map(image => ({
+            uri: image.uri!,
+
+            fileName:
+              image.fileName,
+
+            fileSize:
+              image.fileSize,
+
+            type:
+              image.type,
+          }));
+
+      if (
+        mapped.length === 0
+      ) {
+        return;
+      }
+
+      setAssets(mapped);
+    } catch (error: any) {
+      Alert.alert(
+        'Image selection failed',
+
+        error?.message ||
+          'Please try again.',
+      );
+    }
   }
-}
+
+
+  /* ------------------------------------------------
+     DELETE / REMOVE ONE SNAPSHOT
+  ------------------------------------------------ */
+
+  function removeAssetAt(
+    index: number,
+  ) {
+    Alert.alert(
+      'Remove snapshot?',
+
+      'This snapshot will be removed from the current scan.',
+
+      [
+        {
+          text: 'Cancel',
+
+          style: 'cancel',
+        },
+
+        {
+          text: 'Remove',
+
+          style: 'destructive',
+
+          onPress: () => {
+            setAssets(
+              previous =>
+                previous.filter(
+                  (_, i) =>
+                    i !== index,
+                ),
+            );
+          },
+        },
+      ],
+    );
+  }
+
+
+  /* ------------------------------------------------
+     CLEAR CURRENT CAPTURE SESSION
+  ------------------------------------------------ */
 
   function clearSelection() {
-    setAsset(null);
-    setAssets([]);
-    setSelectedCount(0);
+    if (
+      assets.length === 0
+    ) {
+      return;
+    }
+
+    Alert.alert(
+      'Clear snapshots?',
+
+      'Remove all selected snapshots from this scan?',
+
+      [
+        {
+          text: 'Cancel',
+
+          style: 'cancel',
+        },
+
+        {
+          text: 'Clear',
+
+          style: 'destructive',
+
+          onPress: () =>
+            setAssets([]),
+        },
+      ],
+    );
   }
 
-  function removeAssetAt(index: number) {
-    const next = assets.slice();
-    next.splice(index, 1);
-    setAssets(next);
-    setSelectedCount(next.length);
-    setAsset(next[0] || null);
+
+  /* ------------------------------------------------
+     ANALYSIS PIPELINE
+
+     This preserves your original working
+     runScanPipeline implementation.
+  ------------------------------------------------ */
+
+  async function process() {
+    if (
+      assets.length === 0 ||
+      loading
+    ) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      /*
+       * The primary image enters the
+       * existing Dissectra AI pipeline.
+       */
+      const primaryImage =
+        assets[0];
+
+      const result =
+        await runScanPipeline(
+          primaryImage.uri,
+        );
+
+
+      /*
+       * Preserve additional snapshots
+       * using the CURRENT data model.
+       *
+       * Later we will migrate StoredScan
+       * so all snapshots belong to one
+       * parent scan.
+       */
+      if (
+        assets.length > 1
+      ) {
+        for (
+          let index = 1;
+          index <
+          assets.length;
+          index++
+        ) {
+          const image =
+            assets[index];
+
+          const id =
+            uuidv4();
+
+          const ext =
+            image.fileName
+              ?.split('.')
+              .pop() ||
+            'jpg';
+
+          const filename =
+            `${id}.${ext}`;
+
+          const localPath =
+            await copyToStorage(
+              image.uri,
+
+              'images',
+
+              filename,
+            );
+
+          const additionalScan:
+            StoredScan = {
+              id,
+
+              imageUri:
+                image.uri,
+
+              localImagePath:
+                localPath,
+
+              analysis: {
+                object:
+                  result
+                    .analysis
+                    .object,
+
+                description:
+                  'Additional snapshot captured for this scan.',
+
+                labels:
+                  result
+                    .analysis
+                    .labels,
+
+                confidence:
+                  result
+                    .analysis
+                    .confidence,
+              },
+
+              createdAt:
+                new Date()
+                  .toISOString(),
+
+              status:
+                'processing',
+            };
+
+          await saveScan(
+            additionalScan,
+          );
+        }
+      }
+
+      navigation.navigate(
+        'Home',
+
+        {
+          scan: result,
+        },
+      );
+    } catch (error: any) {
+      Alert.alert(
+        'Processing failed',
+
+        error?.message ||
+          'The scan could not be processed. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   }
+
+
+  /* ------------------------------------------------
+     UI
+  ------------------------------------------------ */
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Scan Object</Text>
-      <Text style={styles.subtitle}>Capture or upload an image for AI analysis</Text>
+    <AppScreen>
+      {/* HEADER */}
 
-      <GlassCard variant="elevated">
-        {asset ? (
-          <View style={styles.previewContainer}>
-            <Image source={{ uri: asset.uri }} style={styles.preview} resizeMode="cover" />
-            <TouchableOpacity style={styles.clearButton} onPress={clearSelection}>
-              <Text style={styles.clearButtonText}>✕</Text>
-            </TouchableOpacity>
-            <View style={styles.imageInfo}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>File</Text>
-                <Text style={styles.infoValue}>{asset.fileName || 'image.jpg'}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Size</Text>
-                <Text style={styles.infoValue}>{asset.fileSize ? `${Math.round(asset.fileSize / 1024)} KB` : 'Unknown'}</Text>
-              </View>
-            </View>
-            {assets.length > 1 && (
-              <ScrollView horizontal style={styles.thumbRow} contentContainerStyle={{ gap: theme.spacing.sm }}>
-                {assets.map((a, i) => (
-                  <View key={i} style={styles.thumbWrap}>
-                    <Image source={{ uri: a.uri }} style={styles.thumbSmall} />
-                    <TouchableOpacity style={styles.thumbRemove} onPress={() => removeAssetAt(i)}>
-                      <Text style={styles.thumbRemoveText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-          </View>
+      <View
+        style={styles.header}
+      >
+        <Pressable
+          onPress={() =>
+            navigation.goBack()
+          }
+
+          hitSlop={12}
+        >
+          <Icon
+            name="chevron-back"
+
+            size={27}
+
+            color={
+              theme.colors.text
+            }
+          />
+        </Pressable>
+
+
+        <Text
+          style={
+            styles.headerTitle
+          }
+        >
+          Capture
+        </Text>
+
+
+        {assets.length > 0 ? (
+          <Pressable
+            onPress={
+              clearSelection
+            }
+
+            hitSlop={12}
+          >
+            <Icon
+              name="trash-outline"
+
+              size={23}
+
+              color={
+                theme.colors.text
+              }
+            />
+          </Pressable>
         ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}>📷</Text>
-            <Text style={styles.placeholderTitle}>No Image Selected</Text>
-            {selectedCount > 1 && (
-              <Text style={styles.selectedCount}>{selectedCount} images selected</Text>
-            )}
-            <Text style={styles.placeholderText}>
-              Capture a photo or choose from your gallery to begin analysis
+          <View
+            style={{
+              width: 27,
+            }}
+          />
+        )}
+      </View>
+
+
+      {/* INSTRUCTIONS */}
+
+      <View
+        style={
+          styles.instructions
+        }
+      >
+        <Text
+          style={
+            styles.instructionTitle
+          }
+        >
+          Center the object
+        </Text>
+
+        <Text
+          style={
+            styles.instructionSubtitle
+          }
+        >
+          Make sure the object is well lit
+        </Text>
+      </View>
+
+
+      {/* CAMERA / IMAGE FRAME */}
+
+      <View
+        style={
+          styles.cameraFrame
+        }
+      >
+        {selected?.uri ? (
+          <Image
+            source={{
+              uri:
+                selected.uri,
+            }}
+
+            style={
+              styles.preview
+            }
+
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={
+              styles.emptyCamera
+            }
+          >
+            <Icon
+              name="scan-outline"
+
+              size={54}
+
+              color={
+                theme.colors
+                  .textSecondary
+              }
+            />
+
+            <Text
+              style={
+                styles.emptyTitle
+              }
+            >
+              Position an object
+            </Text>
+
+            <Text
+              style={
+                styles.emptySubtitle
+              }
+            >
+              Keep the entire object inside the frame
             </Text>
           </View>
         )}
 
-        <View style={styles.actionRow}>
-          <TouchableOpacity 
-            style={styles.secondaryButton} 
-            onPress={() => pick('camera')}
-            disabled={loading}
-          >
-            <Text style={styles.secondaryButtonText}>📷 Camera</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.secondaryButton} 
-            onPress={() => multiCapture()}
-            disabled={loading}
-          >
-            <Text style={styles.secondaryButtonText}>📷 Camera (multi)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.secondaryButton} 
-            onPress={() => pick('gallery')}
-            disabled={loading}
-          >
-            <Text style={styles.secondaryButtonText}>🖼️ Gallery</Text>
-          </TouchableOpacity>
-        </View>
 
-        <TouchableOpacity 
-          disabled={assets.length === 0 || loading} 
-          style={[styles.primaryButton, (!asset?.uri || loading) && styles.disabled]} 
-          onPress={process}
+        {/* GRID */}
+
+        <View
+          pointerEvents="none"
+
+          style={styles.grid}
         >
-          <Text style={styles.primaryButtonText}>
-            {loading ? 'Processing...' : 'Analyze & Generate 3D'}
-          </Text>
-        </TouchableOpacity>
-      </GlassCard>
+          <View
+            style={[
+              styles.verticalGrid,
 
-      {/* Tips Section */}
-      <GlassCard variant="elevated">
-        <Text style={styles.tipsTitle}>Tips for Best Results</Text>
-        <View style={styles.tipItem}>
-          <Text style={styles.tipIcon}>💡</Text>
-          <Text style={styles.tipText}>Use good lighting for clear images</Text>
+              {
+                left:
+                  '33.33%',
+              },
+            ]}
+          />
+
+          <View
+            style={[
+              styles.verticalGrid,
+
+              {
+                left:
+                  '66.66%',
+              },
+            ]}
+          />
+
+          <View
+            style={[
+              styles.horizontalGrid,
+
+              {
+                top:
+                  '33.33%',
+              },
+            ]}
+          />
+
+          <View
+            style={[
+              styles.horizontalGrid,
+
+              {
+                top:
+                  '66.66%',
+              },
+            ]}
+          />
         </View>
-        <View style={styles.tipItem}>
-          <Text style={styles.tipIcon}>📐</Text>
-          <Text style={styles.tipText}>Capture objects from multiple angles</Text>
+
+
+        {selected && (
+          <View
+            style={
+              styles.zoom
+            }
+          >
+            <Text
+              style={
+                styles.zoomText
+              }
+            >
+              {assets.length}/3
+            </Text>
+          </View>
+        )}
+      </View>
+
+
+      {/* SNAPSHOT THUMBNAILS */}
+
+      {assets.length > 0 && (
+        <ScrollView
+          horizontal
+
+          showsHorizontalScrollIndicator={
+            false
+          }
+
+          contentContainerStyle={
+            styles.thumbnailContent
+          }
+
+          style={
+            styles.thumbnailScroll
+          }
+        >
+          {assets.map(
+            (
+              image,
+              index,
+            ) => (
+              <Pressable
+                key={
+                  `${image.uri}-${index}`
+                }
+
+                onPress={() => {
+                  /*
+                   * Move tapped snapshot
+                   * to end so it becomes
+                   * selected preview.
+                   */
+                  setAssets(
+                    previous => {
+                      const next =
+                        [
+                          ...previous,
+                        ];
+
+                      const [
+                        chosen,
+                      ] =
+                        next.splice(
+                          index,
+                          1,
+                        );
+
+                      next.push(
+                        chosen,
+                      );
+
+                      return next;
+                    },
+                  );
+                }}
+
+                onLongPress={() =>
+                  removeAssetAt(
+                    index,
+                  )
+                }
+
+                style={
+                  styles.thumbnailWrap
+                }
+              >
+                <Image
+                  source={{
+                    uri:
+                      image.uri,
+                  }}
+
+                  style={[
+                    styles.thumbnail,
+
+                    index ===
+                      assets.length -
+                        1 &&
+                      styles.thumbnailSelected,
+                  ]}
+                />
+
+                <View
+                  style={
+                    styles.thumbnailNumber
+                  }
+                >
+                  <Text
+                    style={
+                      styles.thumbnailNumberText
+                    }
+                  >
+                    {index + 1}
+                  </Text>
+                </View>
+
+                <Pressable
+                  onPress={() =>
+                    removeAssetAt(
+                      index,
+                    )
+                  }
+
+                  style={
+                    styles.thumbnailDelete
+                  }
+                >
+                  <Icon
+                    name="close"
+
+                    size={14}
+
+                    color="#FFFFFF"
+                  />
+                </Pressable>
+              </Pressable>
+            ),
+          )}
+        </ScrollView>
+      )}
+
+
+      {/* CAMERA CONTROLS */}
+
+      <View
+        style={styles.controls}
+      >
+        <Pressable
+          style={
+            styles.sideControl
+          }
+
+          onPress={
+            openGallery
+          }
+
+          disabled={loading}
+        >
+          <Icon
+            name="images-outline"
+
+            size={25}
+
+            color={
+              theme.colors.text
+            }
+          />
+
+          <Text
+            style={
+              styles.controlLabel
+            }
+          >
+            Gallery
+          </Text>
+        </Pressable>
+
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.shutterOuter,
+
+            pressed && {
+              opacity: 0.7,
+            },
+
+            loading && {
+              opacity: 0.4,
+            },
+          ]}
+
+          onPress={
+            capturePhoto
+          }
+
+          disabled={loading}
+        >
+          <View
+            style={
+              styles.shutterInner
+            }
+          />
+        </Pressable>
+
+
+        {/*
+          launchCamera() opens the system
+          camera interface.
+
+          Front/back switching happens
+          inside that camera UI, so we do
+          NOT show a fake Flip button.
+        */}
+
+        <View
+          style={
+            styles.sideControl
+          }
+        >
+          <Icon
+            name="camera-outline"
+
+            size={27}
+
+            color={
+              theme.colors
+                .textSecondary
+            }
+          />
+
+          <Text
+            style={[
+              styles.controlLabel,
+
+              {
+                color:
+                  theme.colors
+                    .textSecondary,
+              },
+            ]}
+          >
+            Camera
+          </Text>
         </View>
-        <View style={styles.tipItem}>
-          <Text style={styles.tipIcon}>🎯</Text>
-          <Text style={styles.tipText}>Ensure the object is centered in frame</Text>
-        </View>
-      </GlassCard>
+      </View>
+
+
+      {/* MULTI-ANGLE INDICATORS */}
+
+      <View
+        style={styles.steps}
+      >
+        {[1, 2, 3].map(
+          (
+            step,
+            index,
+          ) => {
+            const completed =
+              assets.length >
+              index;
+
+            const active =
+              assets.length ===
+                index ||
+              (
+                assets.length ===
+                  3 &&
+                index === 2
+              );
+
+            return (
+              <React.Fragment
+                key={step}
+              >
+                <View
+                  style={[
+                    styles.step,
+
+                    completed &&
+                      styles
+                        .stepCompleted,
+
+                    active &&
+                      styles
+                        .stepActive,
+                  ]}
+                >
+                  {completed ? (
+                    <Icon
+                      name="checkmark"
+
+                      size={14}
+
+                      color={
+                        theme.colors
+                          .background
+                      }
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.stepText,
+
+                        active &&
+                          styles
+                            .stepTextActive,
+                      ]}
+                    >
+                      {step}
+                    </Text>
+                  )}
+                </View>
+
+                {step < 3 && (
+                  <Text
+                    style={
+                      styles.stepDot
+                    }
+                  >
+                    •
+                  </Text>
+                )}
+              </React.Fragment>
+            );
+          },
+        )}
+      </View>
+
+
+      {/* ANALYZE */}
+
+      {assets.length > 0 && (
+        <Pressable
+          onPress={process}
+
+          disabled={loading}
+
+          style={({ pressed }) => [
+            styles.continueButton,
+
+            pressed && {
+              opacity: 0.8,
+            },
+
+            loading && {
+              opacity: 0.5,
+            },
+          ]}
+        >
+          <Text
+            style={
+              styles.continueText
+            }
+          >
+            {loading
+              ? 'ANALYZING...'
+              : 'ANALYZE OBJECT'}
+          </Text>
+
+          {!loading && (
+            <Icon
+              name="arrow-forward"
+
+              size={20}
+
+              color={
+                theme.colors
+                  .inverseText
+              }
+            />
+          )}
+        </Pressable>
+      )}
+
+
+      {/* LOADING */}
 
       {loading && (
-        <View style={styles.loadingOverlay}>
-          <LoadingState label="Analyzing your scan..." size="large" />
+        <View
+          style={
+            styles.loadingOverlay
+          }
+        >
+          <LoadingState
+            label="Analyzing your scan..."
+
+            size="large"
+          />
         </View>
       )}
-    </ScrollView>
+    </AppScreen>
   );
 }
 
 
+/* --------------------------------------------------
+   STYLES
+-------------------------------------------------- */
 
-function makeStyles(themeObj: any) {
+function createStyles(
+  theme: any,
+) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: themeObj.colors.background },
-    content: { padding: themeObj.spacing.lg, gap: themeObj.spacing.lg },
-    title: {
-      ...themeObj.typography.h1,
-      color: themeObj.colors.text,
-      marginBottom: themeObj.spacing.xs,
-    },
-    subtitle: {
-      ...themeObj.typography.body1,
-      color: themeObj.colors.textSecondary,
-      marginBottom: themeObj.spacing.sm,
-    },
-    previewContainer: { position: 'relative' },
-    preview: {
-      height: 280,
-      borderRadius: themeObj.radius.lg,
-      width: '100%',
-      marginBottom: themeObj.spacing.md,
-    },
-    clearButton: {
-      position: 'absolute',
-      top: themeObj.spacing.md,
-      right: themeObj.spacing.md,
-      width: 32,
-      height: 32,
-      borderRadius: themeObj.radius.full,
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    clearButtonText: { color: themeObj.colors.text, fontSize: 18, fontWeight: '600' },
-    imageInfo: {
+    header: {
+      height: 58,
+
+      paddingHorizontal: 18,
+
       flexDirection: 'row',
-      justifyContent: 'space-around',
-      paddingVertical: themeObj.spacing.sm,
-      borderTopWidth: 1,
-      borderTopColor: themeObj.colors.divider,
-    },
-    infoItem: { alignItems: 'center' },
-    infoLabel: { ...themeObj.typography.caption, color: themeObj.colors.textSecondary, marginBottom: 2 },
-    infoValue: { ...themeObj.typography.subtitle2, color: themeObj.colors.text, fontWeight: '500' },
-    placeholder: {
-      height: 280,
+
       alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: themeObj.colors.surfaceVariant,
-      borderRadius: themeObj.radius.lg,
-      borderWidth: 2,
-      borderColor: themeObj.colors.border,
-      borderStyle: 'dashed',
+
+      justifyContent:
+        'space-between',
+
+      borderBottomWidth:
+        StyleSheet.hairlineWidth,
+
+      borderBottomColor:
+        theme.colors.divider,
     },
-    placeholderIcon: { fontSize: 48, marginBottom: themeObj.spacing.md },
-    placeholderTitle: { ...themeObj.typography.h5, color: themeObj.colors.text, marginBottom: themeObj.spacing.xs },
-    placeholderText: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary, textAlign: 'center', paddingHorizontal: themeObj.spacing.lg },
-    selectedCount: { marginTop: 8, color: themeObj.colors.textSecondary, ...themeObj.typography.caption },
-    actionRow: { flexDirection: 'row', gap: themeObj.spacing.md, marginTop: themeObj.spacing.lg },
-    secondaryButton: { flex: 1, paddingVertical: themeObj.spacing.md, borderRadius: themeObj.radius.md, backgroundColor: themeObj.colors.surfaceVariant, alignItems: 'center', borderWidth: 1, borderColor: themeObj.colors.border },
-    secondaryButtonText: { ...themeObj.typography.subtitle1, color: themeObj.colors.text, fontWeight: '500' },
-    primaryButton: { marginTop: themeObj.spacing.md, paddingVertical: themeObj.spacing.lg, borderRadius: themeObj.radius.md, backgroundColor: themeObj.colors.primary, alignItems: 'center' },
-    disabled: { opacity: 0.5 },
-    primaryButtonText: { ...themeObj.typography.subtitle1, color: themeObj.colors.onPrimary, fontWeight: '600' },
-    tipsTitle: { ...themeObj.typography.h6, color: themeObj.colors.text, marginBottom: themeObj.spacing.md },
-    tipItem: { flexDirection: 'row', alignItems: 'center', gap: themeObj.spacing.md, marginBottom: themeObj.spacing.sm },
-    tipIcon: { fontSize: 20 },
-    tipText: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary, flex: 1 },
-    loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: themeObj.colors.overlay, justifyContent: 'center', alignItems: 'center' },
-    thumbRow: { marginTop: themeObj.spacing.sm },
-    thumbWrap: { position: 'relative' },
-    thumbSmall: { width: 84, height: 84, borderRadius: themeObj.radius.md, marginRight: themeObj.spacing.sm },
-    thumbRemove: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.5)', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-    thumbRemoveText: { color: '#fff', fontSize: 12 },
+
+
+    headerTitle: {
+      color:
+        theme.colors.text,
+
+      fontSize: 16,
+
+      fontWeight: '700',
+    },
+
+
+    instructions: {
+      alignItems: 'center',
+
+      paddingTop: 16,
+
+      paddingBottom: 14,
+    },
+
+
+    instructionTitle: {
+      color:
+        theme.colors.text,
+
+      fontSize: 17,
+
+      fontWeight: '600',
+    },
+
+
+    instructionSubtitle: {
+      color:
+        theme.colors
+          .textSecondary,
+
+      fontSize: 12,
+
+      marginTop: 5,
+    },
+
+
+    cameraFrame: {
+      marginHorizontal: 18,
+
+      flex: 1,
+
+      maxHeight: 480,
+
+      minHeight: 280,
+
+      overflow: 'hidden',
+
+      borderRadius: 16,
+
+      backgroundColor:
+        theme.colors
+          .surfaceVariant,
+    },
+
+
+    preview: {
+      width: '100%',
+
+      height: '100%',
+    },
+
+
+    emptyCamera: {
+      flex: 1,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      padding: 32,
+    },
+
+
+    emptyTitle: {
+      color:
+        theme.colors.text,
+
+      fontSize: 17,
+
+      fontWeight: '600',
+
+      marginTop: 14,
+    },
+
+
+    emptySubtitle: {
+      color:
+        theme.colors
+          .textSecondary,
+
+      fontSize: 13,
+
+      textAlign: 'center',
+
+      marginTop: 6,
+    },
+
+
+    grid: {
+      position: 'absolute',
+
+      top: 0,
+
+      left: 0,
+
+      right: 0,
+
+      bottom: 0,
+    },
+
+
+    verticalGrid: {
+      position: 'absolute',
+
+      top: 0,
+
+      bottom: 0,
+
+      width:
+        StyleSheet.hairlineWidth,
+
+      backgroundColor:
+        'rgba(255,255,255,0.28)',
+    },
+
+
+    horizontalGrid: {
+      position: 'absolute',
+
+      left: 0,
+
+      right: 0,
+
+      height:
+        StyleSheet.hairlineWidth,
+
+      backgroundColor:
+        'rgba(255,255,255,0.28)',
+    },
+
+
+    zoom: {
+      position: 'absolute',
+
+      bottom: 12,
+
+      alignSelf: 'center',
+
+      backgroundColor:
+        'rgba(0,0,0,0.65)',
+
+      paddingHorizontal: 10,
+
+      paddingVertical: 6,
+
+      borderRadius: 20,
+    },
+
+
+    zoomText: {
+      color: '#FFFFFF',
+
+      fontSize: 12,
+
+      fontWeight: '600',
+    },
+
+
+    thumbnailScroll: {
+      flexGrow: 0,
+
+      marginTop: 10,
+    },
+
+
+    thumbnailContent: {
+      paddingHorizontal: 18,
+
+      gap: 10,
+    },
+
+
+    thumbnailWrap: {
+      position: 'relative',
+    },
+
+
+    thumbnail: {
+      width: 58,
+
+      height: 58,
+
+      borderRadius: 10,
+
+      borderWidth: 1,
+
+      borderColor:
+        theme.colors.border,
+    },
+
+
+    thumbnailSelected: {
+      borderWidth: 2,
+
+      borderColor:
+        theme.colors.text,
+    },
+
+
+    thumbnailNumber: {
+      position: 'absolute',
+
+      left: 4,
+
+      bottom: 4,
+
+      width: 18,
+
+      height: 18,
+
+      borderRadius: 9,
+
+      backgroundColor:
+        'rgba(0,0,0,0.7)',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+    },
+
+
+    thumbnailNumberText: {
+      color: '#FFFFFF',
+
+      fontSize: 10,
+
+      fontWeight: '700',
+    },
+
+
+    thumbnailDelete: {
+      position: 'absolute',
+
+      top: -5,
+
+      right: -5,
+
+      width: 21,
+
+      height: 21,
+
+      borderRadius: 11,
+
+      backgroundColor:
+        'rgba(0,0,0,0.8)',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+    },
+
+
+    controls: {
+      height: 102,
+
+      paddingHorizontal: 34,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'space-between',
+    },
+
+
+    sideControl: {
+      width: 70,
+
+      alignItems: 'center',
+
+      gap: 7,
+    },
+
+
+    controlLabel: {
+      color:
+        theme.colors.text,
+
+      fontSize: 12,
+
+      fontWeight: '500',
+    },
+
+
+    shutterOuter: {
+      width: 74,
+
+      height: 74,
+
+      borderRadius: 37,
+
+      borderWidth: 4,
+
+      borderColor:
+        theme.colors.text,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+    },
+
+
+    shutterInner: {
+      width: 58,
+
+      height: 58,
+
+      borderRadius: 29,
+
+      backgroundColor:
+        theme.colors.text,
+    },
+
+
+    steps: {
+      height: 34,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+
+      gap: 12,
+    },
+
+
+    step: {
+      width: 25,
+
+      height: 25,
+
+      borderRadius: 13,
+
+      borderWidth: 1,
+
+      borderColor:
+        theme.colors.border,
+
+      alignItems: 'center',
+
+      justifyContent:
+        'center',
+    },
+
+
+    stepCompleted: {
+      backgroundColor:
+        theme.colors.text,
+
+      borderColor:
+        theme.colors.text,
+    },
+
+
+    stepActive: {
+      borderColor:
+        theme.colors.text,
+    },
+
+
+    stepText: {
+      color:
+        theme.colors
+          .textSecondary,
+
+      fontSize: 12,
+
+      fontWeight: '600',
+    },
+
+
+    stepTextActive: {
+      color:
+        theme.colors.text,
+    },
+
+
+    stepDot: {
+      color:
+        theme.colors
+          .textSecondary,
+    },
+
+
+    continueButton: {
+      marginHorizontal: 18,
+
+      marginTop: 6,
+
+      marginBottom: 12,
+
+      minHeight: 54,
+
+      borderRadius: 15,
+
+      paddingHorizontal: 20,
+
+      backgroundColor:
+        theme.colors
+          .inverseSurface,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent:
+        'space-between',
+    },
+
+
+    continueText: {
+      color:
+        theme.colors
+          .inverseText,
+
+      fontSize: 13,
+
+      fontWeight: '800',
+
+      letterSpacing: 0.3,
+    },
+
+
+    loadingOverlay: {
+      position: 'absolute',
+
+      top: 0,
+
+      left: 0,
+
+      right: 0,
+
+      bottom: 0,
+
+      backgroundColor:
+        theme.colors.overlay,
+
+      justifyContent:
+        'center',
+
+      alignItems: 'center',
+
+      zIndex: 100,
+    },
   });
 }

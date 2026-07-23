@@ -140,9 +140,7 @@ export function SettingsScreen() {
                     ? theme.mode === 'dark'
                       ? '#FFFFFF'
                       : '#111111'
-                    : accents[name][
-                        theme.mode
-                      ];
+                    : accents[name];
 
                 return (
                   <TouchableOpacity

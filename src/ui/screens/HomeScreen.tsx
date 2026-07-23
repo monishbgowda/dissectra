@@ -163,10 +163,70 @@ export function HomeScreen({
 
           <View style={styles.scanDot} />
         </View>
-      </TouchableOpacity>
 
-      {/* Recent */}
+</TouchableOpacity>
 
+{/* 3D Demo */}
+
+<TouchableOpacity
+  activeOpacity={0.85}
+  style={styles.demoButton}
+  onPress={() => {
+    navigation
+      .getParent()
+      ?.navigate(
+        'Demo3D',
+        undefined,
+      );
+  }}
+>
+  <View
+    style={
+      styles.demoIconBox
+    }
+  >
+    <Text
+      style={
+        styles.demoCube
+      }
+    >
+      ◇
+    </Text>
+  </View>
+
+  <View
+    style={
+      styles.demoTextBlock
+    }
+  >
+    <Text
+      style={
+        styles.demoButtonTitle
+      }
+    >
+      TRY 3D DEMO
+    </Text>
+
+    <Text
+      style={
+        styles.demoButtonSubtitle
+      }
+    >
+      Explore an interactive dissection
+    </Text>
+  </View>
+
+  <Text
+    style={
+      styles.demoArrow
+    }
+  >
+    ›
+  </Text>
+</TouchableOpacity>
+
+{/* Recent */}
+        
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
           RECENT DISSECTIONS
@@ -604,7 +664,7 @@ function makeStyles(theme: any) {
 
       paddingHorizontal: 20,
 
-      marginBottom: 28,
+      marginBottom: 10,
 
       ...theme.shadows.sm,
     },
@@ -702,7 +762,92 @@ function makeStyles(theme: any) {
       backgroundColor:
         theme.colors.inverseText,
     },
+demoButton: {
+  minHeight: 68,
 
+  borderRadius: 15,
+
+  borderWidth: 1,
+
+  borderColor:
+    theme.colors.border,
+
+  backgroundColor:
+    theme.colors.card,
+
+  flexDirection: 'row',
+
+  alignItems: 'center',
+
+  paddingHorizontal: 14,
+
+  marginBottom: 28,
+},
+
+demoIconBox: {
+  width: 42,
+
+  height: 42,
+
+  borderRadius: 12,
+
+  backgroundColor:
+    theme.colors
+      .surfaceVariant,
+
+  alignItems: 'center',
+
+  justifyContent: 'center',
+
+  marginRight: 12,
+},
+
+demoCube: {
+  color:
+    theme.colors.text,
+
+  fontSize: 27,
+
+  fontWeight: '400',
+
+  lineHeight: 30,
+},
+
+demoTextBlock: {
+  flex: 1,
+},
+
+demoButtonTitle: {
+  color:
+    theme.colors.text,
+
+  fontSize: 12,
+
+  fontWeight: '800',
+
+  letterSpacing: 0.5,
+},
+
+demoButtonSubtitle: {
+  color:
+    theme.colors
+      .textSecondary,
+
+  fontSize: 11,
+
+  marginTop: 4,
+},
+
+demoArrow: {
+  color:
+    theme.colors.text,
+
+  fontSize: 27,
+
+  fontWeight: '300',
+
+  marginLeft: 10,
+},
     sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -5,3 +5,7 @@ export type RootTabParamList = {
   History: undefined;
   Settings: undefined;
 };
+export type RootStackParamList = {
+  MainTabs: undefined;
+  Demo3D: undefined;
+};
