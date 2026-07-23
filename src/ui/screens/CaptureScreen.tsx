@@ -121,52 +121,111 @@ export function CaptureScreen({ navigation }: any) {
         Alert.alert('Capture failed', err.message || 'Please try again.');
       }
     }
-  async function process() {
-    if (assets.length === 0) return;
-    setLoading(true);
-    try {
-      const storedIds: string[] = [];
-      for (const a of assets) {
+async function process() {
+  if (assets.length === 0) {
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    /*
+     * Run the existing pipeline on the primary image.
+     *
+     * runScanPipeline() already:
+     * - copies the image to local storage
+     * - uploads the image
+     * - performs AI analysis
+     * - requests the 3D model
+     * - downloads the model when available
+     * - creates a complete StoredScan
+     * - saves the StoredScan
+     *
+     * Therefore we should NOT duplicate that work here.
+     */
+
+    const primaryImage = assets[0];
+
+    const result = await runScanPipeline(
+      primaryImage.uri,
+    );
+
+    /*
+     * Save additional selected snapshots locally.
+     *
+     * We are keeping them as individual StoredScan
+     * records temporarily because the current data
+     * model does not yet support multiple snapshots
+     * inside one scan.
+     *
+     * We will redesign this later when we work on
+     * the image-analysis pipeline.
+     */
+
+    if (assets.length > 1) {
+      for (let index = 1; index < assets.length; index++) {
+        const image = assets[index];
+
         const id = uuidv4();
-        const ext = a.fileName?.split('.').pop() || 'jpg';
+
+        const ext =
+          image.fileName?.split('.').pop() ||
+          'jpg';
+
         const filename = `${id}.${ext}`;
-        const localPath = await copyToStorage(a.uri, 'images', filename);
-        const scan: StoredScan = {
+
+        const localPath =
+          await copyToStorage(
+            image.uri,
+            'images',
+            filename,
+          );
+
+        const additionalScan: StoredScan = {
           id,
-          imageUri: a.uri,
+
+          imageUri: image.uri,
+
           localImagePath: localPath,
-          modelUri: null,
-          localModelPath: null,
-          analysis: { object: 'Unknown', labels: [] },
-          createdAt: new Date().toISOString(),
+
+          analysis: {
+            object:
+              result.analysis.object,
+
+            description:
+              'Additional snapshot captured for this scan.',
+
+            labels:
+              result.analysis.labels,
+
+            confidence:
+              result.analysis.confidence,
+          },
+
+          createdAt:
+            new Date().toISOString(),
+
           status: 'processing',
         };
-        await saveScan(scan);
-        storedIds.push(id);
+
+        await saveScan(additionalScan);
       }
-      // run pipeline on first image for immediate UX
-      const first = assets[0];
-      const result = await runScanPipeline(first.uri);
-      // merge result into stored scan
-      const firstId = storedIds[0];
-      const updated: StoredScan = {
-        id: firstId,
-        imageUri: first.uri,
-        localImagePath: undefined,
-        modelUri: null,
-        localModelPath: null,
-        analysis: result.analysis || { object: 'Unknown', labels: [] },
-        createdAt: new Date().toISOString(),
-        status: 'complete',
-      };
-      await saveScan(updated);
-      navigation.navigate('Home', { scan: result });
-    } catch (error: any) {
-      Alert.alert('Processing failed', error.message || 'Scan cached locally, try again later.');
-    } finally {
-      setLoading(false);
     }
+
+    navigation.navigate('Home', {
+      scan: result,
+    });
+  } catch (error: any) {
+    Alert.alert(
+      'Processing failed',
+
+      error?.message ||
+        'The scan could not be processed. Please try again.',
+    );
+  } finally {
+    setLoading(false);
   }
+}
 
   function clearSelection() {
     setAsset(null);

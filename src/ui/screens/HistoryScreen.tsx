@@ -1,233 +1,641 @@
-import React, { useCallback, useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { listScans, deleteScans, clearAllScans } from '../../storage/localStorage';
-import type { StoredScan } from '../../types/dissectra';
-import { useTheme } from '../../theme/ThemeProvider';
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
-type FilterType = 'all' | 'complete' | 'processing' | 'failed';
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
+import {
+  useFocusEffect,
+} from '@react-navigation/native';
 
+import {
+  SafeAreaView,
+} from 'react-native-safe-area-context';
 
-export function HistoryScreen({ navigation }: any) {
+import {
+  listScans,
+} from '../../storage/localStorage';
+
+import type {
+  StoredScan,
+} from '../../types/dissectra';
+
+import {
+  useTheme,
+} from '../../theme/ThemeProvider';
+
+type Filter =
+  | 'all'
+  | 'complete'
+  | 'processing'
+  | 'failed';
+
+export function HistoryScreen({
+  navigation,
+}: any) {
   const { theme } = useTheme();
+
   const styles = makeStyles(theme);
-  const [items, setItems] = useState<StoredScan[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [filteredItems, setFilteredItems] = useState<StoredScan[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  useFocusEffect(useCallback(() => {
-    listScans().then(setItems);
-  }, []));
+  const [items, setItems] =
+    useState<StoredScan[]>([]);
 
-  React.useEffect(() => {
-    let filtered = items;
+  const [searchVisible, setSearchVisible] =
+    useState(false);
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.analysis.object.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.analysis.labels.some(label => label.toLowerCase().includes(searchQuery.toLowerCase()))
+  const [query, setQuery] =
+    useState('');
+
+  const [filter, setFilter] =
+    useState<Filter>('all');
+
+  useFocusEffect(
+    useCallback(() => {
+      listScans().then(setItems);
+    }, []),
+  );
+
+  const filtered = useMemo(() => {
+    return items.filter(item => {
+      const object =
+        item.analysis?.object || '';
+
+      const matchesSearch =
+        object
+          .toLowerCase()
+          .includes(
+            query.toLowerCase(),
+          );
+
+      const matchesFilter =
+        filter === 'all' ||
+        item.status === filter;
+
+      return (
+        matchesSearch &&
+        matchesFilter
       );
-    }
-
-    // Apply status filter
-    if (activeFilter !== 'all') {
-      filtered = filtered.filter(item => item.status === activeFilter);
-    }
-
-    setFilteredItems(filtered);
-  }, [items, searchQuery, activeFilter]);
-
-  const filters: { key: FilterType; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'complete', label: 'Complete' },
-    { key: 'processing', label: 'Processing' },
-    { key: 'failed', label: 'Failed' },
-  ];
-
-  function statusBadgeLabel(status: StoredScan['status']) {
-    if (status === 'offline') return 'OFFLINE';
-    if (status === 'failed') return 'FAILED';
-    if (status === 'processing') return 'PROCESSING';
-    return 'COMPLETE';
-  }
-
-  function statusBadgeStyle(status: StoredScan['status']) {
-    if (status === 'complete') return styles.ready;
-    if (status === 'offline') return styles.offline;
-    if (status === 'failed') return styles.failed;
-    return styles.processing;
-  }
+    });
+  }, [items, query, filter]);
 
   return (
-    <View style={styles.screen}>
-      <View style={{ paddingHorizontal: theme.spacing.lg }}>
-        {selectedIds.length > 0 ? (
-          <View style={{ flexDirection: 'row', gap: theme.spacing.md, marginBottom: theme.spacing.md }}>
-            <TouchableOpacity style={[styles.secondaryButton, { flex: 1 }]} onPress={async () => { await deleteScans(selectedIds); const all = await listScans(); setItems(all); setSelectedIds([]); }}>
-              <Text style={styles.secondaryButtonText}>Delete Selected ({selectedIds.length})</Text>
+    <SafeAreaView
+      edges={[
+        'top',
+        'left',
+        'right',
+      ]}
+      style={styles.safe}
+    >
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            History
+          </Text>
+
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() =>
+                setSearchVisible(
+                  current => !current,
+                )
+              }
+            >
+              <Text
+                style={styles.searchIcon}
+              >
+                ⌕
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.secondaryButton, { width: 120 }]} onPress={() => setSelectedIds([])}>
-              <Text style={styles.secondaryButtonText}>Clear</Text>
+
+            <TouchableOpacity
+              style={styles.iconButton}
+            >
+              <Text style={styles.more}>
+                ⋮
+              </Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <TouchableOpacity style={[styles.secondaryButton, { width: 160 }]} onPress={async () => { await clearAllScans(); setItems([]); }}>
-              <Text style={styles.secondaryButtonText}>Clear History</Text>
-            </TouchableOpacity>
+        </View>
+
+        {searchVisible && (
+          <View style={styles.searchWrap}>
+            <TextInput
+              autoFocus
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search history"
+              placeholderTextColor={
+                theme.colors.textDisabled
+              }
+              style={styles.search}
+            />
           </View>
         )}
-      </View>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Scan History</Text>
-        <Text style={styles.subtitle}>{items.length} scans total</Text>
-      </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search scans..."
-          placeholderTextColor={theme.colors.textDisabled}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+        <View style={styles.filters}>
+          <FilterButton
+            label="All"
+            active={filter === 'all'}
+            onPress={() =>
+              setFilter('all')
+            }
+          />
 
-      {/* Filter Pills */}
-      <View style={styles.filterContainer}>
-        {filters.map(filter => (
-          <TouchableOpacity
-            key={filter.key}
-            style={[
-              styles.filterPill,
-              activeFilter === filter.key && styles.filterPillActive,
-            ]}
-            onPress={() => setActiveFilter(filter.key)}
-          >
-            <Text
-              style={[
-                styles.filterPillText,
-                activeFilter === filter.key && styles.filterPillTextActive,
-              ]}
-            >
-              {filter.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          <FilterButton
+            label="Complete"
+            active={
+              filter === 'complete'
+            }
+            onPress={() =>
+              setFilter('complete')
+            }
+          />
 
-      {/* List */}
-      <FlatList
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        data={filteredItems}
-        keyExtractor={i => i.id}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyTitle}>
-              {searchQuery ? 'No matching scans' : 'No scans yet'}
-            </Text>
-            <Text style={styles.emptyText}>
-              {searchQuery
-                ? 'Try a different search term'
-                : 'Start by scanning an object to build your history'}
-            </Text>
-            {!searchQuery && (
+          <FilterButton
+            label="Processing"
+            active={
+              filter === 'processing'
+            }
+            onPress={() =>
+              setFilter('processing')
+            }
+          />
+
+          <FilterButton
+            label="Failed"
+            active={
+              filter === 'failed'
+            }
+            onPress={() =>
+              setFilter('failed')
+            }
+          />
+        </View>
+
+        <FlatList
+          data={filtered}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={
+            styles.listContent
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>
+                No scans yet
+              </Text>
+
+              <Text style={styles.emptyText}>
+                Captured objects and their
+                snapshots will appear here.
+              </Text>
+
               <TouchableOpacity
                 style={styles.emptyButton}
-                onPress={() => navigation.navigate('Scan')}
+                onPress={() =>
+                  navigation.navigate(
+                    'Scan',
+                  )
+                }
               >
-                <Text style={styles.emptyButtonText}>Start Scanning</Text>
+                <Text
+                  style={
+                    styles.emptyButtonText
+                  }
+                >
+                  SCAN AN OBJECT
+                </Text>
               </TouchableOpacity>
-            )}
-          </View>
-        }
-        renderItem={({ item }) => {
-          const selected = selectedIds.includes(item.id);
-          return (
+            </View>
+          }
+          renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.item, selected && { borderColor: theme.colors.primary }]}
-              onPress={() => navigation.navigate('Home', { scan: item })}
-              onLongPress={() => {
-                setSelectedIds(prev => prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]);
-              }}
+              activeOpacity={0.85}
+              style={styles.card}
+              onPress={() =>
+                navigation.navigate(
+                  'Home',
+                  { scan: item },
+                )
+              }
             >
               {item.imageUri ? (
-                <Image source={{ uri: item.imageUri }} style={styles.thumb} />
+                <Image
+                  source={{
+                    uri: item.imageUri,
+                  }}
+                  style={styles.image}
+                />
               ) : (
-                <View style={styles.thumbPlaceholder}>
-                  <Text style={styles.thumbPlaceholderText}>📷</Text>
+                <View
+                  style={
+                    styles.imagePlaceholder
+                  }
+                >
+                  <Text
+                    style={
+                      styles.placeholderD
+                    }
+                  >
+                    D
+                  </Text>
                 </View>
               )}
-              <View style={styles.itemBody}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {item.analysis.object}
-                  </Text>
-                  <Text
-                    style={[styles.status, statusBadgeStyle(item.status)]}
-                  >
-                    {statusBadgeLabel(item.status)}
-                  </Text>
-                </View>
-                <Text style={styles.date}>
-                  {new Date(item.createdAt).toLocaleDateString()}
+
+              <View style={styles.body}>
+                <Text
+                  style={styles.name}
+                  numberOfLines={1}
+                >
+                  {item.analysis?.object ||
+                    'Unknown object'}
                 </Text>
-                <Text style={styles.labels} numberOfLines={1}>
-                  {item.analysis.labels.join(' • ')}
+
+                <Text
+                  style={styles.parts}
+                  numberOfLines={1}
+                >
+                  {getPartCount(item)}
+                </Text>
+
+                <Text style={styles.date}>
+                  {new Date(
+                    item.createdAt,
+                  ).toLocaleString()}
                 </Text>
               </View>
+
+              <Text style={styles.chevron}>
+                ›
+              </Text>
             </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
+          )}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
-function makeStyles(themeObj: any) {
+function FilterButton({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const { theme } = useTheme();
+
+  return (
+    <TouchableOpacity
+      style={[
+        filterStyles.button,
+        {
+          backgroundColor: active
+            ? theme.colors.inverseBackground
+            : theme.colors.surfaceVariant,
+
+          borderColor: active
+            ? theme.colors.inverseBackground
+            : theme.colors.border,
+        },
+      ]}
+      onPress={onPress}
+    >
+      <Text
+        style={[
+          filterStyles.text,
+          {
+            color: active
+              ? theme.colors.inverseText
+              : theme.colors.textSecondary,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function getPartCount(
+  item: StoredScan,
+) {
+  const analysis: any =
+    item.analysis;
+
+  if (
+    Array.isArray(
+      analysis?.components,
+    )
+  ) {
+    return `${analysis.components.length} Parts`;
+  }
+
+  if (
+    Array.isArray(analysis?.labels)
+  ) {
+    return `${analysis.labels.length} Parts`;
+  }
+
+  return item.status === 'complete'
+    ? 'Completed'
+    : item.status;
+}
+
+const filterStyles =
+  StyleSheet.create({
+    button: {
+      paddingHorizontal: 14,
+      minHeight: 34,
+
+      borderRadius: 17,
+
+      borderWidth: 1,
+
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    text: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+  });
+
+function makeStyles(theme: any) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: themeObj.colors.background },
-    header: { paddingHorizontal: themeObj.spacing.lg, paddingTop: themeObj.spacing.lg, paddingBottom: themeObj.spacing.md },
-    title: { ...themeObj.typography.h2, color: themeObj.colors.text, marginBottom: themeObj.spacing.xs },
-    subtitle: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary },
-    searchContainer: { paddingHorizontal: themeObj.spacing.lg, marginBottom: themeObj.spacing.md },
-    searchInput: { backgroundColor: themeObj.colors.surfaceVariant, borderRadius: themeObj.radius.md, paddingHorizontal: themeObj.spacing.md, paddingVertical: themeObj.spacing.md, ...themeObj.typography.body1, color: themeObj.colors.text },
-    filterContainer: { flexDirection: 'row', paddingHorizontal: themeObj.spacing.lg, marginBottom: themeObj.spacing.md, gap: themeObj.spacing.sm },
-    filterPill: { paddingHorizontal: themeObj.spacing.md, paddingVertical: themeObj.spacing.sm, borderRadius: themeObj.radius.full, backgroundColor: themeObj.colors.surfaceVariant, borderWidth: 1, borderColor: themeObj.colors.border },
-    filterPillActive: { backgroundColor: themeObj.colors.primary, borderColor: themeObj.colors.primary },
-    filterPillText: { ...themeObj.typography.caption, color: themeObj.colors.textSecondary, fontWeight: '500' },
-    filterPillTextActive: { color: themeObj.colors.onPrimary },
-    list: { flex: 1 },
-    listContent: { paddingHorizontal: themeObj.spacing.lg, paddingBottom: themeObj.spacing.lg, gap: themeObj.spacing.md },
-    emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: themeObj.spacing.xxl },
-    emptyIcon: { fontSize: 64, marginBottom: themeObj.spacing.md },
-    emptyTitle: { ...themeObj.typography.h5, color: themeObj.colors.text, marginBottom: themeObj.spacing.xs },
-    emptyText: { ...themeObj.typography.body2, color: themeObj.colors.textSecondary, textAlign: 'center', marginBottom: themeObj.spacing.lg },
-    emptyButton: { backgroundColor: themeObj.colors.primary, paddingHorizontal: themeObj.spacing.xl, paddingVertical: themeObj.spacing.md, borderRadius: themeObj.radius.md },
-    emptyButtonText: { ...themeObj.typography.subtitle1, color: themeObj.colors.onPrimary, fontWeight: '600' },
-    item: { flexDirection: 'row', gap: themeObj.spacing.md, padding: themeObj.spacing.md, borderRadius: themeObj.radius.lg, backgroundColor: themeObj.colors.card, borderWidth: 1, borderColor: themeObj.colors.border },
-    thumb: { width: 80, height: 80, borderRadius: themeObj.radius.md },
-    thumbPlaceholder: { width: 80, height: 80, borderRadius: themeObj.radius.md, backgroundColor: themeObj.colors.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
-    thumbPlaceholderText: { fontSize: 32 },
-    itemBody: { flex: 1 },
-    rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    name: { ...themeObj.typography.subtitle1, color: themeObj.colors.text, fontWeight: '600', flex: 1, marginRight: themeObj.spacing.sm },
-    date: { ...themeObj.typography.caption, color: themeObj.colors.textSecondary, marginTop: 2 },
-    labels: { ...themeObj.typography.caption, color: themeObj.colors.primary, marginTop: themeObj.spacing.sm },
-    status: { ...themeObj.typography.caption, fontWeight: '600', textTransform: 'uppercase', paddingHorizontal: themeObj.spacing.sm, paddingVertical: 2, borderRadius: themeObj.radius.sm },
-    ready: { color: themeObj.colors.success, backgroundColor: 'rgba(0, 230, 118, 0.15)' },
-    offline: { color: '#FBBF24', backgroundColor: 'rgba(251, 191, 36, 0.15)' },
-    failed: { color: themeObj.colors.error, backgroundColor: 'rgba(255, 82, 82, 0.15)' },
-    processing: { color: themeObj.colors.secondary, backgroundColor: 'rgba(124, 92, 255, 0.15)' },
-    secondaryButton: { paddingVertical: themeObj.spacing.md, paddingHorizontal: themeObj.spacing.md, borderRadius: themeObj.radius.md, backgroundColor: themeObj.colors.surfaceVariant, alignItems: 'center', borderWidth: 1, borderColor: themeObj.colors.border },
-    secondaryButtonText: { ...themeObj.typography.subtitle1, color: themeObj.colors.text, fontWeight: '500' },
+    safe: {
+      flex: 1,
+
+      backgroundColor:
+        theme.colors.background,
+    },
+
+    container: {
+      flex: 1,
+
+      width: '100%',
+      maxWidth: 720,
+
+      alignSelf: 'center',
+    },
+
+    header: {
+      minHeight: 66,
+
+      paddingHorizontal: 20,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+      justifyContent: 'space-between',
+
+      borderBottomWidth: 1,
+      borderBottomColor:
+        theme.colors.divider,
+    },
+
+    title: {
+      color: theme.colors.text,
+
+      fontSize: 22,
+      fontWeight: '700',
+    },
+
+    headerActions: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 4,
+    },
+
+    iconButton: {
+      width: 42,
+      height: 42,
+
+      alignItems: 'center',
+      justifyContent: 'center',
+
+      borderRadius: 21,
+    },
+
+    searchIcon: {
+      color: theme.colors.text,
+
+      fontSize: 27,
+      lineHeight: 29,
+    },
+
+    more: {
+      color: theme.colors.text,
+
+      fontSize: 25,
+      lineHeight: 27,
+    },
+
+    searchWrap: {
+      paddingHorizontal: 20,
+      paddingTop: 14,
+    },
+
+    search: {
+      minHeight: 46,
+
+      borderRadius: 13,
+
+      paddingHorizontal: 15,
+
+      color: theme.colors.text,
+
+      backgroundColor:
+        theme.colors.input,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      fontSize: 14,
+    },
+
+    filters: {
+      flexDirection: 'row',
+
+      paddingHorizontal: 20,
+
+      paddingTop: 16,
+      paddingBottom: 14,
+
+      gap: 8,
+    },
+
+    listContent: {
+      paddingHorizontal: 20,
+
+      paddingBottom: 32,
+
+      gap: 10,
+
+      flexGrow: 1,
+    },
+
+    card: {
+      minHeight: 94,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      padding: 9,
+
+      borderRadius: 16,
+
+      backgroundColor:
+        theme.colors.card,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      ...theme.shadows.sm,
+    },
+
+    image: {
+      width: 78,
+      height: 74,
+
+      borderRadius: 11,
+
+      backgroundColor:
+        theme.colors.surfaceVariant,
+    },
+
+    imagePlaceholder: {
+      width: 78,
+      height: 74,
+
+      borderRadius: 11,
+
+      backgroundColor:
+        theme.colors.surfaceVariant,
+
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    placeholderD: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 30,
+      fontWeight: '800',
+    },
+
+    body: {
+      flex: 1,
+
+      minWidth: 0,
+
+      paddingHorizontal: 14,
+    },
+
+    name: {
+      color: theme.colors.text,
+
+      fontSize: 15,
+      fontWeight: '600',
+    },
+
+    parts: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 12,
+
+      marginTop: 5,
+    },
+
+    date: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 11,
+
+      marginTop: 3,
+    },
+
+    chevron: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 26,
+
+      paddingRight: 6,
+    },
+
+    empty: {
+      flex: 1,
+
+      minHeight: 400,
+
+      alignItems: 'center',
+      justifyContent: 'center',
+
+      paddingHorizontal: 32,
+    },
+
+    emptyTitle: {
+      color: theme.colors.text,
+
+      fontSize: 18,
+      fontWeight: '600',
+    },
+
+    emptyText: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 13,
+      lineHeight: 19,
+
+      textAlign: 'center',
+
+      marginTop: 7,
+      marginBottom: 22,
+    },
+
+    emptyButton: {
+      minHeight: 48,
+
+      paddingHorizontal: 24,
+
+      borderRadius: 13,
+
+      alignItems: 'center',
+      justifyContent: 'center',
+
+      backgroundColor:
+        theme.colors.inverseBackground,
+    },
+
+    emptyButtonText: {
+      color:
+        theme.colors.inverseText,
+
+      fontSize: 12,
+      fontWeight: '700',
+    },
   });
 }

@@ -1,51 +1,128 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  useColorScheme,
+} from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { theme as darkTheme } from './theme';
 
-type Appearance = 'dark' | 'light' | 'system';
+import {
+  AccentName,
+  AppearanceMode,
+  createTheme,
+} from './theme';
 
-const lightTheme = {
-  ...darkTheme,
-  colors: {
-    ...darkTheme.colors,
-    background: '#FFFFFF',
-    surface: '#F7F9FC',
-    surfaceVariant: '#F0F4F8',
-    primary: '#0066CC',
-    onPrimary: '#FFFFFF',
-    text: '#0B1220',
-    textSecondary: '#5B6B7A',
-    border: 'rgba(0,0,0,0.06)',
-    card: 'rgba(0,0,0,0.02)',
-  },
-};
+const APPEARANCE_KEY = 'dissectra:appearance';
+const ACCENT_KEY = 'dissectra:accent';
 
-const ThemeContext = createContext<any>(null);
+interface ThemeContextValue {
+  appearance: AppearanceMode;
+  accent: AccentName;
+  theme: ReturnType<typeof createTheme>;
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [appearance, setAppearance] = useState<Appearance>('dark');
+  setAppearance: (value: AppearanceMode) => Promise<void>;
+  setAccent: (value: AccentName) => Promise<void>;
+}
+
+const ThemeContext =
+  createContext<ThemeContextValue | null>(null);
+
+export function ThemeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const systemScheme = useColorScheme();
+
+  const [appearance, setAppearanceState] =
+    useState<AppearanceMode>('dark');
+
+  const [accent, setAccentState] =
+    useState<AccentName>('monochrome');
+
   useEffect(() => {
-    AsyncStorage.getItem('dissectra:appearance').then(v => {
-      if (v === 'light' || v === 'dark' || v === 'system') setAppearance(v as Appearance);
-    });
+    async function loadPreferences() {
+      const [storedAppearance, storedAccent] =
+        await Promise.all([
+          AsyncStorage.getItem(APPEARANCE_KEY),
+          AsyncStorage.getItem(ACCENT_KEY),
+        ]);
+
+      if (
+        storedAppearance === 'dark' ||
+        storedAppearance === 'light' ||
+        storedAppearance === 'system'
+      ) {
+        setAppearanceState(storedAppearance);
+      }
+
+      if (
+        storedAccent === 'monochrome' ||
+        storedAccent === 'blue' ||
+        storedAccent === 'violet' ||
+        storedAccent === 'green' ||
+        storedAccent === 'orange'
+      ) {
+        setAccentState(storedAccent);
+      }
+    }
+
+    loadPreferences();
   }, []);
 
-  const setAndPersist = async (a: Appearance) => {
-    setAppearance(a);
-    await AsyncStorage.setItem('dissectra:appearance', a);
-  };
+  async function setAppearance(value: AppearanceMode) {
+    setAppearanceState(value);
+    await AsyncStorage.setItem(APPEARANCE_KEY, value);
+  }
 
-  const currentTheme = appearance === 'light' ? lightTheme : darkTheme;
+  async function setAccent(value: AccentName) {
+    setAccentState(value);
+    await AsyncStorage.setItem(ACCENT_KEY, value);
+  }
+
+  const resolvedMode: 'dark' | 'light' =
+    appearance === 'system'
+      ? systemScheme === 'light'
+        ? 'light'
+        : 'dark'
+      : appearance;
+
+  const theme = useMemo(
+    () => createTheme(resolvedMode, accent),
+    [resolvedMode, accent],
+  );
 
   return (
-    <ThemeContext.Provider value={{ appearance, setAppearance: setAndPersist, theme: currentTheme }}>
+    <ThemeContext.Provider
+      value={{
+        appearance,
+        accent,
+        theme,
+        setAppearance,
+        setAccent,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  return useContext(ThemeContext);
+  const context = useContext(ThemeContext);
+
+  if (!context) {
+    throw new Error(
+      'useTheme must be used inside ThemeProvider',
+    );
+  }
+
+  return context;
 }
 
 export default ThemeProvider;
