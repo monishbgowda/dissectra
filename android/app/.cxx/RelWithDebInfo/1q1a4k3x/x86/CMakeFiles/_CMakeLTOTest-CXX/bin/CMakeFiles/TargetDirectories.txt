@@ -1,4 +1,0 @@
-E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/foo.dir
-E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/boo.dir
-E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/edit_cache.dir
-E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/rebuild_cache.dir
