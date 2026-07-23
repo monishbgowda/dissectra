@@ -48,6 +48,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/RNImagePickerSpec_autolinked_build/cmake_install.cmake")
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/safeareacontext_autolinked_build/cmake_install.cmake")
   include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/rnscreens_autolinked_build/cmake_install.cmake")
+  include("E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/arm64-v8a/RNCWebViewSpec_autolinked_build/cmake_install.cmake")
 
 endif()
 

@@ -13,3 +13,6 @@ E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/safeareacontex
 E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir
 E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/rnscreens_autolinked_build/CMakeFiles/edit_cache.dir
 E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/rnscreens_autolinked_build/CMakeFiles/rebuild_cache.dir
+E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir
+E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/RNCWebViewSpec_autolinked_build/CMakeFiles/edit_cache.dir
+E:/dissectra/android/app/.cxx/RelWithDebInfo/1q1a4k3x/armeabi-v7a/RNCWebViewSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
