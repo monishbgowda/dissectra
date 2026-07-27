@@ -1,0 +1,165 @@
+{
+  "product": {
+    "brand": "Ant Esports",
+    "model": "GM200W",
+    "name": "Wired RGB Gaming Mouse",
+    "category": "Computer Peripherals",
+    "confidence": 0.95
+  },
+  "components": [
+    {
+      "id": "comp_01",
+      "name": "Upper Shell & Palm Rest",
+      "category": "Housing",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Snap-Fit / Screw Fastened",
+      "replaceable": true,
+      "confidence": 0.95
+    },
+    {
+      "id": "comp_02",
+      "name": "Base Plate & Side Grips",
+      "category": "Structural Frame",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Screw Fastened",
+      "replaceable": true,
+      "confidence": 0.95
+    },
+    {
+      "id": "comp_03",
+      "name": "Primary Click Buttons (L/R)",
+      "category": "User Interface",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Cantilever Flexure / Snap-Fit",
+      "replaceable": true,
+      "confidence": 0.9
+    },
+    {
+      "id": "comp_04",
+      "name": "Scroll Wheel Assembly",
+      "category": "User Interface",
+      "material": "Polycarbonate & Rubber",
+      "manufacturingProcess": "Overmolding",
+      "assemblyMethod": "Axle Mount / Rotary Encoder Insertion",
+      "replaceable": true,
+      "confidence": 0.9
+    },
+    {
+      "id": "comp_05",
+      "name": "DPI & Side Macro Buttons",
+      "category": "User Interface",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Retention Clip / Microswitch Actuator",
+      "replaceable": true,
+      "confidence": 0.9
+    },
+    {
+      "id": "comp_06",
+      "name": "RGB Light Diffusers",
+      "category": "Optics / Aesthetics",
+      "material": "Polycarbonate",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Internal Stake / Snap-Fit",
+      "replaceable": false,
+      "confidence": 0.85
+    },
+    {
+      "id": "comp_07",
+      "name": "USB Cable & Strain Relief",
+      "category": "Electrical / Interconnect",
+      "material": "PVC & Copper Wire",
+      "manufacturingProcess": "Extrusion & Overmolding",
+      "assemblyMethod": "Internal Connector / Strain Relief Slot",
+      "replaceable": true,
+      "confidence": 0.92
+    }
+  ],
+  "materials": [
+    {
+      "name": "ABS Plastic",
+      "usedIn": [
+        "Upper Shell & Palm Rest",
+        "Base Plate & Side Grips",
+        "Primary Click Buttons (L/R)",
+        "DPI & Side Macro Buttons"
+      ]
+    },
+    {
+      "name": "Polycarbonate",
+      "usedIn": [
+        "Scroll Wheel Assembly Inner Core",
+        "RGB Light Diffusers"
+      ]
+    },
+    {
+      "name": "Rubber",
+      "usedIn": [
+        "Scroll Wheel Assembly Grip Ring"
+      ]
+    },
+    {
+      "name": "PVC",
+      "usedIn": [
+        "USB Cable Outer Jacket",
+        "Strain Relief Boot"
+      ]
+    },
+    {
+      "name": "Copper",
+      "usedIn": [
+        "USB Cable Conductors"
+      ]
+    }
+  ],
+  "manufacturing": [
+    {
+      "process": "Injection Molding",
+      "components": [
+        "Upper Shell & Palm Rest",
+        "Base Plate & Side Grips",
+        "Primary Click Buttons (L/R)",
+        "DPI & Side Macro Buttons",
+        "RGB Light Diffusers"
+      ]
+    },
+    {
+      "process": "Overmolding",
+      "components": [
+        "Scroll Wheel Assembly",
+        "USB Cable & Strain Relief"
+      ]
+    },
+    {
+      "process": "Pad Printing",
+      "components": [
+        "Upper Shell & Palm Rest (Branding and Text)"
+      ]
+    },
+    {
+      "process": "Extrusion",
+      "components": [
+        "USB Cable & Strain Relief"
+      ]
+    }
+  ],
+  "damage": [
+    {
+      "component": "Upper Shell & Palm Rest",
+      "type": "Surface Dirt / Minor Scuffs",
+      "severity": "Low",
+      "repairable": true,
+      "confidence": 0.7
+    }
+  ],
+  "engineering": {
+    "repairability": 6,
+    "manufacturability": 8,
+    "complexity": 5,
+    "modularity": 6
+  },
+  "summary": "The product is an Ant Esports GM200W ergonomically contoured wired gaming mouse featuring multi-zone green LED backlighting. It is constructed primarily from injection-molded ABS housing components with contrasting yellow macro/DPI buttons, translucent polycarbonate diffusers, and an overmolded rubber scroll wheel. Design employs high manufacturability through modular plastic snaps, pad-printed graphics, and standard screw assembly, allowing straightforward disassembly for internal microswitch or encoder repair."
+}

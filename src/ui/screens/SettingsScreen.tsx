@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 
 import {
@@ -217,16 +218,28 @@ export function SettingsScreen() {
 
         <View style={styles.card}>
           <SettingRow
-            label="Manage Scan History"
-            styles={styles}
-          />
+    label="Manage Scan History"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "Manage Scan History",
+            "This feature will allow you to review and permanently delete previous inspections.",
+        )
+    }
+/>
 
           <View style={styles.divider} />
 
           <SettingRow
-            label="Clear Cached Models"
-            styles={styles}
-          />
+    label="Clear Cached Models"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "Clear Cached Models",
+            "Downloaded 3D models and temporary files will be removed to free storage space.",
+        )
+    }
+/>
         </View>
 
         <Text style={styles.sectionLabel}>
@@ -234,17 +247,29 @@ export function SettingsScreen() {
         </Text>
 
         <View style={styles.card}>
-          <SettingRow
-            label="About Dissectra"
-            styles={styles}
-          />
+         <SettingRow
+    label="About Dissectra"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "About Dissectra",
+            "Dissectra uses Artificial Intelligence (AI) and interactive three-dimensional (3D) visualization to analyze products and explore their internal components.",
+        )
+    }
+/>
 
           <View style={styles.divider} />
 
           <SettingRow
-            label="Privacy Policy"
-            styles={styles}
-          />
+    label="Privacy Policy"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "Privacy Policy",
+            "Our privacy policy will be available in a future update.",
+        )
+    }
+/>
 
           <View style={styles.divider} />
 
@@ -261,6 +286,15 @@ export function SettingsScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+function showComingSoon(
+    title: string,
+    message: string,
+) {
+    Alert.alert(
+        title,
+        message,
+    );
 }
 
 function SettingToggle({
@@ -293,13 +327,20 @@ function SettingToggle({
     </View>
   );
 }
-
 function SettingRow({
-  label,
-  styles,
-}: any) {
+    label,
+    styles,
+    onPress,
+}: {
+    label: string;
+    styles: any;
+    onPress: () => void;
+}) {
   return (
-    <TouchableOpacity style={styles.row}>
+    <TouchableOpacity
+    style={styles.row}
+    onPress={onPress}
+>
       <Text style={styles.rowText}>
         {label}
       </Text>

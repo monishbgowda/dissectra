@@ -79,4 +79,7 @@ async function analyzeWithOpenAICompatible(imagePath, mimeType, config) {
   return normalizeAnalysis(JSON.parse(stripJsonFence(text)), config.provider, config.model);
 }
 
-module.exports = { analyzeImage, analyzeWithGemini };
+module.exports = {
+    analyzeImage,
+    analyzeWithGemini,
+};

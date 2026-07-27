@@ -1,7 +1,8 @@
 import React, {
   useCallback,
+  useMemo,
   useState,
-} from 'react';
+} from "react";
 
 import {
   Image,
@@ -11,55 +12,109 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
-} from 'react-native';
+} from "react-native";
 
 import {
   useFocusEffect,
-} from '@react-navigation/native';
+} from "@react-navigation/native";
+
+import type {
+  BottomTabScreenProps,
+} from "@react-navigation/bottom-tabs";
 
 import {
   listScans,
-} from '../../storage/localStorage';
+} from "../../storage/localStorage";
 
 import type {
   StoredScan,
-} from '../../types/dissectra';
+} from "../../types/dissectra";
+
+import type {
+  RootTabParamList,
+} from "../../types/navigation";
 
 import {
   useTheme,
-} from '../../theme/ThemeProvider';
+} from "../../theme/ThemeProvider";
 
 import {
   Screen,
-} from '../components/Screen';
+} from "../components/Screen";
+
+type Props =
+  BottomTabScreenProps<
+    RootTabParamList,
+    "Home"
+  >;
 
 export function HomeScreen({
   navigation,
-}: any) {
+}: Props)  {
   const { theme } = useTheme();
 
-  const {
-    width,
-  } = useWindowDimensions();
-
+  const { width } =
+  useWindowDimensions();
   const [recent, setRecent] =
     useState<StoredScan[]>([]);
 
-  const styles = makeStyles(theme);
-
-  useFocusEffect(
-    useCallback(() => {
-      listScans()
-        .then(scans => {
-          setRecent(scans.slice(0, 6));
-        })
-        .catch(() => {
-          setRecent([]);
-        });
-    }, []),
+  const styles =
+  useMemo(
+    () => makeStyles(theme),
+    [theme],
   );
 
-  const horizontalPadding =
+  const loadRecent = useCallback(async () => {
+    try {
+      const scans =
+        await listScans();
+
+      setRecent(
+        scans.slice(0, 6),
+      );
+    } catch {
+      setRecent([]);
+    }
+  }, []);
+
+const openInspection = useCallback(
+  (scan: StoredScan) => {
+    navigation
+      .getParent()
+      ?.navigate("InspectionDetails", {
+        inspectionId: scan.id,
+      });
+  },
+  [navigation],
+);
+const openScanner =useCallback(() => {
+    navigation.navigate("Scan");
+  }, [navigation]);
+
+const openHistory =
+  useCallback(() => {
+    navigation.navigate("History");
+  }, [navigation]);
+
+const openSettings =
+  useCallback(() => {
+    navigation.navigate("Settings");
+  }, [navigation]);
+
+const openDemo =
+  useCallback(() => {
+    navigation
+      .getParent()
+      ?.navigate("Demo3D");
+  }, [navigation]);
+
+useFocusEffect(
+  useCallback(() => {
+    loadRecent();
+  }, [loadRecent]),
+);
+
+const horizontalPadding =
     width < 380 ? 18 : 24;
 
   return (
@@ -86,9 +141,7 @@ export function HomeScreen({
         <TouchableOpacity
           accessibilityLabel="Settings"
           style={styles.settingsButton}
-          onPress={() =>
-            navigation.navigate('Settings')
-          }
+          onPress={openSettings}
         >
           <Text style={styles.settingsIcon}>
             ⚙
@@ -147,9 +200,7 @@ export function HomeScreen({
       <TouchableOpacity
         activeOpacity={0.88}
         style={styles.scanButton}
-        onPress={() =>
-          navigation.navigate('Scan')
-        }
+        onPress={openScanner}
       >
         <Text style={styles.scanButtonText}>
           SCAN AN OBJECT
@@ -171,14 +222,7 @@ export function HomeScreen({
 <TouchableOpacity
   activeOpacity={0.85}
   style={styles.demoButton}
-  onPress={() => {
-    navigation
-      .getParent()
-      ?.navigate(
-        'Demo3D',
-        undefined,
-      );
-  }}
+  onPress={openDemo}
 >
   <View
     style={
@@ -234,9 +278,7 @@ export function HomeScreen({
 
         {recent.length > 0 && (
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('History')
-            }
+            onPress={openHistory}
           >
             <Text style={styles.viewAll}>
               View all
@@ -248,9 +290,7 @@ export function HomeScreen({
       {recent.length === 0 ? (
         <TouchableOpacity
           style={styles.emptyRecent}
-          onPress={() =>
-            navigation.navigate('Scan')
-          }
+          onPress={openScanner}
         >
           <Text style={styles.emptyTitle}>
             No dissections yet
@@ -262,71 +302,47 @@ export function HomeScreen({
           </Text>
         </TouchableOpacity>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={
-            styles.recentRow
-          }
-        >
-          {recent.map(scan => (
-            <TouchableOpacity
-              key={scan.id}
-              activeOpacity={0.85}
-              style={styles.recentCard}
-              onPress={() =>
-                navigation.navigate(
-                  'Home',
-                  { scan },
-                )
-              }
-            >
-              <View
-                style={
-                  styles.thumbnailContainer
-                }
-              >
-                {scan.imageUri ? (
-                  <Image
-                    source={{
-                      uri: scan.imageUri,
-                    }}
-                    style={styles.thumbnail}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={
-                      styles.thumbnailFallback
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.fallbackMark
-                      }
-                    >
-                      D
-                    </Text>
-                  </View>
-                )}
-              </View>
+       <ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.recentRow}
+>
+  {recent.map((scan) => (
+    <TouchableOpacity
+      key={scan.id}
+      activeOpacity={0.85}
+      style={styles.recentCard}
+      onPress={() => openInspection(scan)}
+    >
+      <View style={styles.thumbnailContainer}>
+        {scan.imageUri ? (
+          <Image
+            source={{ uri: scan.imageUri }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.thumbnailFallback}>
+            <Text style={styles.fallbackMark}>
+              D
+            </Text>
+          </View>
+        )}
+      </View>
 
-              <Text
-                numberOfLines={1}
-                style={styles.recentName}
-              >
-                {scan.analysis?.object ||
-                  'Unknown object'}
-              </Text>
+      <Text
+        numberOfLines={1}
+        style={styles.recentName}
+      >
+        {scan.analysis.object}
+      </Text>
 
-              <Text style={styles.recentDate}>
-                {formatRelativeDate(
-                  scan.createdAt,
-                )}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      <Text style={styles.recentDate}>
+        {formatRelativeDate(scan.createdAt)}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
       )}
 
       {/* How it works */}
@@ -469,6 +485,9 @@ const stylesStatic =
 
 function makeStyles(theme: any) {
   return StyleSheet.create({
+    // -------------------------------------
+// Header
+// -------------------------------------
     header: {
       paddingTop: 12,
       paddingBottom: 20,
@@ -515,7 +534,9 @@ function makeStyles(theme: any) {
       color: theme.colors.text,
       fontSize: 22,
     },
-
+// -------------------------------------
+// Hero
+// -------------------------------------  
     hero: {
       minHeight: 300,
 
@@ -650,6 +671,9 @@ function makeStyles(theme: any) {
       maxWidth: 280,
     },
 
+// -------------------------------------
+// Scan Button
+// -------------------------------------
     scanButton: {
       minHeight: 58,
 
@@ -762,6 +786,10 @@ function makeStyles(theme: any) {
       backgroundColor:
         theme.colors.inverseText,
     },
+
+// -------------------------------------
+// Demo
+// -------------------------------------
 demoButton: {
   minHeight: 68,
 
@@ -848,6 +876,9 @@ demoArrow: {
 
   marginLeft: 10,
 },
+// -------------------------------------
+// Recent
+// -------------------------------------
     sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -969,7 +1000,9 @@ demoArrow: {
 
       marginTop: 5,
     },
-
+// -------------------------------------
+// How It Works
+// -------------------------------------
     howCard: {
       borderRadius: 18,
 

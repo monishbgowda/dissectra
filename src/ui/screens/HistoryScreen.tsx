@@ -23,32 +23,54 @@ import {
 } from 'react-native-safe-area-context';
 
 import {
-  listScans,
-} from '../../storage/localStorage';
+  listInspections,
+  deleteInspection,
+} from '../../storage/inspectionStorage';
 
 import type {
-  StoredScan,
-} from '../../types/dissectra';
+  Inspection,
+} from '../../storage/inspectionTypes';
 
 import {
   useTheme,
 } from '../../theme/ThemeProvider';
 
-type Filter =
-  | 'all'
-  | 'complete'
-  | 'processing'
-  | 'failed';
+import type {
+  CompositeScreenProps,
+} from "@react-navigation/native";
+
+import type {
+  BottomTabScreenProps,
+} from "@react-navigation/bottom-tabs";
+
+import type {
+  NativeStackScreenProps,
+} from "@react-navigation/native-stack";
+
+import type {
+  RootTabParamList,
+  RootStackParamList,
+} from "../../types/navigation";
+
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<
+    RootTabParamList,
+    "History"
+  >,
+  NativeStackScreenProps<
+    RootStackParamList
+  >
+>;
 
 export function HistoryScreen({
   navigation,
-}: any) {
+}: Props)  {
   const { theme } = useTheme();
 
   const styles = makeStyles(theme);
 
-  const [items, setItems] =
-    useState<StoredScan[]>([]);
+  const [history, setHistory] =
+    useState<Inspection[]>([]);
 
   const [searchVisible, setSearchVisible] =
     useState(false);
@@ -56,19 +78,43 @@ export function HistoryScreen({
   const [query, setQuery] =
     useState('');
 
-  const [filter, setFilter] =
-    useState<Filter>('all');
+const [filter, setFilter] =
+useState<
+'ALL' |
+'COMPLETED' |
+'PROCESSING' |
+'FAILED'
+>('ALL');
 
   useFocusEffect(
     useCallback(() => {
-      listScans().then(setItems);
+        loadHistory();
     }, []),
+);
+async function loadHistory(): Promise<void> {
+  const inspections =
+    await listInspections();
+
+  inspections.sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() -
+      new Date(a.createdAt).getTime(),
   );
 
+  setHistory(inspections);
+}
+async function removeInspection(
+  id: string,
+): Promise<void> {
+  await deleteInspection(id);
+
+  await loadHistory();
+}
+
   const filtered = useMemo(() => {
-    return items.filter(item => {
+    return history.filter(item => {
       const object =
-        item.analysis?.object || '';
+    item.objectName || '';
 
       const matchesSearch =
         object
@@ -78,7 +124,7 @@ export function HistoryScreen({
           );
 
       const matchesFilter =
-        filter === 'all' ||
+        filter === 'ALL' ||
         item.status === filter;
 
       return (
@@ -86,7 +132,7 @@ export function HistoryScreen({
         matchesFilter
       );
     });
-  }, [items, query, filter]);
+}, [history, query, filter]);
 
   return (
     <SafeAreaView
@@ -147,39 +193,39 @@ export function HistoryScreen({
         <View style={styles.filters}>
           <FilterButton
             label="All"
-            active={filter === 'all'}
+            active={filter === 'ALL'}
             onPress={() =>
-              setFilter('all')
+              setFilter('ALL')
             }
           />
 
           <FilterButton
             label="Complete"
             active={
-              filter === 'complete'
+              filter === 'COMPLETED'
             }
             onPress={() =>
-              setFilter('complete')
+              setFilter('COMPLETED')
             }
           />
 
           <FilterButton
             label="Processing"
             active={
-              filter === 'processing'
+              filter === 'PROCESSING'
             }
             onPress={() =>
-              setFilter('processing')
+              setFilter('PROCESSING')
             }
           />
 
           <FilterButton
             label="Failed"
             active={
-              filter === 'failed'
+              filter === 'FAILED'
             }
             onPress={() =>
-              setFilter('failed')
+              setFilter('FAILED')
             }
           />
         </View>
@@ -194,12 +240,12 @@ export function HistoryScreen({
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>
-                No scans yet
+                No inspections yet
               </Text>
 
               <Text style={styles.emptyText}>
-                Captured objects and their
-                snapshots will appear here.
+                Your completed inspections
+                will appear here.
               </Text>
 
               <TouchableOpacity
@@ -220,68 +266,93 @@ export function HistoryScreen({
               </TouchableOpacity>
             </View>
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.card}
-              onPress={() =>
-                navigation.navigate(
-                  'Home',
-                  { scan: item },
-                )
-              }
-            >
-              {item.imageUri ? (
-                <Image
-                  source={{
-                    uri: item.imageUri,
-                  }}
-                  style={styles.image}
-                />
-              ) : (
-                <View
-                  style={
-                    styles.imagePlaceholder
-                  }
-                >
-                  <Text
-                    style={
-                      styles.placeholderD
-                    }
-                  >
-                    D
-                  </Text>
-                </View>
-              )}
+          renderItem={({ item }) => {
 
-              <View style={styles.body}>
+    const statusColor =
+        item.status === "COMPLETED"
+            ? theme.colors.success
+            : item.status === "FAILED"
+            ? theme.colors.error
+            : theme.colors.warning;
+
+    return (
+        <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.card}
+            onPress={() =>
+                navigation.navigate(
+                    "InspectionDetails",
+                    {
+                        inspectionId: item.id,
+                    },
+                )
+            }
+        >
+            {/* Everything that was already inside your TouchableOpacity stays exactly the same */}
+
+            {item.thumbnail ? (
+                <Image
+                    source={{ uri: item.thumbnail }}
+                    style={styles.image}
+                />
+            ) : (
+                <View style={styles.imagePlaceholder}>
+                    <Text style={styles.placeholderD}>
+                        D
+                    </Text>
+                </View>
+            )}
+
+            <View style={styles.body}>
                 <Text
-                  style={styles.name}
-                  numberOfLines={1}
+                    style={styles.name}
+                    numberOfLines={1}
                 >
-                  {item.analysis?.object ||
-                    'Unknown object'}
+                    {item.objectName ||
+                        "Unknown object"}
                 </Text>
 
                 <Text
-                  style={styles.parts}
-                  numberOfLines={1}
+                    style={styles.parts}
+                    numberOfLines={1}
                 >
-                  {getPartCount(item)}
+                    {item.imageCount} Images
+                </Text>
+
+                <Text style={styles.parts}>
+                    Confidence:
+                    {item.confidence
+                        ? ` ${Math.round(
+                              item.confidence *
+                                  100,
+                          )}%`
+                        : " --"}
+                </Text>
+
+                <Text
+                    style={[
+                        styles.parts,
+                        {
+                            color: statusColor,
+                        },
+                    ]}
+                >
+                    {item.status}
                 </Text>
 
                 <Text style={styles.date}>
-                  {new Date(
-                    item.createdAt,
-                  ).toLocaleString()}
+                    {new Date(
+                        item.createdAt,
+                    ).toLocaleString()}
                 </Text>
-              </View>
+            </View>
 
-              <Text style={styles.chevron}>
+            <Text style={styles.chevron}>
                 ›
-              </Text>
-            </TouchableOpacity>
-          )}
+            </Text>
+        </TouchableOpacity>
+    );
+}}
         />
       </View>
     </SafeAreaView>
@@ -331,30 +402,7 @@ function FilterButton({
   );
 }
 
-function getPartCount(
-  item: StoredScan,
-) {
-  const analysis: any =
-    item.analysis;
 
-  if (
-    Array.isArray(
-      analysis?.components,
-    )
-  ) {
-    return `${analysis.components.length} Parts`;
-  }
-
-  if (
-    Array.isArray(analysis?.labels)
-  ) {
-    return `${analysis.labels.length} Parts`;
-  }
-
-  return item.status === 'complete'
-    ? 'Completed'
-    : item.status;
-}
 
 const filterStyles =
   StyleSheet.create({

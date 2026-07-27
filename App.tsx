@@ -1,92 +1,84 @@
-import React from 'react';
+import React, {
+  useMemo,
+  useEffect,
+} from "react";
 
 import {
   useWindowDimensions,
-} from 'react-native';
+} from "react-native";
 
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+} from "react-native-safe-area-context";
 
 import {
   NavigationContainer,
   DefaultTheme,
-} from '@react-navigation/native';
+} from "@react-navigation/native";
 
 import {
   createBottomTabNavigator,
-} from '@react-navigation/bottom-tabs';
+} from "@react-navigation/bottom-tabs";
 
 import {
   createNativeStackNavigator,
-} from '@react-navigation/native-stack';
+} from "@react-navigation/native-stack";
 
-import Icon from
-  'react-native-vector-icons/Ionicons';
-
-import {
-  HomeScreen,
-} from './src/ui/screens/HomeScreen';
-
-import {
-  CaptureScreen,
-} from './src/ui/screens/CaptureScreen';
-
-import {
-  HistoryScreen,
-} from './src/ui/screens/HistoryScreen';
-
-import {
-  SettingsScreen,
-} from './src/ui/screens/SettingsScreen';
-
-import {
-  Demo3DScreen,
-} from './src/ui/screens/Demo3DScreen';
-
-import {
-  theme,
-} from './src/theme/theme';
+import Icon from "react-native-vector-icons/Ionicons";
 
 import {
   ThemeProvider,
   useTheme,
-} from './src/theme/ThemeProvider';
+} from "./src/theme/ThemeProvider";
+
+import {
+  theme,
+} from "./src/theme/theme";
+
+import {
+  HomeScreen,
+} from "./src/ui/screens/HomeScreen";
+
+import {
+  CaptureScreen,
+} from "./src/ui/screens/CaptureScreen";
+
+import {
+  HistoryScreen,
+} from "./src/ui/screens/HistoryScreen";
+
+import {
+  SettingsScreen,
+} from "./src/ui/screens/SettingsScreen";
+
+import {
+  Demo3DScreen,
+} from "./src/ui/screens/Demo3DScreen";
+
+import InspectionDetailsScreen from "./src/ui/screens/InspectionDetailsScreen";
 
 import type {
   RootTabParamList,
   RootStackParamList,
-} from './src/types/navigation';
-
-
-if (
-  Icon &&
-  typeof Icon.loadFont ===
-    'function'
-) {
-  Icon.loadFont();
-}
-
+} from "./src/types/navigation";
 
 const Tab =
-  createBottomTabNavigator<
-    RootTabParamList
-  >();
+  createBottomTabNavigator<RootTabParamList>();
 
 const Stack =
-  createNativeStackNavigator<
-    RootStackParamList
-  >();
-
+  createNativeStackNavigator<RootStackParamList>();
 
 function makeNavTheme(
   t: typeof theme,
 ) {
+
   return {
+
     ...DefaultTheme,
 
     colors: {
+
       ...DefaultTheme.colors,
 
       background:
@@ -103,16 +95,37 @@ function makeNavTheme(
 
       primary:
         t.colors.primary,
+
     },
+
   };
+
 }
 
+function renderIcon(
+  name: string,
+) {
 
-/* ---------------------------------------------
-   MAIN BOTTOM NAVIGATION
---------------------------------------------- */
+  return ({
+    color,
+    size,
+  }: {
+    color: string;
+    size: number;
+  }) => (
+
+    <Icon
+      name={name}
+      color={color}
+      size={size}
+    />
+
+  );
+
+}
 
 function MainTabs() {
+
   const {
     width,
     height,
@@ -125,246 +138,379 @@ function MainTabs() {
     theme: activeTheme,
   } = useTheme();
 
-  const base =
-    Math.min(
-      width,
-      height,
-    );
+  const {
 
-  const responsiveIconSize =
-    Math.max(
-      20,
-      Math.round(
-        base * 0.06,
-      ),
-    );
+    responsiveIconSize,
 
-  const tabBarHeight =
-    56 +
-    (insets.bottom || 8);
+    tabBarHeight,
 
+  } = useMemo(() => {
+
+    const base =
+      Math.min(
+        width,
+        height,
+      );
+
+    return {
+
+      responsiveIconSize:
+
+        Math.max(
+          20,
+          Math.round(
+            base * 0.06,
+          ),
+        ),
+
+      tabBarHeight:
+        56 +
+        (insets.bottom || 8),
+
+    };
+
+  }, [
+
+    width,
+
+    height,
+
+    insets.bottom,
+
+  ]);
+
+  const screenOptions =
+    useMemo(() => ({
+
+      headerShown: false,
+
+      tabBarStyle: {
+
+        backgroundColor:
+          activeTheme.colors.surface,
+
+        borderTopColor:
+          activeTheme.colors.border,
+
+        borderTopWidth: 1,
+
+        height:
+          tabBarHeight,
+
+        paddingBottom:
+          insets.bottom || 8,
+
+        paddingTop: 8,
+
+      },
+
+      tabBarActiveTintColor:
+        activeTheme.colors.primary,
+
+      tabBarInactiveTintColor:
+        activeTheme.colors.textSecondary,
+
+      tabBarLabelStyle: {
+
+        fontSize: 12,
+
+        fontWeight: "600",
+
+      },
+
+    }), [
+
+      activeTheme,
+
+      tabBarHeight,
+
+      insets.bottom,
+
+    ]);
 
   return (
+
     <Tab.Navigator
-      screenOptions={{
+    screenOptions={{
         headerShown: false,
 
         tabBarStyle: {
-          backgroundColor:
-            activeTheme
-              .colors
-              .surface,
+            backgroundColor:
+                activeTheme.colors.surface,
 
-          borderTopColor:
-            activeTheme
-              .colors
-              .border,
+            borderTopColor:
+                activeTheme.colors.border,
 
-          borderTopWidth: 1,
+            borderTopWidth: 1,
 
-          height:
-            tabBarHeight,
+            height:
+                tabBarHeight,
 
-          paddingBottom:
-            insets.bottom ||
-            8,
+            paddingBottom:
+                insets.bottom || 8,
 
-          paddingTop: 8,
+            paddingTop: 8,
         },
 
         tabBarActiveTintColor:
-          activeTheme
-            .colors
-            .primary,
+            activeTheme.colors.primary,
 
         tabBarInactiveTintColor:
-          activeTheme
-            .colors
-            .textSecondary,
+            activeTheme.colors.textSecondary,
 
         tabBarLabelStyle: {
-          fontSize: 12,
 
-          fontWeight: '600',
+            fontSize: 12,
+
+            fontWeight: "600",
+
         },
-      }}
-    >
+
+    }}
+>
+
       <Tab.Screen
+
         name="Home"
 
-        component={
-          HomeScreen
-        }
+        component={HomeScreen}
 
         options={{
+
           tabBarLabel:
-            'Viewer',
+            "Viewer",
 
-          tabBarIcon: ({
-            color,
-          }) => (
-            <Icon
-              name="home-outline"
+          tabBarIcon:
+            ({ color }) => (
 
-              size={
-                responsiveIconSize
-              }
+              <Icon
 
-              color={color}
-            />
-          ),
+                name="home-outline"
+
+                color={color}
+
+                size={responsiveIconSize}
+
+              />
+
+            ),
+
         }}
+
       />
 
-
       <Tab.Screen
+
         name="Scan"
 
-        component={
-          CaptureScreen
-        }
+        component={CaptureScreen}
 
         options={{
+
           tabBarLabel:
-            'Scan',
+            "Scan",
 
-          tabBarIcon: ({
-            color,
-          }) => (
-            <Icon
-              name="camera-outline"
+          tabBarIcon:
+            ({ color }) => (
 
-              size={
-                responsiveIconSize
-              }
+              <Icon
 
-              color={color}
-            />
-          ),
+                name="camera-outline"
+
+                color={color}
+
+                size={responsiveIconSize}
+
+              />
+
+            ),
+
         }}
+
       />
 
-
       <Tab.Screen
+
         name="History"
 
-        component={
-          HistoryScreen
-        }
+        component={HistoryScreen}
 
         options={{
+
           tabBarLabel:
-            'History',
+            "History",
 
-          tabBarIcon: ({
-            color,
-          }) => (
-            <Icon
-              name="time-outline"
+          tabBarIcon:
+            ({ color }) => (
 
-              size={
-                responsiveIconSize
-              }
+              <Icon
 
-              color={color}
-            />
-          ),
+                name="time-outline"
+
+                color={color}
+
+                size={responsiveIconSize}
+
+              />
+
+            ),
+
         }}
-      />
 
+      />
 
       <Tab.Screen
+
         name="Settings"
 
-        component={
-          SettingsScreen
-        }
+        component={SettingsScreen}
 
         options={{
+
           tabBarLabel:
-            'Settings',
+            "Settings",
 
-          tabBarIcon: ({
-            color,
-          }) => (
-            <Icon
-              name="settings-outline"
+          tabBarIcon:
+            ({ color }) => (
 
-              size={
-                responsiveIconSize
-              }
+              <Icon
 
-              color={color}
-            />
-          ),
+                name="settings-outline"
+
+                color={color}
+
+                size={responsiveIconSize}
+
+              />
+
+            ),
+
         }}
+
       />
+
     </Tab.Navigator>
+
   );
+
 }
-
-
-/* ---------------------------------------------
-   APP
---------------------------------------------- */
-
-export default function App() {
-  return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AppInner />
-      </ThemeProvider>
-    </SafeAreaProvider>
-  );
-}
-
 
 function AppInner() {
+
   const {
+
     theme: activeTheme,
+
   } = useTheme();
 
-  return (
-    <NavigationContainer
-      theme={
+  const navigationTheme =
+    useMemo(
+
+      () =>
+
         makeNavTheme(
           activeTheme,
-        )
-      }
+        ),
+
+      [
+
+        activeTheme,
+
+      ],
+
+    );
+
+  return (
+
+    <NavigationContainer
+      theme={navigationTheme}
     >
+
       <Stack.Navigator
+
         screenOptions={{
+
           headerShown: false,
 
           contentStyle: {
+
             backgroundColor:
-              activeTheme
-                .colors
-                .background,
+              activeTheme.colors.background,
+
           },
+
         }}
+
       >
+
         <Stack.Screen
+
           name="MainTabs"
 
-          component={
-            MainTabs
-          }
+          component={MainTabs}
+
         />
 
         <Stack.Screen
+
           name="Demo3D"
 
+          component={Demo3DScreen}
+
+          options={{
+
+            animation:
+              "slide_from_right",
+
+          }}
+
+        />
+
+        <Stack.Screen
+
+          name="InspectionDetails"
+
           component={
-            Demo3DScreen
+            InspectionDetailsScreen
           }
 
           options={{
+
             animation:
-              'slide_from_right',
+              "slide_from_right",
+
           }}
+
         />
+
       </Stack.Navigator>
+
     </NavigationContainer>
+
   );
+
+}
+
+export default function App() {
+
+  useEffect(() => {
+
+    Icon.loadFont?.();
+
+  }, []);
+
+  return (
+
+    <SafeAreaProvider>
+
+      <ThemeProvider>
+
+        <AppInner />
+
+      </ThemeProvider>
+
+    </SafeAreaProvider>
+
+  );
+
 }

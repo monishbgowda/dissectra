@@ -3,6 +3,7 @@ import React, {
   useContext,
   useMemo,
   useState,
+  useEffect,
 } from 'react';
 
 import {
@@ -16,6 +17,7 @@ import {
   createTheme,
 } from './theme';
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ThemeContextValue {
   theme: AppTheme;
@@ -37,7 +39,11 @@ const ThemeContext =
   createContext<ThemeContextValue | null>(
     null,
   );
+const APPEARANCE_KEY =
+  "theme_appearance";
 
+const ACCENT_KEY =
+  "theme_accent";
 export function ThemeProvider({
   children,
 }: {
@@ -45,13 +51,41 @@ export function ThemeProvider({
 }) {
   const systemScheme = useColorScheme();
 
-  const [appearance, setAppearance] =
-    useState<AppearanceMode>('system');
+const [appearance, setAppearance] =
+  useState<AppearanceMode>("system");
 
 const [accent, setAccent] =
   useState<AccentName>(
-    'monochrome',
+    "monochrome",
   );
+
+useEffect(() => {
+  async function loadSettings() {
+    const savedAppearance =
+      await AsyncStorage.getItem(
+        APPEARANCE_KEY,
+      );
+
+    const savedAccent =
+      await AsyncStorage.getItem(
+        ACCENT_KEY,
+      );
+
+    if (savedAppearance) {
+      setAppearance(
+        savedAppearance as AppearanceMode,
+      );
+    }
+
+    if (savedAccent) {
+      setAccent(
+        savedAccent as AccentName,
+      );
+    }
+  }
+
+  loadSettings();
+}, []);
 
   const resolvedMode: 'dark' | 'light' =
     appearance === 'system'
@@ -72,20 +106,40 @@ const [accent, setAccent] =
     ],
   );
 
-  const value = useMemo(
-    () => ({
-      theme,
-      appearance,
-      accent,
-      setAppearance,
-      setAccent,
-    }),
-    [
-      theme,
-      appearance,
-      accent,
-    ],
-  );
+ const value = useMemo(
+  () => ({
+    theme,
+    appearance,
+    accent,
+
+    setAppearance: async (
+      mode: AppearanceMode,
+    ) => {
+      setAppearance(mode);
+
+      await AsyncStorage.setItem(
+        APPEARANCE_KEY,
+        mode,
+      );
+    },
+
+    setAccent: async (
+      value: AccentName,
+    ) => {
+      setAccent(value);
+
+      await AsyncStorage.setItem(
+        ACCENT_KEY,
+        value,
+      );
+    },
+  }),
+  [
+    theme,
+    appearance,
+    accent,
+  ],
+);
 
   return (
     <ThemeContext.Provider value={value}>

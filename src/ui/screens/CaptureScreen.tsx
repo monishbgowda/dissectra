@@ -42,13 +42,22 @@ import {
 } from '../../services/scanPipeline';
 
 import {
-  copyToStorage,
-  saveScan,
-} from '../../storage/localStorage';
+  startInspection,
+} from '../../storage/inspectionManager';
+
+import {
+  copyImageToInspection,
+  saveInspection,
+} from '../../storage/inspectionStorage';
+
+import type {
+    Inspection,
+    InspectionImage,
+} from "../../storage/inspectionTypes";
 
 import type {
   StoredScan,
-} from '../../types/dissectra';
+} from "../../types/dissectra";
 
 import {
   MAX_IMAGE_BYTES,
@@ -538,134 +547,110 @@ export function CaptureScreen({
      This preserves your original working
      runScanPipeline implementation.
   ------------------------------------------------ */
+async function createInspectionRecord(): Promise<Inspection> {
+    return startInspection();
+}
+async function analyzePrimaryImage(): Promise<StoredScan> {
+  return runScanPipeline(assets[0].uri);
+}
+async function attachInspectionImages(
+  inspection: Inspection,
+): Promise<void> {
+  const inspectionImages: InspectionImage[] = [];
 
-  async function process() {
-    if (
-      assets.length === 0 ||
-      loading
-    ) {
-      return;
-    }
+  for (let i = 0; i < assets.length; i++) {
+    const image = assets[i];
 
-    setLoading(true);
+    const extension =
+      image.fileName?.split(".").pop() ?? "jpg";
 
-    try {
-      /*
-       * The primary image enters the
-       * existing Dissectra AI pipeline.
-       */
-      const primaryImage =
-        assets[0];
+    const fileName = `${i + 1}.${extension}`;
 
-      const result =
-        await runScanPipeline(
-          primaryImage.uri,
-        );
-
-
-      /*
-       * Preserve additional snapshots
-       * using the CURRENT data model.
-       *
-       * Later we will migrate StoredScan
-       * so all snapshots belong to one
-       * parent scan.
-       */
-      if (
-        assets.length > 1
-      ) {
-        for (
-          let index = 1;
-          index <
-          assets.length;
-          index++
-        ) {
-          const image =
-            assets[index];
-
-          const id =
-            uuidv4();
-
-          const ext =
-            image.fileName
-              ?.split('.')
-              .pop() ||
-            'jpg';
-
-          const filename =
-            `${id}.${ext}`;
-
-          const localPath =
-            await copyToStorage(
-              image.uri,
-
-              'images',
-
-              filename,
-            );
-
-          const additionalScan:
-            StoredScan = {
-              id,
-
-              imageUri:
-                image.uri,
-
-              localImagePath:
-                localPath,
-
-              analysis: {
-                object:
-                  result
-                    .analysis
-                    .object,
-
-                description:
-                  'Additional snapshot captured for this scan.',
-
-                labels:
-                  result
-                    .analysis
-                    .labels,
-
-                confidence:
-                  result
-                    .analysis
-                    .confidence,
-              },
-
-              createdAt:
-                new Date()
-                  .toISOString(),
-
-              status:
-                'processing',
-            };
-
-          await saveScan(
-            additionalScan,
-          );
-        }
-      }
-
-      navigation.navigate(
-        'Home',
-
-        {
-          scan: result,
-        },
+    const storedPath =
+      await copyImageToInspection(
+        inspection.id,
+        image.uri,
+        fileName,
       );
-    } catch (error: any) {
-      Alert.alert(
-        'Processing failed',
 
-        error?.message ||
-          'The scan could not be processed. Please try again.',
-      );
-    } finally {
-      setLoading(false);
-    }
+    inspectionImages.push({
+      id: `${inspection.id}_${i + 1}`,
+      fileName,
+      filePath: storedPath,
+      angle: `ANGLE_${i + 1}`,
+      capturedAt: new Date().toISOString(),
+    });
   }
+
+  updateInspectionImages(
+    inspection,
+    inspectionImages,
+  );
+}
+function updateInspectionImages(
+  inspection: Inspection,
+  images: InspectionImage[],
+): void {
+  inspection.images = images;
+  inspection.imageCount = images.length;
+  inspection.thumbnail = images[0].filePath;
+}
+function updateInspectionFromAnalysis(
+  inspection: Inspection,
+  result: StoredScan,
+): void {
+  inspection.objectName =
+    result.analysis.object;
+
+  inspection.status =
+    "COMPLETED";
+
+  inspection.updatedAt =
+    new Date().toISOString();
+
+  inspection.confidence =
+    result.analysis.confidence;
+}
+
+async function process() {
+  if (assets.length === 0 || loading) {
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const inspection =
+      await createInspectionRecord();
+
+    const result =
+      await analyzePrimaryImage();
+
+    await attachInspectionImages(
+      inspection,
+    );
+
+    updateInspectionFromAnalysis(
+      inspection,
+      result,
+    );
+
+    await saveInspection(inspection);
+
+    navigation.navigate("Home", {
+      scan: result,
+    });
+
+  } catch (error: any) {
+    Alert.alert(
+      "Processing failed",
+      error?.message ??
+        "Unable to analyze object.",
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
 
   /* ------------------------------------------------
