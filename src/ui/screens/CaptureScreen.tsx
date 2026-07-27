@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -103,8 +104,17 @@ export function CaptureScreen({
 }: any) {
   const { theme } = useTheme();
 
+  const { width, height } =
+    useWindowDimensions();
+
+  const isLandscape =
+    width > height;
+
   const styles =
-    createStyles(theme);
+    createStyles(
+      theme,
+      isLandscape,
+    );
 
   const [assets, setAssets] =
     useState<ImageAssetInfo[]>([]);
@@ -664,6 +674,16 @@ export function CaptureScreen({
 
   return (
     <AppScreen>
+      <ScrollView
+        style={styles.screenScroll}
+        contentContainerStyle={
+          styles.screenContent
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
+        keyboardShouldPersistTaps="handled"
+      >
       {/* HEADER */}
 
       <View
@@ -1249,6 +1269,7 @@ export function CaptureScreen({
           />
         </View>
       )}
+      </ScrollView>
     </AppScreen>
   );
 }
@@ -1260,10 +1281,26 @@ export function CaptureScreen({
 
 function createStyles(
   theme: any,
+  isLandscape: boolean,
 ) {
   return StyleSheet.create({
+    screenScroll: {
+      flex: 1,
+    },
+
+    screenContent: {
+      flexGrow: 1,
+      paddingBottom:
+        isLandscape
+          ? 12
+          : 0,
+    },
+
     header: {
-      height: 58,
+      height:
+        isLandscape
+          ? 48
+          : 58,
 
       paddingHorizontal: 18,
 
@@ -1295,9 +1332,15 @@ function createStyles(
     instructions: {
       alignItems: 'center',
 
-      paddingTop: 16,
+      paddingTop:
+        isLandscape
+          ? 6
+          : 16,
 
-      paddingBottom: 14,
+      paddingBottom:
+        isLandscape
+          ? 6
+          : 14,
     },
 
 
@@ -1323,13 +1366,25 @@ function createStyles(
 
 
     cameraFrame: {
-      marginHorizontal: 18,
+      marginHorizontal:
+        isLandscape
+          ? 14
+          : 18,
 
-      flex: 1,
+      height:
+        isLandscape
+          ? 230
+          : 420,
 
-      maxHeight: 480,
+      maxHeight:
+        isLandscape
+          ? 260
+          : 480,
 
-      minHeight: 280,
+      minHeight:
+        isLandscape
+          ? 180
+          : 280,
 
       overflow: 'hidden',
 
@@ -1552,9 +1607,15 @@ function createStyles(
 
 
     controls: {
-      height: 102,
+      height:
+        isLandscape
+          ? 82
+          : 102,
 
-      paddingHorizontal: 34,
+      paddingHorizontal:
+        isLandscape
+          ? 70
+          : 34,
 
       flexDirection: 'row',
 
@@ -1585,11 +1646,20 @@ function createStyles(
 
 
     shutterOuter: {
-      width: 74,
+      width:
+        isLandscape
+          ? 62
+          : 74,
 
-      height: 74,
+      height:
+        isLandscape
+          ? 62
+          : 74,
 
-      borderRadius: 37,
+      borderRadius:
+        isLandscape
+          ? 31
+          : 37,
 
       borderWidth: 4,
 
@@ -1604,11 +1674,20 @@ function createStyles(
 
 
     shutterInner: {
-      width: 58,
+      width:
+        isLandscape
+          ? 48
+          : 58,
 
-      height: 58,
+      height:
+        isLandscape
+          ? 48
+          : 58,
 
-      borderRadius: 29,
+      borderRadius:
+        isLandscape
+          ? 24
+          : 29,
 
       backgroundColor:
         theme.colors.text,
