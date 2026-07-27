@@ -123,3 +123,26 @@ dependencies {
         implementation jscFlavor
     }
 }
+// Automatically copy and rename the Release APK
+afterEvaluate {
+    tasks.named("assembleRelease").configure {
+        doLast {
+            def sourceApk = file("$buildDir/outputs/apk/release/app-release.apk")
+            def destinationApk = file("${rootDir.parent}/Dissectra.apk")
+
+            if (sourceApk.exists()) {
+                copy {
+                    from sourceApk
+                    into destinationApk.parentFile
+                    rename { "Dissectra.apk" }
+                }
+                println("======================================")
+                println(" APK copied successfully!")
+                println(" Location: ${destinationApk}")
+                println("======================================")
+            } else {
+                println("Release APK not found!")
+            }
+        }
+    }
+}
