@@ -1,13 +1,19 @@
 import React from "react";
-import { View, Text } from "react-native";
-import { RouteProp, useRoute } from "@react-navigation/native";
-import type { RootStackParamList } from "../../../types/navigation";
+import {
+    View,
+    Text,
+} from "react-native";
+
+import {
+    useRoute,
+} from "@react-navigation/native";
 
 export default function AnalysisScreen() {
 
     const route = useRoute();
 
-    console.log("Route object:", route);
+    console.log("===== ANALYSIS SCREEN =====");
+    console.log(route);
 
     return (
         <View
@@ -18,10 +24,32 @@ export default function AnalysisScreen() {
                 alignItems: "center",
             }}
         >
-            <Text style={{ color: "white" }}>
+            <Text
+                style={{
+                    color: "white",
+                    fontSize: 22,
+                }}
+            >
                 Analysis Screen
+            </Text>
+
+            <Text
+                style={{
+                    color: "white",
+                    marginTop: 20,
+                }}
+            >
+                Route:
+            </Text>
+
+            <Text
+                style={{
+                    color: "yellow",
+                    padding: 20,
+                }}
+            >
+                {JSON.stringify(route.params, null, 2)}
             </Text>
         </View>
     );
 }
-

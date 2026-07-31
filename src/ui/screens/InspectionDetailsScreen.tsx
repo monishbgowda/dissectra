@@ -88,25 +88,40 @@ async function refreshInspection(): Promise<void> {
   await loadInspection();
 }
 async function uploadImages(): Promise<void> {
-  if (!inspection) {
-    return;
-  }
 
-  for (const image of inspection.images) {
+    if (!inspection) {
+        return;
+    }
+
+    const start = Date.now();
+
+    await Promise.all(
+
+        inspection.images.map(async (image, index) => {
+
+            const imageStart = Date.now();
+
+            await uploadInspectionImage(
+                inspection.id,
+                image.filePath,
+            );
+
+            console.log(
+                `Image ${index + 1} uploaded in ${
+                    Date.now() - imageStart
+                } ms`
+            );
+
+        })
+
+    );
+
     console.log(
-      "Uploading:",
-      image.filePath,
+        `All uploads completed in ${
+            Date.now() - start
+        } ms`
     );
 
-    await uploadInspectionImage(
-      inspection.id,
-      image.filePath,
-    );
-  }
-
-  console.log(
-    "All images uploaded.",
-  );
 }
 async function analyzeCurrentInspection(inspectionId: string) {
   return analyzeInspection(inspectionId);
@@ -114,50 +129,61 @@ async function analyzeCurrentInspection(inspectionId: string) {
 
 async function handleAnalyze() {
 
-  console.log("STEP 1");
+    if (!inspection) {
+        return;
+    }
 
-  if (!inspection) {
-    console.log("Inspection is null");
-    return;
-  }
+    const inspectionId = inspection.id;
 
-  const inspectionId = inspection.id;
+    try {
 
-  try {
+        setAnalyzing(true);
 
-    console.log("STEP 2");
-    setAnalyzing(true);
+        const totalStart = Date.now();
 
-    console.log("STEP 3");
-    await uploadImages();
+        const uploadStart = Date.now();
+        await uploadImages();
+        console.log(
+            `UPLOAD TIME : ${Date.now() - uploadStart} ms`
+        );
 
-    console.log("STEP 4");
+        const analysisStart = Date.now();
+        const result = await analyzeCurrentInspection(
+            inspectionId,
+        );
+        console.log(
+            `ANALYSIS TIME : ${Date.now() - analysisStart} ms`
+        );
 
-    const result = await analyzeCurrentInspection(inspectionId);
+        const refreshStart = Date.now();
+        await refreshInspection();
+        console.log(
+            `REFRESH TIME : ${Date.now() - refreshStart} ms`
+        );
 
-    console.log("STEP 5");
-    console.log(JSON.stringify(result, null, 2));
+        console.log(
+            `TOTAL TIME : ${Date.now() - totalStart} ms`
+        );
 
-    console.log("STEP 6");
+        navigation.navigate(
+            "Analysis",
+            {
+                inspectionId,
+                analysis: result,
+            },
+        );
 
-    await refreshInspection();
+    } catch (e) {
 
-    console.log("STEP 7");
+        console.log("MAIN ERROR");
+        console.log(e);
 
-    Alert.alert("SUCCESS", "Reached Step 7");
+    } finally {
 
-  } catch (error: any) {
+        setAnalyzing(false);
 
-    console.log("ERROR");
-    console.log(error);
-    console.log(error.response?.data);
+    }
 
-  } finally {
-
-    console.log("FINALLY");
-    setAnalyzing(false);
-
-  }
 }
   return (
     <ScrollView contentContainerStyle={styles.container}>

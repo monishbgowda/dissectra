@@ -1,89 +1,357 @@
-import { analyzeImage, generateModel, getModelStatus, uploadImage } from './dissectraApi';
-import { copyToStorage, downloadModelToStorage, saveScan } from '../storage/localStorage';
-import type { AnatomyAnalysis, ModelGenerationResponse, StoredScan } from '../types/dissectra';
+import {
+    analyzeImage,
+    generateModel,
+    getModelStatus,
+    uploadImage,
+} from "./dissectraApi";
+
+import {
+    copyToStorage,
+    downloadModelToStorage,
+    saveScan,
+} from "../storage/localStorage";
+
+import type {
+    AnatomyAnalysis,
+    ModelGenerationResponse,
+    StoredScan,
+} from "../types/dissectra";
 
 function wait(ms: number) {
-  return new Promise<void>(resolve => setTimeout(() => resolve(), ms));
+    return new Promise<void>((resolve) =>
+        setTimeout(resolve, ms)
+    );
 }
 
 async function pollModelStatus(jobId: string) {
-  const maxAttempts = 12;
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const status = await getModelStatus(jobId);
-    if (status.status === 'complete' || status.status === 'failed') {
-      return status;
+
+    console.log("========== POLLING MODEL ==========");
+
+    const maxAttempts = 12;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+
+        console.log(
+            `Polling attempt ${attempt + 1}/${maxAttempts}`
+        );
+
+        const status =
+            await getModelStatus(jobId);
+
+        console.log("Model Status:", status);
+
+        if (
+            status.status === "complete" ||
+            status.status === "failed"
+        ) {
+
+            console.log(
+                "Model generation finished."
+            );
+
+            return status;
+
+        }
+
+        await wait(
+            2000 + attempt * 500
+        );
+
     }
-    await wait(2000 + attempt * 500);
-  }
-  throw new Error('Model generation timed out.');
+
+    throw new Error(
+        "Model generation timed out."
+    );
+
 }
 
 const OFFLINE_ANALYSIS: AnatomyAnalysis = {
-  object: 'Offline anatomy scan',
-  description: 'Saved locally. Connect to the network to analyze and generate the 3D model.',
-  labels: ['offline', 'cached'],
-  confidence: 0,
+
+    object:
+        "Offline anatomy scan",
+
+    description:
+        "Saved locally. Connect to the network to analyze and generate the 3D model.",
+
+    labels: [
+        "offline",
+        "cached",
+    ],
+
+    confidence: 0,
+
 };
 
-async function saveOfflineScan(id: string, imageUri: string, localImagePath?: string, analysis: AnatomyAnalysis = OFFLINE_ANALYSIS): Promise<StoredScan> {
-  const scan: StoredScan = {
-    id,
-    imageUri,
-    localImagePath,
-    analysis,
-    createdAt: new Date().toISOString(),
-    status: 'offline',
-  };
-  await saveScan(scan);
-  return scan;
+async function saveOfflineScan(
+    id: string,
+    imageUri: string,
+    localImagePath?: string,
+    analysis: AnatomyAnalysis =
+        OFFLINE_ANALYSIS,
+): Promise<StoredScan> {
+
+    console.log(
+        "Saving offline scan..."
+    );
+
+    const scan: StoredScan = {
+
+        id,
+
+        imageUri,
+
+        localImagePath,
+
+        analysis,
+
+        createdAt:
+            new Date().toISOString(),
+
+        status: "offline",
+
+    };
+
+    await saveScan(scan);
+
+    console.log(
+        "Offline scan saved."
+    );
+
+    return scan;
+
 }
 
-export async function runScanPipeline(imageUri: string): Promise<StoredScan> {
-  const id = String(Date.now());
-  const localImagePath = await copyToStorage(imageUri, 'images', `${id}.jpg`).catch(() => undefined);
+export async function runScanPipeline(
+    imageUri: string,
+): Promise<StoredScan> {
 
-  let upload;
-  try {
-    upload = await uploadImage(imageUri, `${id}.jpg`);
-  } catch (_error) {
-    void _error;
-    return saveOfflineScan(id, imageUri, localImagePath);
-  }
+    console.log("");
+    console.log(
+        "========== SCAN PIPELINE START =========="
+    );
 
-  let analysis: AnatomyAnalysis;
-  try {
-    analysis = await analyzeImage(upload.uploadId);
-  } catch (_error) {
-    void _error;
-    analysis = {
-      ...OFFLINE_ANALYSIS,
-      description: 'Analysis failed, but this scan was saved locally. Retry when online.',
+    const id =
+        String(Date.now());
+
+    console.log("STEP 1");
+    console.log("Copying image...");
+
+    const localImagePath =
+        await copyToStorage(
+            imageUri,
+            "images",
+            `${id}.jpg`,
+        ).catch((err) => {
+
+            console.error(
+                "Image copy failed:",
+                err
+            );
+
+            return undefined;
+
+        });
+
+    console.log("STEP 2");
+    console.log("Uploading image...");
+
+    let upload;
+
+    try {
+
+        upload =
+            await uploadImage(
+                imageUri,
+                `${id}.jpg`,
+            );
+
+        console.log(
+            "Upload successful:"
+        );
+
+        console.log(upload);
+
+    }
+
+    catch (err) {
+
+        console.error(
+            "Upload failed:"
+        );
+
+        console.error(err);
+
+        return saveOfflineScan(
+            id,
+            imageUri,
+            localImagePath,
+        );
+
+    }
+
+    console.log("STEP 3");
+    console.log("Running analysis...");
+
+    let analysis: AnatomyAnalysis;
+
+    try {
+
+        analysis =
+            await analyzeImage(
+                upload.uploadId,
+            );
+
+        console.log(
+            "Analysis complete."
+        );
+
+        console.log(analysis);
+
+    }
+
+    catch (err) {
+
+        console.error(
+            "Analysis failed:"
+        );
+
+        console.error(err);
+
+        analysis = {
+
+            ...OFFLINE_ANALYSIS,
+
+            description:
+                "Analysis failed, but this scan was saved locally. Retry later.",
+
+        };
+
+    }
+
+    console.log("STEP 4");
+    console.log("Generating model...");
+
+    let model: ModelGenerationResponse;
+
+    try {
+
+        const initialModel =
+            await generateModel(
+                upload.uploadId,
+            );
+
+        console.log(
+            "Initial model response:"
+        );
+
+        console.log(initialModel);
+
+        model =
+            initialModel.status === "queued" ||
+            initialModel.status === "processing"
+
+                ? await pollModelStatus(
+                      initialModel.jobId,
+                  )
+
+                : initialModel;
+
+        console.log(
+            "Final model:"
+        );
+
+        console.log(model);
+
+    }
+
+    catch (err) {
+
+        console.error(
+            "Model generation failed:"
+        );
+
+        console.error(err);
+
+        model = {
+
+            jobId: "",
+
+            status: "failed",
+
+        };
+
+    }
+
+    console.log("STEP 5");
+    console.log(
+        "Downloading model..."
+    );
+
+    const localModelPath =
+        model.modelUrl
+
+            ? await downloadModelToStorage(
+
+                  model.modelUrl,
+
+                  `${id}.glb`,
+
+              ).catch((err) => {
+
+                  console.error(
+                      "Download failed:"
+                  );
+
+                  console.error(err);
+
+                  return undefined;
+
+              })
+
+            : undefined;
+
+    console.log("STEP 6");
+    console.log("Saving scan...");
+
+    const scan: StoredScan = {
+
+        id,
+
+        imageUri,
+
+        localImagePath,
+
+        modelUri:
+            localModelPath ||
+            model.modelUrl,
+
+        localModelPath,
+
+        analysis,
+
+        createdAt:
+            new Date().toISOString(),
+
+        status:
+            model.status === "failed"
+
+                ? "failed"
+
+                : "complete",
+
     };
-  }
 
-  let model: ModelGenerationResponse;
-  try {
-    const initialModel = await generateModel(upload.uploadId);
-    model = initialModel.status === 'queued' || initialModel.status === 'processing'
-      ? await pollModelStatus(initialModel.jobId)
-      : initialModel;
-  } catch (_error) {
-    void _error;
-    model = { jobId: '', status: 'failed' };
-  }
+    await saveScan(scan);
 
-  const localModelPath = model.modelUrl ? await downloadModelToStorage(model.modelUrl, `${id}.glb`).catch(() => undefined) : undefined;
-  const scan: StoredScan = {
-    id,
-    imageUri,
-    localImagePath,
-    modelUri: localModelPath || model.modelUrl,
-    localModelPath,
-    analysis,
-    createdAt: new Date().toISOString(),
-    status: model.status === 'failed' ? 'failed' : 'complete',
-  };
+    console.log(
+        "Scan saved successfully."
+    );
 
-  await saveScan(scan);
-  return scan;
+    console.log("STEP 7");
+    console.log(
+        "========== PIPELINE COMPLETE =========="
+    );
+
+    return scan;
+
 }

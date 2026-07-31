@@ -45,7 +45,12 @@ formData.append(
 
 const response = await api.post(
     "/api/upload",
-    formData
+    formData,
+    {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    },
 );
 
     return response.data;

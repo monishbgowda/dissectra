@@ -11,7 +11,13 @@
     "fastapi": "node scripts/start-fastapi.js",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "release": "node scripts/start-fastapi.js && cd android && gradlew assembleRelease && copy /Y app\\build\\outputs\\apk\\release\\app-release.apk ..\\Dissectra.apk"
+    "release": "node scripts/start-fastapi.js && cd android && gradlew assembleRelease && copy /Y app\\build\\outputs\\apk\\release\\app-release.apk ..\\Dissectra.apk",
+    "doctor":"node scripts/doctor.js",
+    "clean":"node scripts/clean.js",
+    "setup:android":"node scripts/setup-android.js",
+    "dev":"node scripts/start-dev.js",
+
+    "logs":"node scripts/logs.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
