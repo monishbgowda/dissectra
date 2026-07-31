@@ -51,10 +51,11 @@ import {
 import {
   SettingsScreen,
 } from "./src/ui/screens/SettingsScreen";
-
+import AnalysisScreen from "./src/ui/screens/analysis/AnalysisScreen";
 import {
   Demo3DScreen,
 } from "./src/ui/screens/Demo3DScreen";
+
 
 import InspectionDetailsScreen from "./src/ui/screens/InspectionDetailsScreen";
 
@@ -444,12 +445,9 @@ function AppInner() {
       >
 
         <Stack.Screen
-
-          name="MainTabs"
-
-          component={MainTabs}
-
-        />
+    name="MainTabs"
+    component={MainTabs}
+/>
 
         <Stack.Screen
 
@@ -465,7 +463,10 @@ function AppInner() {
           }}
 
         />
-
+<Stack.Screen
+    name="Analysis"
+    component={AnalysisScreen}
+/>
         <Stack.Screen
 
           name="InspectionDetails"

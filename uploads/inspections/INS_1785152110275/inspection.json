@@ -2,16 +2,16 @@
   "analysis": {
     "product": {
       "brand": "Ant Esports",
-      "model": "GM200W",
-      "name": "Wired RGB Gaming Mouse",
+      "model": "Gaming Unlimited",
+      "name": "Ant Esports Gaming Unlimited Wired Gaming Mouse",
       "category": "Computer Peripherals",
       "confidence": 0.95
     },
     "components": [
       {
-        "id": "comp_01",
-        "name": "Upper Shell & Palm Rest",
-        "category": "Housing",
+        "id": "comp-1",
+        "name": "Top Main Housing Shell",
+        "category": "Structural Plastic Shell",
         "material": "ABS Plastic",
         "manufacturingProcess": "Injection Molding",
         "assemblyMethod": "Snap-Fit / Screw Fastened",
@@ -19,100 +19,120 @@
         "confidence": 0.95
       },
       {
-        "id": "comp_02",
-        "name": "Base Plate & Side Grips",
-        "category": "Structural Frame",
+        "id": "comp-2",
+        "name": "Palm Rest Cover Shell",
+        "category": "Structural Plastic Shell",
+        "material": "ABS Plastic",
+        "manufacturingProcess": "Injection Molding",
+        "assemblyMethod": "Snap-Fit",
+        "replaceable": true,
+        "confidence": 0.92
+      },
+      {
+        "id": "comp-3",
+        "name": "Base Housing / Bottom Plate",
+        "category": "Chassis",
         "material": "ABS Plastic",
         "manufacturingProcess": "Injection Molding",
         "assemblyMethod": "Screw Fastened",
         "replaceable": true,
+        "confidence": 0.9
+      },
+      {
+        "id": "comp-4",
+        "name": "Scroll Wheel Assembly",
+        "category": "Input Mechanism",
+        "material": "Polycarbonate",
+        "manufacturingProcess": "Injection Molding",
+        "assemblyMethod": "Rotational Pin Axle Mount",
+        "replaceable": true,
         "confidence": 0.95
       },
       {
-        "id": "comp_03",
-        "name": "Primary Click Buttons (L/R)",
-        "category": "User Interface",
-        "material": "ABS Plastic",
-        "manufacturingProcess": "Injection Molding",
-        "assemblyMethod": "Cantilever Flexure / Snap-Fit",
-        "replaceable": true,
-        "confidence": 0.9
-      },
-      {
-        "id": "comp_04",
-        "name": "Scroll Wheel Assembly",
-        "category": "User Interface",
-        "material": "Polycarbonate & Rubber",
+        "id": "comp-5",
+        "name": "Scroll Wheel Rubber Grip Ring",
+        "category": "Tactile Interface",
+        "material": "Rubber",
         "manufacturingProcess": "Overmolding",
-        "assemblyMethod": "Axle Mount / Rotary Encoder Insertion",
-        "replaceable": true,
+        "assemblyMethod": "Friction Fit",
+        "replaceable": false,
         "confidence": 0.9
       },
       {
-        "id": "comp_05",
-        "name": "DPI & Side Macro Buttons",
-        "category": "User Interface",
+        "id": "comp-6",
+        "name": "DPI Adjustment Button",
+        "category": "Input Button",
         "material": "ABS Plastic",
         "manufacturingProcess": "Injection Molding",
-        "assemblyMethod": "Retention Clip / Microswitch Actuator",
-        "replaceable": true,
+        "assemblyMethod": "Cantilever Snap-Fit",
+        "replaceable": false,
+        "confidence": 0.92
+      },
+      {
+        "id": "comp-7",
+        "name": "Side Navigation Buttons",
+        "category": "Input Buttons",
+        "material": "ABS Plastic",
+        "manufacturingProcess": "Injection Molding",
+        "assemblyMethod": "Hinge Pin / Snap-Fit",
+        "replaceable": false,
         "confidence": 0.9
       },
       {
-        "id": "comp_06",
-        "name": "RGB Light Diffusers",
-        "category": "Optics / Aesthetics",
+        "id": "comp-8",
+        "name": "Fire Accent Button",
+        "category": "Input Button",
+        "material": "ABS Plastic",
+        "manufacturingProcess": "Injection Molding",
+        "assemblyMethod": "Snap-Fit",
+        "replaceable": false,
+        "confidence": 0.88
+      },
+      {
+        "id": "comp-9",
+        "name": "Side Light Guide Diffuser Strips",
+        "category": "Optics / Diffuser",
         "material": "Polycarbonate",
         "manufacturingProcess": "Injection Molding",
-        "assemblyMethod": "Internal Stake / Snap-Fit",
+        "assemblyMethod": "Heat Staking / Internal Clip",
         "replaceable": false,
-        "confidence": 0.85
+        "confidence": 0.92
       },
       {
-        "id": "comp_07",
-        "name": "USB Cable & Strain Relief",
-        "category": "Electrical / Interconnect",
-        "material": "PVC & Copper Wire",
-        "manufacturingProcess": "Extrusion & Overmolding",
-        "assemblyMethod": "Internal Connector / Strain Relief Slot",
+        "id": "comp-10",
+        "name": "USB Cable with Strain Relief",
+        "category": "Cable Assembly",
+        "material": "Rubber",
+        "manufacturingProcess": "Extrusion",
+        "assemblyMethod": "Internal Connector / Soldered",
         "replaceable": true,
-        "confidence": 0.92
+        "confidence": 0.95
       }
     ],
     "materials": [
       {
         "name": "ABS Plastic",
         "usedIn": [
-          "Upper Shell & Palm Rest",
-          "Base Plate & Side Grips",
-          "Primary Click Buttons (L/R)",
-          "DPI & Side Macro Buttons"
+          "Top Main Housing Shell",
+          "Palm Rest Cover Shell",
+          "Base Housing / Bottom Plate",
+          "DPI Adjustment Button",
+          "Side Navigation Buttons",
+          "Fire Accent Button"
         ]
       },
       {
         "name": "Polycarbonate",
         "usedIn": [
-          "Scroll Wheel Assembly Inner Core",
-          "RGB Light Diffusers"
+          "Scroll Wheel Assembly",
+          "Side Light Guide Diffuser Strips"
         ]
       },
       {
         "name": "Rubber",
         "usedIn": [
-          "Scroll Wheel Assembly Grip Ring"
-        ]
-      },
-      {
-        "name": "PVC",
-        "usedIn": [
-          "USB Cable Outer Jacket",
-          "Strain Relief Boot"
-        ]
-      },
-      {
-        "name": "Copper",
-        "usedIn": [
-          "USB Cable Conductors"
+          "Scroll Wheel Rubber Grip Ring",
+          "USB Cable with Strain Relief"
         ]
       }
     ],
@@ -120,62 +140,59 @@
       {
         "process": "Injection Molding",
         "components": [
-          "Upper Shell & Palm Rest",
-          "Base Plate & Side Grips",
-          "Primary Click Buttons (L/R)",
-          "DPI & Side Macro Buttons",
-          "RGB Light Diffusers"
-        ]
-      },
-      {
-        "process": "Overmolding",
-        "components": [
+          "Top Main Housing Shell",
+          "Palm Rest Cover Shell",
+          "Base Housing / Bottom Plate",
           "Scroll Wheel Assembly",
-          "USB Cable & Strain Relief"
+          "DPI Adjustment Button",
+          "Side Navigation Buttons",
+          "Fire Accent Button",
+          "Side Light Guide Diffuser Strips"
         ]
       },
       {
         "process": "Pad Printing",
         "components": [
-          "Upper Shell & Palm Rest (Branding and Text)"
+          "Top Main Housing Shell",
+          "Palm Rest Cover Shell",
+          "DPI Adjustment Button"
+        ]
+      },
+      {
+        "process": "Overmolding",
+        "components": [
+          "Scroll Wheel Rubber Grip Ring",
+          "USB Cable with Strain Relief"
         ]
       },
       {
         "process": "Extrusion",
         "components": [
-          "USB Cable & Strain Relief"
+          "USB Cable with Strain Relief"
         ]
       }
     ],
-    "damage": [
-      {
-        "component": "Upper Shell & Palm Rest",
-        "type": "Surface Dirt / Minor Scuffs",
-        "severity": "Low",
-        "repairable": true,
-        "confidence": 0.7
-      }
-    ],
+    "damage": [],
     "engineering": {
-      "repairability": 6,
-      "manufacturability": 8,
-      "complexity": 5,
-      "modularity": 6
+      "repairability": 65,
+      "manufacturability": 85,
+      "complexity": 60,
+      "modularity": 45
     },
-    "summary": "The product is an Ant Esports GM200W ergonomically contoured wired gaming mouse featuring multi-zone green LED backlighting. It is constructed primarily from injection-molded ABS housing components with contrasting yellow macro/DPI buttons, translucent polycarbonate diffusers, and an overmolded rubber scroll wheel. Design employs high manufacturability through modular plastic snaps, pad-printed graphics, and standard screw assembly, allowing straightforward disassembly for internal microswitch or encoder repair."
+    "summary": "The product is an Ant Esports 'Gaming Unlimited' wired optical gaming mouse. It features a multi-piece ergonomic injection-molded ABS housing with distinct white, black, and gold styling elements. Internal lighting is directed outward via translucent polycarbonate light diffuser channels along the side chevron slits, scroll wheel, and back logo. Assembly relies on snap-fits, heat-staked diffusers, and base fasteners, typical for high-volume consumer peripheral manufacturing."
   },
   "product": {
     "brand": "Ant Esports",
-    "model": "GM200W",
-    "name": "Wired RGB Gaming Mouse",
+    "model": "Gaming Unlimited",
+    "name": "Ant Esports Gaming Unlimited Wired Gaming Mouse",
     "category": "Computer Peripherals",
     "confidence": 0.95
   },
   "components": [
     {
-      "id": "comp_01",
-      "name": "Upper Shell & Palm Rest",
-      "category": "Housing",
+      "id": "comp-1",
+      "name": "Top Main Housing Shell",
+      "category": "Structural Plastic Shell",
       "material": "ABS Plastic",
       "manufacturingProcess": "Injection Molding",
       "assemblyMethod": "Snap-Fit / Screw Fastened",
@@ -184,69 +201,116 @@
       "matched": false
     },
     {
-      "id": "comp_02",
-      "name": "Base Plate & Side Grips",
-      "category": "Structural Frame",
+      "id": "comp-2",
+      "name": "Palm Rest Cover Shell",
+      "category": "Structural Plastic Shell",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Snap-Fit",
+      "replaceable": true,
+      "confidence": 0.92,
+      "matched": false
+    },
+    {
+      "id": "comp-3",
+      "name": "Base Housing / Bottom Plate",
+      "category": "Chassis",
       "material": "ABS Plastic",
       "manufacturingProcess": "Injection Molding",
       "assemblyMethod": "Screw Fastened",
+      "replaceable": true,
+      "confidence": 0.9,
+      "matched": false
+    },
+    {
+      "id": "comp-4",
+      "name": "Scroll Wheel Assembly",
+      "category": "Input Mechanism",
+      "material": "Polycarbonate",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Rotational Pin Axle Mount",
       "replaceable": true,
       "confidence": 0.95,
       "matched": false
     },
     {
-      "id": "comp_03",
-      "name": "Primary Click Buttons (L/R)",
-      "category": "User Interface",
-      "material": "ABS Plastic",
-      "manufacturingProcess": "Injection Molding",
-      "assemblyMethod": "Cantilever Flexure / Snap-Fit",
-      "replaceable": true,
-      "confidence": 0.9,
-      "matched": false
-    },
-    {
-      "id": "comp_04",
-      "name": "Scroll Wheel Assembly",
-      "category": "User Interface",
-      "material": "Polycarbonate & Rubber",
+      "id": "comp-5",
+      "name": "Scroll Wheel Rubber Grip Ring",
+      "category": "Tactile Interface",
+      "material": "Rubber",
       "manufacturingProcess": "Overmolding",
-      "assemblyMethod": "Axle Mount / Rotary Encoder Insertion",
-      "replaceable": true,
+      "assemblyMethod": "Friction Fit",
+      "replaceable": false,
       "confidence": 0.9,
       "matched": false
     },
     {
-      "id": "comp_05",
-      "name": "DPI & Side Macro Buttons",
-      "category": "User Interface",
+      "id": "comp-6",
+      "name": "DPI Adjustment Button",
+      "category": "Input",
       "material": "ABS Plastic",
       "manufacturingProcess": "Injection Molding",
-      "assemblyMethod": "Retention Clip / Microswitch Actuator",
-      "replaceable": true,
+      "assemblyMethod": "Cantilever Snap-Fit",
+      "replaceable": false,
+      "confidence": 0.92,
+      "matched": true,
+      "componentId": "dpi_button",
+      "sketchfabQuery": "mouse dpi button",
+      "meshTag": "dpi_button",
+      "asset": {
+        "provider": "Sketchfab",
+        "search": {
+          "query": "mouse dpi button",
+          "categories": [
+            "technology"
+          ],
+          "animated": false,
+          "downloadable": true
+        }
+      }
+    },
+    {
+      "id": "comp-7",
+      "name": "Side Navigation Buttons",
+      "category": "Input Buttons",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Hinge Pin / Snap-Fit",
+      "replaceable": false,
       "confidence": 0.9,
       "matched": false
     },
     {
-      "id": "comp_06",
-      "name": "RGB Light Diffusers",
-      "category": "Optics / Aesthetics",
+      "id": "comp-8",
+      "name": "Fire Accent Button",
+      "category": "Input Button",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Snap-Fit",
+      "replaceable": false,
+      "confidence": 0.88,
+      "matched": false
+    },
+    {
+      "id": "comp-9",
+      "name": "Side Light Guide Diffuser Strips",
+      "category": "Optics / Diffuser",
       "material": "Polycarbonate",
       "manufacturingProcess": "Injection Molding",
-      "assemblyMethod": "Internal Stake / Snap-Fit",
+      "assemblyMethod": "Heat Staking / Internal Clip",
       "replaceable": false,
-      "confidence": 0.85,
+      "confidence": 0.92,
       "matched": false
     },
     {
-      "id": "comp_07",
-      "name": "USB Cable & Strain Relief",
-      "category": "Electrical / Interconnect",
-      "material": "PVC & Copper Wire",
-      "manufacturingProcess": "Extrusion & Overmolding",
-      "assemblyMethod": "Internal Connector / Strain Relief Slot",
+      "id": "comp-10",
+      "name": "USB Cable with Strain Relief",
+      "category": "Cable Assembly",
+      "material": "Rubber",
+      "manufacturingProcess": "Extrusion",
+      "assemblyMethod": "Internal Connector / Soldered",
       "replaceable": true,
-      "confidence": 0.92,
+      "confidence": 0.95,
       "matched": false
     }
   ],
@@ -254,36 +318,26 @@
     {
       "name": "ABS Plastic",
       "usedIn": [
-        "Upper Shell & Palm Rest",
-        "Base Plate & Side Grips",
-        "Primary Click Buttons (L/R)",
-        "DPI & Side Macro Buttons"
+        "Top Main Housing Shell",
+        "Palm Rest Cover Shell",
+        "Base Housing / Bottom Plate",
+        "DPI Adjustment Button",
+        "Side Navigation Buttons",
+        "Fire Accent Button"
       ]
     },
     {
       "name": "Polycarbonate",
       "usedIn": [
-        "Scroll Wheel Assembly Inner Core",
-        "RGB Light Diffusers"
+        "Scroll Wheel Assembly",
+        "Side Light Guide Diffuser Strips"
       ]
     },
     {
       "name": "Rubber",
       "usedIn": [
-        "Scroll Wheel Assembly Grip Ring"
-      ]
-    },
-    {
-      "name": "PVC",
-      "usedIn": [
-        "USB Cable Outer Jacket",
-        "Strain Relief Boot"
-      ]
-    },
-    {
-      "name": "Copper",
-      "usedIn": [
-        "USB Cable Conductors"
+        "Scroll Wheel Rubber Grip Ring",
+        "USB Cable with Strain Relief"
       ]
     }
   ],
@@ -291,45 +345,42 @@
     {
       "process": "Injection Molding",
       "components": [
-        "Upper Shell & Palm Rest",
-        "Base Plate & Side Grips",
-        "Primary Click Buttons (L/R)",
-        "DPI & Side Macro Buttons",
-        "RGB Light Diffusers"
-      ]
-    },
-    {
-      "process": "Overmolding",
-      "components": [
+        "Top Main Housing Shell",
+        "Palm Rest Cover Shell",
+        "Base Housing / Bottom Plate",
         "Scroll Wheel Assembly",
-        "USB Cable & Strain Relief"
+        "DPI Adjustment Button",
+        "Side Navigation Buttons",
+        "Fire Accent Button",
+        "Side Light Guide Diffuser Strips"
       ]
     },
     {
       "process": "Pad Printing",
       "components": [
-        "Upper Shell & Palm Rest (Branding and Text)"
+        "Top Main Housing Shell",
+        "Palm Rest Cover Shell",
+        "DPI Adjustment Button"
+      ]
+    },
+    {
+      "process": "Overmolding",
+      "components": [
+        "Scroll Wheel Rubber Grip Ring",
+        "USB Cable with Strain Relief"
       ]
     },
     {
       "process": "Extrusion",
       "components": [
-        "USB Cable & Strain Relief"
+        "USB Cable with Strain Relief"
       ]
     }
   ],
-  "damage": [
-    {
-      "component": "Upper Shell & Palm Rest",
-      "type": "Surface Dirt / Minor Scuffs",
-      "severity": "Low",
-      "repairable": true,
-      "confidence": 0.7
-    }
-  ],
-  "summary": "The product is an Ant Esports GM200W ergonomically contoured wired gaming mouse featuring multi-zone green LED backlighting. It is constructed primarily from injection-molded ABS housing components with contrasting yellow macro/DPI buttons, translucent polycarbonate diffusers, and an overmolded rubber scroll wheel. Design employs high manufacturability through modular plastic snaps, pad-printed graphics, and standard screw assembly, allowing straightforward disassembly for internal microswitch or encoder repair.",
+  "damage": [],
+  "summary": "The product is an Ant Esports 'Gaming Unlimited' wired optical gaming mouse. It features a multi-piece ergonomic injection-molded ABS housing with distinct white, black, and gold styling elements. Internal lighting is directed outward via translucent polycarbonate light diffuser channels along the side chevron slits, scroll wheel, and back logo. Assembly relies on snap-fits, heat-staked diffusers, and base fasteners, typical for high-volume consumer peripheral manufacturing.",
   "reconstructionPlan": {
-    "product": "Wired RGB Gaming Mouse",
+    "product": "Ant Esports Gaming Unlimited Wired Gaming Mouse",
     "strategy": "existing-model",
     "confidence": 0.95,
     "sources": [
@@ -340,32 +391,45 @@
   "componentGraph": {
     "nodes": [
       {
-        "name": "Upper Shell & Palm Rest",
-        "category": "Housing"
+        "name": "Top Main Housing Shell",
+        "category": "Structural Plastic Shell"
       },
       {
-        "name": "Base Plate & Side Grips",
-        "category": "Structural Frame"
+        "name": "Palm Rest Cover Shell",
+        "category": "Structural Plastic Shell"
       },
       {
-        "name": "Primary Click Buttons (L/R)",
-        "category": "User Interface"
+        "name": "Base Housing / Bottom Plate",
+        "category": "Chassis"
       },
       {
         "name": "Scroll Wheel Assembly",
-        "category": "User Interface"
+        "category": "Input Mechanism"
       },
       {
-        "name": "DPI & Side Macro Buttons",
-        "category": "User Interface"
+        "name": "Scroll Wheel Rubber Grip Ring",
+        "category": "Tactile Interface"
       },
       {
-        "name": "RGB Light Diffusers",
-        "category": "Optics / Aesthetics"
+        "id": "dpi_button",
+        "name": "DPI Adjustment Button",
+        "category": "Input"
       },
       {
-        "name": "USB Cable & Strain Relief",
-        "category": "Electrical / Interconnect"
+        "name": "Side Navigation Buttons",
+        "category": "Input Buttons"
+      },
+      {
+        "name": "Fire Accent Button",
+        "category": "Input Button"
+      },
+      {
+        "name": "Side Light Guide Diffuser Strips",
+        "category": "Optics / Diffuser"
+      },
+      {
+        "name": "USB Cable with Strain Relief",
+        "category": "Cable Assembly"
       }
     ],
     "edges": []
@@ -407,6 +471,7 @@
       }
     },
     {
+      "componentId": "dpi_button",
       "translate": {
         "x": 0.3,
         "y": 0,
@@ -419,51 +484,91 @@
         "y": 0,
         "z": 0
       }
+    },
+    {
+      "translate": {
+        "x": 0.39999999999999997,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.44999999999999996,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.49999999999999994,
+        "y": 0,
+        "z": 0
+      }
     }
   ],
   "billOfMaterials": [
     {
       "item": 1,
-      "name": "Upper Shell & Palm Rest",
+      "name": "Top Main Housing Shell",
       "material": "ABS Plastic",
       "process": "Injection Molding"
     },
     {
       "item": 2,
-      "name": "Base Plate & Side Grips",
+      "name": "Palm Rest Cover Shell",
       "material": "ABS Plastic",
       "process": "Injection Molding"
     },
     {
       "item": 3,
-      "name": "Primary Click Buttons (L/R)",
+      "name": "Base Housing / Bottom Plate",
       "material": "ABS Plastic",
       "process": "Injection Molding"
     },
     {
       "item": 4,
       "name": "Scroll Wheel Assembly",
-      "material": "Polycarbonate & Rubber",
-      "process": "Overmolding"
-    },
-    {
-      "item": 5,
-      "name": "DPI & Side Macro Buttons",
-      "material": "ABS Plastic",
-      "process": "Injection Molding"
-    },
-    {
-      "item": 6,
-      "name": "RGB Light Diffusers",
       "material": "Polycarbonate",
       "process": "Injection Molding"
     },
     {
+      "item": 5,
+      "name": "Scroll Wheel Rubber Grip Ring",
+      "material": "Rubber",
+      "process": "Overmolding"
+    },
+    {
+      "item": 6,
+      "partNumber": "dpi_button",
+      "name": "DPI Adjustment Button",
+      "material": "ABS Plastic",
+      "process": "Injection Molding"
+    },
+    {
       "item": 7,
-      "name": "USB Cable & Strain Relief",
-      "material": "PVC & Copper Wire",
-      "process": "Extrusion & Overmolding"
+      "name": "Side Navigation Buttons",
+      "material": "ABS Plastic",
+      "process": "Injection Molding"
+    },
+    {
+      "item": 8,
+      "name": "Fire Accent Button",
+      "material": "ABS Plastic",
+      "process": "Injection Molding"
+    },
+    {
+      "item": 9,
+      "name": "Side Light Guide Diffuser Strips",
+      "material": "Polycarbonate",
+      "process": "Injection Molding"
+    },
+    {
+      "item": 10,
+      "name": "USB Cable with Strain Relief",
+      "material": "Rubber",
+      "process": "Extrusion"
     }
   ],
-  "createdAt": "2026-07-27T18:46:03.252Z"
+  "createdAt": "2026-07-28T03:46:21.385Z"
 }

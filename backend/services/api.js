@@ -6,7 +6,7 @@ const api = axios.create({
 
         process.env.EXPO_PUBLIC_API_URL ||
 
-        "http://192.168.0.9:4000",
+        "http://10.63.2.59:4000",
 
     timeout: 60000
 

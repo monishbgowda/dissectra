@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "node scripts/start-fastapi.js && react-native run-android",
     "ios": "echo \"iOS disabled: Android-only build\" && exit 1",
-    "build:android": "cd android && .\\gradlew assembleRelease",
+    "build:android": "node scripts/start-fastapi.js && cd android && .\\gradlew assembleRelease",
     "lint": "eslint .",
-    "start": "react-native start",
+    "start": "node scripts/start-fastapi.js && react-native start",
+    "fastapi": "node scripts/start-fastapi.js",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "release": "cd android && gradlew assembleRelease && copy /Y app\\build\\outputs\\apk\\release\\app-release.apk ..\\Dissectra.apk"
+    "release": "node scripts/start-fastapi.js && cd android && gradlew assembleRelease && copy /Y app\\build\\outputs\\apk\\release\\app-release.apk ..\\Dissectra.apk"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

@@ -108,47 +108,53 @@ async function uploadImages(): Promise<void> {
     "All images uploaded.",
   );
 }
-async function analyzeCurrentInspection() {
+async function analyzeCurrentInspection(inspectionId: string) {
+  return analyzeInspection(inspectionId);
+}
+
+async function handleAnalyze() {
+
+  console.log("STEP 1");
+
   if (!inspection) {
-    throw new Error(
-      "Inspection not found.",
-    );
+    console.log("Inspection is null");
+    return;
   }
 
-  return analyzeInspection(
-    inspection.id,
-  );
-}
-async function handleAnalyze() {
+  const inspectionId = inspection.id;
+
   try {
+
+    console.log("STEP 2");
     setAnalyzing(true);
 
+    console.log("STEP 3");
     await uploadImages();
 
-    const result =
-      await analyzeCurrentInspection();
+    console.log("STEP 4");
 
-    console.log(result);
+    const result = await analyzeCurrentInspection(inspectionId);
 
-    Alert.alert(
-      "Success",
-      "Analysis completed.",
-    );
+    console.log("STEP 5");
+    console.log(JSON.stringify(result, null, 2));
+
+    console.log("STEP 6");
 
     await refreshInspection();
 
+    console.log("STEP 7");
+
+    Alert.alert("SUCCESS", "Reached Step 7");
+
   } catch (error: any) {
 
+    console.log("ERROR");
     console.log(error);
     console.log(error.response?.data);
 
-    Alert.alert(
-      "Error",
-      error.message,
-    );
-
   } finally {
 
+    console.log("FINALLY");
     setAnalyzing(false);
 
   }

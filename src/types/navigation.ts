@@ -13,12 +13,20 @@ export type RootTabParamList = {
 
 
 export type RootStackParamList = {
-  MainTabs:
-    NavigatorScreenParams<RootTabParamList>;
 
-  Demo3D: undefined;
+    MainTabs: NavigatorScreenParams<RootTabParamList>;
 
-  InspectionDetails: {
-    inspectionId: string;
-  };
+    InspectionDetails: {
+        inspectionId: string;
+    };
+
+    Analysis: {
+        inspectionId: string;
+        analysis: any;
+    };
+
+    Demo3D: {
+        inspectionId: string;
+    };
+
 };
