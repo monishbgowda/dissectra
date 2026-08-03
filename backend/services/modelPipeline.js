@@ -1,52 +1,69 @@
+const path = require("path");
 
-const fs = require('fs/promises');
-const path = require('path');
+const storageService =
+    require("./storageService");
 
-const { generateModel } = require('./modelProvider');
+const logger =
+    require("../utils/logger");
+
+const {
+    generateModel,
+} = require("./modelProvider");
 
 async function generateInspectionModel(
     inspectionId,
 ) {
 
+    if (!inspectionId) {
+
+        throw new Error(
+            "Inspection ID is required.",
+        );
+
+    }
+
     const inspectionFolder =
-        path.join(
-            process.env.UPLOAD_ROOT,
+        storageService.getInspectionFolder(
             inspectionId,
         );
 
     const analysisPath =
         path.join(
             inspectionFolder,
-            'analysis',
-            'analysis.json',
+            "analysis",
+            "analysis.json",
         );
 
     const modelsFolder =
-        path.join(
-            inspectionFolder,
-            'models',
+        storageService.getInspectionModelFolder(
+            inspectionId,
         );
 
     const analysis =
-        JSON.parse(
-            await fs.readFile(
-                analysisPath,
-                'utf8',
-            ),
+        await storageService.readJson(
+            analysisPath,
         );
 
-    await fs.mkdir(
+    await storageService.ensureDirectory(
         modelsFolder,
-        {
-            recursive: true,
-        },
     );
 
-    return await generateModel(
-        inspectionId,
-        analysis,
-        modelsFolder,
+    logger.info(
+        `Generating model for inspection: ${inspectionId}`,
     );
+
+    const result =
+        await generateModel(
+            inspectionId,
+            analysis,
+            modelsFolder,
+        );
+
+    logger.info(
+        `Model generation completed for inspection: ${inspectionId}`,
+    );
+
+    return result;
 
 }
 

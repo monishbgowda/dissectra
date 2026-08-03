@@ -1,27 +1,48 @@
 const fs = require("fs/promises");
 const path = require("path");
 
+const config =
+    require("../config/config");
+
+const logger =
+    require("../utils/logger");
+
 const CACHE = path.join(
-    __dirname,
-    "../assets/cache"
+    config.uploadRoot,
+    "assets",
+    "cache",
 );
 
 async function ensureFolder(folder) {
 
-    await fs.mkdir(folder, {
-        recursive: true,
-    });
+    await fs.mkdir(
+        folder,
+        {
+            recursive: true,
+        },
+    );
 
 }
 
 async function componentFolder(id) {
 
-    const folder = path.join(
-        CACHE,
-        id
-    );
+    if (!id) {
 
-    await ensureFolder(folder);
+        throw new Error(
+            "Component ID is required.",
+        );
+
+    }
+
+    const folder =
+        path.join(
+            CACHE,
+            id,
+        );
+
+    await ensureFolder(
+        folder,
+    );
 
     return folder;
 
@@ -29,9 +50,17 @@ async function componentFolder(id) {
 
 async function exists(file) {
 
+    if (!file) {
+
+        return false;
+
+    }
+
     try {
 
-        await fs.access(file);
+        await fs.access(
+            file,
+        );
 
         return true;
 
@@ -45,10 +74,38 @@ async function exists(file) {
 
 }
 
+async function remove(file) {
+
+    if (!(await exists(file))) {
+
+        return false;
+
+    }
+
+    await fs.rm(
+        file,
+        {
+            recursive: true,
+            force: true,
+        },
+    );
+
+    logger.info(
+        `Removed asset: ${file}`,
+    );
+
+    return true;
+
+}
+
 module.exports = {
 
     componentFolder,
 
+    ensureFolder,
+
     exists,
+
+    remove,
 
 };

@@ -22,24 +22,6 @@ class InspectionController {
 
         try {
 
-            const {
-
-                inspectionId,
-
-            } = req.body;
-
-            if (!inspectionId) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error: "inspectionId is required.",
-
-                });
-
-            }
-
             if (!req.file) {
 
                 return res.status(400).json({
@@ -55,7 +37,7 @@ class InspectionController {
             const result =
                 await inspectionService.uploadInspection(
 
-                    inspectionId,
+                    req.body.inspectionId,
 
                     req.file,
 
@@ -77,36 +59,18 @@ class InspectionController {
 
         try {
 
-            const {
-
-                inspectionId,
-
-            } = req.params;
-
-            if (!inspectionId) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error: "inspectionId is required.",
-
-                });
-
-            }
-
             logger.info(
 
                 "Starting analysis:",
 
-                inspectionId,
+                req.params.inspectionId,
 
             );
 
             const result =
                 await inspectionService.analyzeInspection(
 
-                    inspectionId,
+                    req.params.inspectionId,
 
                 );
 
@@ -114,7 +78,7 @@ class InspectionController {
 
                 "Analysis completed:",
 
-                inspectionId,
+                req.params.inspectionId,
 
             );
 
@@ -134,28 +98,10 @@ class InspectionController {
 
         try {
 
-            const {
-
-                inspectionId,
-
-            } = req.params;
-
-            if (!inspectionId) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error: "inspectionId is required.",
-
-                });
-
-            }
-
             const result =
                 await inspectionService.generateInspectionModel(
 
-                    inspectionId,
+                    req.params.inspectionId,
 
                 );
 
@@ -175,28 +121,10 @@ class InspectionController {
 
         try {
 
-            const {
-
-                uploadId,
-
-            } = req.body;
-
-            if (!uploadId) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error: "uploadId is required.",
-
-                });
-
-            }
-
             const result =
                 await inspectionService.generateModelJob(
 
-                    uploadId,
+                    req.body.uploadId,
 
                 );
 
@@ -216,28 +144,10 @@ class InspectionController {
 
         try {
 
-            const {
-
-                jobId,
-
-            } = req.params;
-
-            if (!jobId) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    error: "jobId is required.",
-
-                });
-
-            }
-
             const result =
                 await inspectionService.getModelStatus(
 
-                    jobId,
+                    req.params.jobId,
 
                 );
 

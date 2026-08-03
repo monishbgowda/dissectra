@@ -95,6 +95,11 @@ async function saveAnalysis(
     analysis
 ) {
 
+    const analysisFolder = path.join(
+        inspectionFolder,
+        "analysis"
+    );
+
 const outputFile = path.join(
     inspectionFolder,
     "analysis",
@@ -137,15 +142,18 @@ async function analyzeInspection(imageFiles) {
 
     ];
 
-    const buffers = await Promise.all(
+    for (const image of imageFiles) {
 
-    imageFiles.map(image =>
-        fs.readFile(image.path)
-    )
+const buffers =
+    await Promise.all(
 
-);
+        imageFiles.map(image =>
+            fs.readFile(image.path)
+        )
 
-buffers.forEach((buffer, index) => {
+    );
+
+buffers.forEach((buffers, index) => {
 
     parts.push({
 
@@ -155,13 +163,15 @@ buffers.forEach((buffer, index) => {
                 imageFiles[index].mimeType,
 
             data:
-                buffer.toString("base64"),
+                buffers.toString("base64"),
 
         },
 
     });
 
 });
+
+    }
 
     logger.info(
         `Sending ${imageFiles.length} image(s) to Gemini...`
@@ -257,12 +267,9 @@ logger.info(
     }
 
 }
-const start = Date.now();
 const response =
     await generateContentWithRetry(parts);
-logger.info(
-    `Gemini response received in ${Date.now() - start} ms`
-);
+
     if (!response.text) {
 
         throw new Error(
