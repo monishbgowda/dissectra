@@ -35,9 +35,9 @@ import {
 import {
   theme,
 } from "./src/theme/theme";
-import { discoverBackend } from './src/services/backendDiscovery';
-import { setApiBaseUrl } from "./src/services/apiClient";
-import { API_BASE_URL } from "./src/config/env";
+
+import { setApi } from "./src/config/backend";
+
 
 import {
   HomeScreen,
@@ -503,30 +503,20 @@ useEffect(() => {
 
         try {
 
-            console.log("discoverBackend() started");
+            console.log("Initializing Railway backend...");
 
-            const ip = await discoverBackend();
+            await setApi();
 
-            console.log("DISCOVERED:", ip);
-
-            if (!ip) {
-
-                console.log("Backend not found.");
-
-                return;
-
-            }
-
-            console.log("Connected:", ip);
+            console.log("Backend configured successfully.");
 
         }
 
         catch (err) {
 
-            console.log("DISCOVERY FAILED");
+            console.log("Backend initialization failed.");
 
             console.log(err);
-throw err;
+
         }
 
     }

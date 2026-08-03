@@ -1,19 +1,15 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setApiBaseUrl } from "../services/apiClient";
 
-let API = "";
+const API =
+    "https://dissectra-production.up.railway.app/api";
 
-export async function setApi(ip: string) {
+export async function setApi() {
 
-    console.log("SETTING API");
+    console.log("Using Railway Backend");
 
-    console.log(ip);
+    console.log(API);
 
-    const url = `http://${ip}:4000/api`;
-
-    console.log(url);
-
-    setApiBaseUrl(url);
+    setApiBaseUrl(API);
 
 }
 
