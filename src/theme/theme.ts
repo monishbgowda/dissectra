@@ -68,7 +68,26 @@ export function createTheme(
       ? '#111111'
       : '#FFFFFF',
 
+info:
+    dark
+        ? "#38BDF8"
+        : "#0284C7",
 
+replaceable:
+    "#22C55E",
+
+nonReplaceable:
+    "#EF4444",
+
+chip:
+    dark
+        ? "#1C1C1C"
+        : "#F2F2F2",
+
+chipBorder:
+    dark
+        ? "#303030"
+        : "#E5E5E5",
       primary: accentColor,
 
       onPrimary:
@@ -134,7 +153,71 @@ export function createTheme(
         dark
           ? '#111111'
           : '#FFFFFF',
+        confidenceHigh: "#22C55E",
+
+confidenceMedium: "#F59E0B",
+
+confidenceLow: "#EF4444",
+
+componentBorder:
+    dark
+        ? "#2D2D2D"
+        : "#E6E6E6",
+
+componentBackground:
+    dark
+        ? "#151515"
+        : "#FCFCFC",
     },
+gradients: {
+
+    hero:
+        dark
+            ? ["#181818", "#111111"]
+            : ["#FFFFFF", "#F7F7F7"],
+
+    primary:
+        dark
+            ? [accentColor, "#181818"]
+            : [accentColor, "#FFFFFF"],
+
+},
+status: {
+
+    completed: "#22C55E",
+
+    processing: "#3B82F6",
+
+    pending: "#F59E0B",
+
+    failed: "#EF4444",
+
+},
+materials: {
+
+    metal: "#9CA3AF",
+
+    plastic: "#60A5FA",
+
+    glass: "#67E8F9",
+
+    rubber: "#4ADE80",
+
+    ceramic: "#FBBF24",
+
+    composite: "#C084FC",
+
+},
+icons: {
+
+    active: accentColor,
+
+    inactive:
+        dark
+            ? "#808080"
+            : "#999999",
+
+},
 
     spacing: {
       xs: 4,
@@ -238,6 +321,26 @@ typography: {
 
         elevation: 5,
       },
+      lg: {
+
+    shadowColor: "#000",
+
+    shadowOffset: {
+
+        width: 0,
+
+        height: 10,
+
+    },
+
+    shadowOpacity:
+        dark ? 0.45 : 0.18,
+
+    shadowRadius: 18,
+
+    elevation: 8,
+
+},
     },
   };
 }

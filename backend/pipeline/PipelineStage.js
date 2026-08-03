@@ -12,6 +12,7 @@ class PipelineStage {
 
     async execute(context) {
 
+        
         throw new Error(
             `${this.name} must implement execute()`
         );

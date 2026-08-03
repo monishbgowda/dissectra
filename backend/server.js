@@ -1,89 +1,92 @@
-require("dotenv").config();
-
-const path = require("path");
-const http = require("http");
-const { spawn } = require("child_process");
-
 const express = require("express");
-
 const cors = require("cors");
+const path = require("path");
 
-const helmet = require("helmet");
+const config =
+    require("./config/config");
 
-const morgan = require("morgan");
-
-const scanRoutes =
-    require("./routes/scanRoutes");
+const logger =
+    require("./utils/logger");
 
 const errorHandler =
     require("./middleware/errorHandler");
 
-// Auto-launch FastAPI CNN server on port 8000 if not already running
-function ensureFastApiServer() {
-    const checkReq = http.get("http://127.0.0.1:8000/health", (res) => {
-        if (res.statusCode === 200) {
-            console.log("✅ FastAPI CNN server is active on port 8000");
-        }
-    });
+const discoveryRoutes =
+    require("./routes/discoveryRoutes");
 
-    checkReq.on("error", () => {
-        console.log("🚀 Auto-launching FastAPI CNN server on port 8000...");
-        const cnnDir = path.join(__dirname, "..", "cnn_model").replace(/\\/g, "/");
-        const psCmd = `powershell -Command "Start-Process python -ArgumentList '-m uvicorn main:app --host 0.0.0.0 --port 8000' -WorkingDirectory '${cnnDir}' -WindowStyle Hidden"`;
+const scanRoutes =
+    require("./routes/scanRoutes");
 
-        const { exec } = require("child_process");
-        exec(psCmd, (err) => {
-            if (err) {
-                console.error("❌ Failed to start FastAPI server:", err.message);
-            } else {
-                console.log("✅ FastAPI CNN server launched on port 8000");
-            }
-        });
-    });
-}
+const {
+    ensureFastApiServer,
+} = require("./services/fastApiManager");
 
-ensureFastApiServer();
+const app =
+    express();
 
-const app = express();
-
-const PORT =
-    process.env.PORT || 4000;
-
-app.use(helmet());
-
-app.use(cors({
-
-    origin:
-
-        process.env.CORS_ORIGIN ||
-
-        "*"
-
-}));
-
-app.use(morgan("dev"));
-
-app.use(express.json({
-
-    limit: "5mb"
-
-}));
+/*
+|--------------------------------------------------------------------------
+| Global Middleware
+|--------------------------------------------------------------------------
+*/
 
 app.use(
 
-    "/files",
+    cors(),
+
+);
+
+app.use(
+
+    express.json({
+        limit: "25mb",
+    }),
+
+);
+
+app.use(
+
+    express.urlencoded({
+
+        extended: true,
+
+        limit: "25mb",
+
+    }),
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| Static Assets
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    "/storage",
 
     express.static(
 
         path.join(
+            config.uploadRoot,
+        ),
 
-            __dirname,
+    ),
 
-            "storage"
+);
 
-        )
+/*
+|--------------------------------------------------------------------------
+| Routes
+|--------------------------------------------------------------------------
+*/
 
-    )
+app.use(
+
+    "/discover",
+
+    discoveryRoutes,
 
 );
 
@@ -91,22 +94,111 @@ app.use(
 
     "/api",
 
-    scanRoutes
+    scanRoutes,
 
 );
+
+/*
+|--------------------------------------------------------------------------
+| 404 Handler
+|--------------------------------------------------------------------------
+*/
 
 app.use(
 
-    errorHandler
+    (_req, res) => {
+
+        res.status(404).json({
+
+            success: false,
+
+            error: "Route not found.",
+
+        });
+
+    },
 
 );
 
-app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-        console.log(
-            `🚀 Dissectra Backend running on port ${PORT}`
+/*
+|--------------------------------------------------------------------------
+| Error Handler
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    errorHandler,
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| Server Startup
+|--------------------------------------------------------------------------
+*/
+
+async function startServer() {
+
+    try {
+
+        if (
+
+            config.env !== "production"
+
+        ) {
+
+            logger.info(
+
+                "Development mode detected.",
+
+            );
+
+            await ensureFastApiServer();
+
+        }
+
+        app.listen(
+
+            config.port,
+
+            () => {
+
+                logger.info(
+
+                    `Dissectra Backend running on port ${config.port}`,
+
+                );
+
+                logger.info(
+
+                    `Environment: ${config.env}`,
+
+                );
+
+            },
+
         );
+
     }
-);
+
+    catch (err) {
+
+        logger.error(
+
+            "Server startup failed",
+
+            err,
+
+        );
+
+        process.exit(1);
+
+    }
+
+}
+
+startServer();
+
+module.exports =
+    app;

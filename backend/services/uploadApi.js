@@ -1,4 +1,4 @@
-import api from "./api";
+import { api } from "../../src/services/apiClient";
 
 export async function uploadInspectionImage(
 
@@ -44,7 +44,7 @@ formData.append(
 );
 
 const response = await api.post(
-    "/api/upload",
+    "/upload",
     formData,
     {
         headers: {

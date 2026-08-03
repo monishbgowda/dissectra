@@ -2,6 +2,9 @@ const fs = require("fs/promises");
 const path = require("path");
 const { GoogleGenAI } = require("@google/genai");
 
+const logger =
+    require("../utils/logger");
+
 const {
     buildInspectionPrompt
 } = require("./promptBuilder");
@@ -66,7 +69,7 @@ async function loadImages(inspectionFolder) {
 
     }
 
-    console.log(
+    logger.info(
         `Loaded ${images.length} image(s)`
     );
 
@@ -106,7 +109,7 @@ async function saveAnalysis(
         "utf8"
     );
 
-    console.log(
+    logger.info(
         "Analysis saved to:",
         outputFile
     );
@@ -158,7 +161,7 @@ async function analyzeInspection(imageFiles) {
 
     }
 
-    console.log(
+    logger.info(
         `Sending ${imageFiles.length} image(s) to Gemini...`
     );
 async function generateContentWithRetry(parts) {
@@ -167,7 +170,7 @@ async function generateContentWithRetry(parts) {
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
 
-  try {console.log("Before generateContent");
+  try {logger.info("Before generateContent");
 
 const response =
     await ai.models.generateContent({
@@ -191,9 +194,9 @@ const response =
 
     });
 
-console.log("After generateContent");
+logger.info("After generateContent");
 
-console.log(
+logger.info(
     JSON.stringify(
         response.candidates,
         null,
@@ -219,7 +222,7 @@ return response;
                 const delay =
                     attempt * 3000;
 
-                console.log(
+                logger.info(
                     `Gemini busy. Retrying in ${delay} ms...`
                 );
 
@@ -249,24 +252,24 @@ const response =
 
     }
 
-    console.log("\n===== GEMINI RESPONSE =====\n");
+    logger.info("\n===== GEMINI RESPONSE =====\n");
 
-    console.log("========== START ==========");
+    logger.info("========== START ==========");
 
-    console.log(
+    logger.info(
         "Length:",
         response.text.length
     );
 
-    console.log(
+    logger.info(
         "Last 200 characters:"
     );
 
-    console.log(
+    logger.info(
         response.text.slice(-200)
     );
 
-    console.log("=========== END ===========");
+    logger.info("=========== END ===========");
 
     return parseAnalysis(
         response.text
@@ -282,4 +285,4 @@ module.exports = {
 
     saveAnalysis
 
-};  
+};

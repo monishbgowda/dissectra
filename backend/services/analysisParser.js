@@ -36,6 +36,9 @@ function stripJson(text) {
 
 }
 
+const logger =
+    require("../utils/logger");
+
 function parseAnalysis(text) {
 
     if (!text) {
@@ -68,14 +71,14 @@ function parseAnalysis(text) {
 
     catch (err) {
 
-    console.error("JSON Parse Error:");
-    console.error(err.message);
+    logger.error("JSON Parse Error:");
+    logger.error(err.message);
 
-    console.error(
+    logger.error(
         "\nLast 300 characters:\n"
     );
 
-    console.error(
+    logger.error(
         cleaned.slice(-300)
     );
 

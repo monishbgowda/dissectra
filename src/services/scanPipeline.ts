@@ -6,6 +6,9 @@ import {
 } from "./dissectraApi";
 
 import {
+} from "../storage/inspectionStorage";
+
+import {
     copyToStorage,
     downloadModelToStorage,
     saveScan,
@@ -123,6 +126,7 @@ async function saveOfflineScan(
 
 export async function runScanPipeline(
     imageUri: string,
+    inspectionId?: string,
 ): Promise<StoredScan> {
 
     console.log("");
@@ -130,8 +134,7 @@ export async function runScanPipeline(
         "========== SCAN PIPELINE START =========="
     );
 
-    const id =
-        String(Date.now());
+    const id = inspectionId || String(Date.now());
 
     console.log("STEP 1");
     console.log("Copying image...");
@@ -163,6 +166,7 @@ export async function runScanPipeline(
             await uploadImage(
                 imageUri,
                 `${id}.jpg`,
+                id,
             );
 
         console.log(
@@ -174,20 +178,11 @@ export async function runScanPipeline(
     }
 
     catch (err) {
+    console.error("UPLOAD FAILED");
+    console.error(err);
 
-        console.error(
-            "Upload failed:"
-        );
-
-        console.error(err);
-
-        return saveOfflineScan(
-            id,
-            imageUri,
-            localImagePath,
-        );
-
-    }
+    throw err;
+}
 
     console.log("STEP 3");
     console.log("Running analysis...");
@@ -198,7 +193,7 @@ export async function runScanPipeline(
 
         analysis =
             await analyzeImage(
-                upload.uploadId,
+                id,
             );
 
         console.log(
@@ -210,23 +205,11 @@ export async function runScanPipeline(
     }
 
     catch (err) {
+    console.error("ANALYSIS FAILED");
+    console.error(err);
 
-        console.error(
-            "Analysis failed:"
-        );
-
-        console.error(err);
-
-        analysis = {
-
-            ...OFFLINE_ANALYSIS,
-
-            description:
-                "Analysis failed, but this scan was saved locally. Retry later.",
-
-        };
-
-    }
+    throw err;
+}
 
     console.log("STEP 4");
     console.log("Generating model...");
@@ -266,21 +249,13 @@ export async function runScanPipeline(
 
     catch (err) {
 
-        console.error(
-            "Model generation failed:"
-        );
+    console.error("MODEL FAILED");
 
-        console.error(err);
+    console.error(err);
 
-        model = {
+    throw err;
 
-            jobId: "",
-
-            status: "failed",
-
-        };
-
-    }
+}
 
     console.log("STEP 5");
     console.log(

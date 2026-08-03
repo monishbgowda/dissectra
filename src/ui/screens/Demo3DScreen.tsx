@@ -15,12 +15,12 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import {
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-
-import {
   useTheme,
 } from '../../theme/ThemeProvider';
+
+import {
+  useSafeAreaInsetsOrFallback,
+} from '../components/safeArea';
 
 import {
   Demo3DViewer,
@@ -39,7 +39,7 @@ export function Demo3DScreen({
   navigation,
 }: any) {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsetsOrFallback();
   const { width, height } =
     useWindowDimensions();
 

@@ -35,6 +35,9 @@ import {
 import {
   theme,
 } from "./src/theme/theme";
+import { discoverBackend } from './src/services/backendDiscovery';
+import { setApiBaseUrl } from "./src/services/apiClient";
+import { API_BASE_URL } from "./src/config/env";
 
 import {
   HomeScreen,
@@ -494,11 +497,43 @@ function AppInner() {
 
 export default function App() {
 
-  useEffect(() => {
+useEffect(() => {
 
-    Icon.loadFont?.();
+    async function initialize() {
 
-  }, []);
+        try {
+
+            console.log("discoverBackend() started");
+
+            const ip = await discoverBackend();
+
+            console.log("DISCOVERED:", ip);
+
+            if (!ip) {
+
+                console.log("Backend not found.");
+
+                return;
+
+            }
+
+            console.log("Connected:", ip);
+
+        }
+
+        catch (err) {
+
+            console.log("DISCOVERY FAILED");
+
+            console.log(err);
+throw err;
+        }
+
+    }
+
+    initialize();
+
+}, []);
 
   return (
 

@@ -27,7 +27,9 @@ export async function createInspection(id: string) {
 
   return folder;
 }
-
+console.log(
+    "Saving inspection..."
+);
 export async function saveInspection(inspection: Inspection) {
   await ensureRoot();
 

@@ -1,3 +1,6 @@
+const logger =
+    require("../utils/logger");
+
 class Pipeline {
 
     constructor(stages = []) {
@@ -14,12 +17,12 @@ class Pipeline {
 
             try {
 
-                console.log(`Running: ${stage.name}`);
+                logger.info(`Running: ${stage.name}`);
 
                 context =
                     await stage.execute(context);
 
-                console.log(
+                logger.info(
                     `Completed: ${stage.name} (${Date.now() - start} ms)`
                 );
 
@@ -27,13 +30,13 @@ class Pipeline {
 
             catch (error) {
 
-                console.error(
+                logger.error(
                     `Failed: ${stage.name}`
                 );
 
                 if (stage.optional) {
 
-                    console.warn(
+                    logger.warn(
                         `${stage.name} skipped.`
                     );
 

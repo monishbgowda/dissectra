@@ -37,9 +37,6 @@ import {
   useTheme,
 } from '../../theme/ThemeProvider';
 
-import {
-  runScanPipeline,
-} from '../../services/scanPipeline';
 
 import {
   startInspection,
@@ -52,12 +49,8 @@ import {
 
 import type {
     Inspection,
-    InspectionImage,
 } from "../../storage/inspectionTypes";
 
-import type {
-  StoredScan,
-} from "../../types/dissectra";
 
 import {
   MAX_IMAGE_BYTES,
@@ -79,29 +72,7 @@ interface ImageAssetInfo {
 }
 
 
-/* --------------------------------------------------
-   UUID
--------------------------------------------------- */
 
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    .replace(
-      /[xy]/g,
-      c => {
-        const r =
-          Math.floor(
-            Math.random() * 16,
-          );
-
-        const v =
-          c === 'x'
-            ? r
-            : (r & 0x3) | 0x8;
-
-        return v.toString(16);
-      },
-    );
-}
 
 
 /* --------------------------------------------------
@@ -550,15 +521,15 @@ export function CaptureScreen({
 async function createInspectionRecord(): Promise<Inspection> {
     return startInspection();
 }
-async function analyzePrimaryImage(): Promise<StoredScan> {
-  return runScanPipeline(assets[0].uri);
-}
+
 async function attachInspectionImages(
   inspection: Inspection,
 ): Promise<void> {
-  const inspectionImages: InspectionImage[] = [];
+
+  inspection.images = [];
 
   for (let i = 0; i < assets.length; i++) {
+
     const image = assets[i];
 
     const extension =
@@ -573,7 +544,7 @@ async function attachInspectionImages(
         fileName,
       );
 
-    inspectionImages.push({
+    inspection.images.push({
       id: `${inspection.id}_${i + 1}`,
       fileName,
       filePath: storedPath,
@@ -582,37 +553,17 @@ async function attachInspectionImages(
     });
   }
 
-  updateInspectionImages(
-    inspection,
-    inspectionImages,
-  );
-}
-function updateInspectionImages(
-  inspection: Inspection,
-  images: InspectionImage[],
-): void {
-  inspection.images = images;
-  inspection.imageCount = images.length;
-  inspection.thumbnail = images[0].filePath;
-}
-function updateInspectionFromAnalysis(
-  inspection: Inspection,
-  result: StoredScan,
-): void {
-  inspection.objectName =
-    result.analysis.object;
+  inspection.imageCount =
+    inspection.images.length;
 
-  inspection.status =
-    "COMPLETED";
+  inspection.thumbnail =
+    inspection.images[0]?.filePath ?? "";
 
-  inspection.updatedAt =
-    new Date().toISOString();
-
-  inspection.confidence =
-    result.analysis.confidence;
 }
+
 
 async function process() {
+
   if (assets.length === 0 || loading) {
     return;
   }
@@ -620,36 +571,45 @@ async function process() {
   setLoading(true);
 
   try {
+
     const inspection =
       await createInspectionRecord();
-
-    const result =
-      await analyzePrimaryImage();
 
     await attachInspectionImages(
       inspection,
     );
 
-    updateInspectionFromAnalysis(
+    inspection.status = "PENDING";
+
+    inspection.updatedAt =
+      new Date().toISOString();
+
+    await saveInspection(
       inspection,
-      result,
     );
 
-    await saveInspection(inspection);
-
-    navigation.navigate("Home", {
-      scan: result,
-    });
+    navigation.navigate(
+      "InspectionDetails",
+      {
+        inspectionId:
+          inspection.id,
+      },
+    );
 
   } catch (error: any) {
+
     Alert.alert(
-      "Processing failed",
+      "Failed",
       error?.message ??
-        "Unable to analyze object.",
+      "Unable to create inspection.",
     );
+
   } finally {
+
     setLoading(false);
+
   }
+
 }
 
 
@@ -1219,8 +1179,8 @@ async function process() {
             }
           >
             {loading
-              ? 'ANALYZING...'
-              : 'ANALYZE OBJECT'}
+    ? 'CREATING INSPECTION...'
+    : 'CONTINUE'}
           </Text>
 
           {!loading && (
@@ -1248,7 +1208,7 @@ async function process() {
           }
         >
           <LoadingState
-            label="Analyzing your scan..."
+    label="Creating inspection..."
 
             size="large"
           />

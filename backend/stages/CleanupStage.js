@@ -4,6 +4,9 @@ const path = require("path");
 const PipelineStage =
     require("../pipeline/PipelineStage");
 
+const logger =
+    require("../utils/logger");
+
 class CleanupStage extends PipelineStage {
 
     constructor() {
@@ -43,7 +46,7 @@ class CleanupStage extends PipelineStage {
 
                 catch (err) {
 
-                    console.warn(err.message);
+                    logger.warn(err.message);
 
                 }
 
@@ -65,7 +68,7 @@ class CleanupStage extends PipelineStage {
 
         catch (err) {
 
-            console.warn(err.message);
+            logger.warn(err.message);
 
         }
 

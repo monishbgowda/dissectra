@@ -1,0 +1,159 @@
+{
+  "product": {
+    "brand": "Fastrack",
+    "model": "38045PP02",
+    "name": "Fastrack Digital Sports Watch",
+    "category": "Wristwatches",
+    "confidence": 0.98
+  },
+  "components": [
+    {
+      "id": "comp_case",
+      "name": "Watch Outer Case",
+      "category": "Housing",
+      "material": "Polycarbonate",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Screw Fastening / Press Fit",
+      "replaceable": false,
+      "confidence": 0.95
+    },
+    {
+      "id": "comp_backplate",
+      "name": "Stainless Steel Backplate",
+      "category": "Housing",
+      "material": "Stainless Steel",
+      "manufacturingProcess": "Stamping",
+      "assemblyMethod": "Machine Screws",
+      "replaceable": true,
+      "confidence": 0.98
+    },
+    {
+      "id": "comp_strap",
+      "name": "Watch Strap",
+      "category": "Accessories",
+      "material": "Silicone Rubber",
+      "manufacturingProcess": "Compression Molding",
+      "assemblyMethod": "Spring Pins",
+      "replaceable": true,
+      "confidence": 0.95
+    },
+    {
+      "id": "comp_buckle",
+      "name": "Strap Buckle",
+      "category": "Fasteners",
+      "material": "Stainless Steel",
+      "manufacturingProcess": "Stamping",
+      "assemblyMethod": "Pin Fastener",
+      "replaceable": true,
+      "confidence": 0.95
+    },
+    {
+      "id": "comp_display",
+      "name": "Digital LCD Display Module",
+      "category": "Electronics",
+      "material": "Glass",
+      "manufacturingProcess": "Micro-assembly",
+      "assemblyMethod": "Internal Bracket Retention",
+      "replaceable": true,
+      "confidence": 0.92
+    },
+    {
+      "id": "comp_buttons",
+      "name": "Side Push Buttons",
+      "category": "Controls",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Shaft Insertion with O-ring Seal",
+      "replaceable": false,
+      "confidence": 0.9
+    },
+    {
+      "id": "comp_screws",
+      "name": "Case Back Screws",
+      "category": "Fasteners",
+      "material": "Stainless Steel",
+      "manufacturingProcess": "Cold Heading",
+      "assemblyMethod": "Threaded Fastening",
+      "replaceable": true,
+      "confidence": 0.95
+    }
+  ],
+  "materials": [
+    {
+      "name": "Stainless Steel",
+      "usedIn": [
+        "comp_backplate",
+        "comp_buckle",
+        "comp_screws"
+      ]
+    },
+    {
+      "name": "Polycarbonate",
+      "usedIn": [
+        "comp_case"
+      ]
+    },
+    {
+      "name": "Silicone Rubber",
+      "usedIn": [
+        "comp_strap"
+      ]
+    },
+    {
+      "name": "ABS Plastic",
+      "usedIn": [
+        "comp_buttons"
+      ]
+    },
+    {
+      "name": "Glass",
+      "usedIn": [
+        "comp_display"
+      ]
+    }
+  ],
+  "manufacturing": [
+    {
+      "process": "Injection Molding",
+      "components": [
+        "comp_case",
+        "comp_buttons"
+      ]
+    },
+    {
+      "process": "Stamping",
+      "components": [
+        "comp_backplate",
+        "comp_buckle"
+      ]
+    },
+    {
+      "process": "Compression Molding",
+      "components": [
+        "comp_strap"
+      ]
+    },
+    {
+      "process": "Cold Heading",
+      "components": [
+        "comp_screws"
+      ]
+    }
+  ],
+  "damage": [
+    {
+      "component": "comp_case",
+      "type": "Surface Discoloration and Mild Wear",
+      "severity": "Low",
+      "repairable": true,
+      "confidence": 0.85
+    }
+  ],
+  "engineering": {
+    "repairability": 80,
+    "manufacturability": 90,
+    "complexity": 45,
+    "modularity": 75
+  },
+  "summary": "The product is a Fastrack digital sports watch (Model 38045PP02) rated for 100M water resistance. It features an injection-molded polycarbonate main housing, flexible silicone rubber straps attached via standard spring pins, four side push buttons, and a stamped stainless steel backplate secured by four cross-recess machine screws for straightforward battery and module access."
+}

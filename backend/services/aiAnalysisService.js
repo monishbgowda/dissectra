@@ -1,5 +1,6 @@
 const fs = require('fs/promises');
-
+const config =
+require("../config/config");
 const SYSTEM_PROMPT = 'Analyze this anatomy/object image for a medical-tech visualization app. Return strict JSON only with: object string, description string, labels string array, confidence number between 0 and 1.';
 
 function stripJsonFence(text) {
@@ -43,11 +44,11 @@ async function analyzeImage(imagePath, mimeType) {
 }
 
 async function analyzeWithGemini(imagePath, mimeType) {
-  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY missing for AI_ANALYSIS_PROVIDER=gemini');
+  if (!config.geminiKey) throw new Error('GEMINI_API_KEY missing for AI_ANALYSIS_PROVIDER=gemini');
   const imageBase64 = await fs.readFile(imagePath, 'base64');
   const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   const body = { contents: [{ parts: [{ text: SYSTEM_PROMPT }, { inline_data: { mime_type: mimeType, data: imageBase64 } }] }], generationConfig: { response_mime_type: 'application/json' } };
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.geminiKey}`;
   const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!response.ok) throw new Error(`Gemini failed: ${response.status} ${await response.text()}`);
   const data = await response.json();
@@ -64,7 +65,7 @@ async function analyzeWithOpenAICompatible(imagePath, mimeType, config) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${config.apiKey}`,
-      'HTTP-Referer': process.env.APP_PUBLIC_URL || 'http://localhost:4000',
+      'HTTP-Referer': process.env.API_PUBLIC_URL,
       'X-Title': 'Dissectra',
     },
     body: JSON.stringify({

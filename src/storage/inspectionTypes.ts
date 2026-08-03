@@ -1,33 +1,35 @@
-export type InspectionStatus =
-  | 'CAPTURING'
-  | 'PROCESSING'
-  | 'COMPLETED'
-  | 'FAILED';
+  export type InspectionStatus =
+    | 'CAPTURING'
+    | 'PENDING'
+    | 'PROCESSING'
+    | 'COMPLETED'
+    | 'FAILED';
 
-export interface InspectionImage {
-  id: string;
-  fileName: string;
-  filePath: string;
-  angle?: string;
-  capturedAt: string;
-}
+  export interface InspectionImage {
+    id: string;
+    fileName: string;
+    filePath: string;
+    angle?: string;
+    capturedAt: string;
+  }
 
-export interface Inspection {
-  id: string;
-  objectName: string;
-  createdAt: string;
-  updatedAt: string;
-  status: InspectionStatus;
+  export interface Inspection {
+    id: string;
+    objectName: string;
+    createdAt: string;
+    updatedAt: string;
+    status: InspectionStatus;
+    analysis?: any;
+    
+    thumbnail: string;
 
-  thumbnail: string;
+    imageCount: number;
 
-  imageCount: number;
+    images: InspectionImage[];
 
-  images: InspectionImage[];
+    analysisFile?: string;
 
-  analysisFile?: string;
+    modelFile?: string;
 
-  modelFile?: string;
-
-  confidence?: number;
-}
+    confidence?: number;
+  }

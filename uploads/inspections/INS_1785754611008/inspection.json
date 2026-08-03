@@ -1,0 +1,451 @@
+{
+  "analysis": {
+    "product": {
+      "brand": "Fastrack",
+      "model": "Digital Sport",
+      "name": "Fastrack Digital Quartz Watch",
+      "category": "Wearable Electronics / Wristwatches",
+      "confidence": 0.95
+    },
+    "components": [
+      {
+        "id": "comp_1",
+        "name": "Outer Case & Bezel",
+        "category": "Enclosure",
+        "material": "Polyurethane Resin",
+        "manufacturingProcess": "Plastic Injection Molding",
+        "assemblyMethod": "Snap Fit / Screw Fastened",
+        "replaceable": true,
+        "confidence": 0.9
+      },
+      {
+        "id": "comp_2",
+        "name": "Decorative Bezel Screws",
+        "category": "Fasteners",
+        "material": "Stainless Steel",
+        "manufacturingProcess": "Precision Machining / Thread Rolling",
+        "assemblyMethod": "Threaded Fastening",
+        "replaceable": true,
+        "confidence": 0.95
+      },
+      {
+        "id": "comp_3",
+        "name": "Watch Crystal / Lens",
+        "category": "Optics / Protection",
+        "material": "Acrylic Plastic",
+        "manufacturingProcess": "Injection Molding / Polishing",
+        "assemblyMethod": "Press Fit / Adhesive Bonding",
+        "replaceable": false,
+        "confidence": 0.85
+      },
+      {
+        "id": "comp_4",
+        "name": "Monochrome LCD Panel",
+        "category": "Display",
+        "material": "Glass",
+        "manufacturingProcess": "Photolithography / Liquid Crystal Assembly",
+        "assemblyMethod": "Zebra Connector / Mechanical Frame Fit",
+        "replaceable": false,
+        "confidence": 0.9
+      },
+      {
+        "id": "comp_5",
+        "name": "Inner Dial Frame / Chapter Ring",
+        "category": "Structural / Aesthetic",
+        "material": "ABS Plastic",
+        "manufacturingProcess": "Injection Molding & Pad Printing",
+        "assemblyMethod": "Interlocking Snap Fit",
+        "replaceable": false,
+        "confidence": 0.85
+      },
+      {
+        "id": "comp_6",
+        "name": "Push Buttons",
+        "category": "User Interface",
+        "material": "Polycarbonate / ABS",
+        "manufacturingProcess": "Injection Molding",
+        "assemblyMethod": "Spring-Loaded Shaft Retention",
+        "replaceable": false,
+        "confidence": 0.9
+      },
+      {
+        "id": "comp_7",
+        "name": "Watch Strap",
+        "category": "Retention / Strap",
+        "material": "Silicone Rubber",
+        "manufacturingProcess": "Compression Molding",
+        "assemblyMethod": "Spring Bar Attachment",
+        "replaceable": true,
+        "confidence": 0.95
+      }
+    ],
+    "materials": [
+      {
+        "name": "Polyurethane Resin",
+        "usedIn": [
+          "Outer Case & Bezel"
+        ]
+      },
+      {
+        "name": "Stainless Steel",
+        "usedIn": [
+          "Decorative Bezel Screws"
+        ]
+      },
+      {
+        "name": "Acrylic Plastic",
+        "usedIn": [
+          "Watch Crystal / Lens"
+        ]
+      },
+      {
+        "name": "ABS Plastic",
+        "usedIn": [
+          "Inner Dial Frame / Chapter Ring"
+        ]
+      },
+      {
+        "name": "Silicone Rubber",
+        "usedIn": [
+          "Watch Strap"
+        ]
+      },
+      {
+        "name": "Glass",
+        "usedIn": [
+          "Monochrome LCD Panel"
+        ]
+      }
+    ],
+    "manufacturing": [
+      {
+        "process": "Plastic Injection Molding",
+        "components": [
+          "Outer Case & Bezel",
+          "Inner Dial Frame / Chapter Ring",
+          "Push Buttons",
+          "Watch Crystal / Lens"
+        ]
+      },
+      {
+        "process": "Compression Molding",
+        "components": [
+          "Watch Strap"
+        ]
+      },
+      {
+        "process": "Precision Machining / Thread Rolling",
+        "components": [
+          "Decorative Bezel Screws"
+        ]
+      },
+      {
+        "process": "Pad Printing",
+        "components": [
+          "Inner Dial Frame / Chapter Ring"
+        ]
+      }
+    ],
+    "damage": [],
+    "engineering": {
+      "repairability": 65,
+      "manufacturability": 90,
+      "complexity": 45,
+      "modularity": 70
+    },
+    "summary": "The product is a Fastrack digital quartz wristwatch featuring a ruggedized resin casing with decorative external stainless steel accent screws. The design uses high-volume injection-molded polymer components for the bezel, case, and inner dial frame, coupled with a compression-molded flexible silicone strap. The internal quartz movement drives a custom multi-segment LCD displaying time, date, and mode indicators. Modular elements such as the strap and battery/caseback allow straightforward servicing, whereas internal display assembly requires complete replacement of the core digital module."
+  },
+  "product": {
+    "brand": "Fastrack",
+    "model": "Digital Sport",
+    "name": "Fastrack Digital Quartz Watch",
+    "category": "Wearable Electronics / Wristwatches",
+    "confidence": 0.95
+  },
+  "components": [
+    {
+      "id": "comp_1",
+      "name": "Outer Case & Bezel",
+      "category": "Enclosure",
+      "material": "Polyurethane Resin",
+      "manufacturingProcess": "Plastic Injection Molding",
+      "assemblyMethod": "Snap Fit / Screw Fastened",
+      "replaceable": true,
+      "confidence": 0.9,
+      "matched": false
+    },
+    {
+      "id": "comp_2",
+      "name": "Decorative Bezel Screws",
+      "category": "Fasteners",
+      "material": "Stainless Steel",
+      "manufacturingProcess": "Precision Machining / Thread Rolling",
+      "assemblyMethod": "Threaded Fastening",
+      "replaceable": true,
+      "confidence": 0.95,
+      "matched": false
+    },
+    {
+      "id": "comp_3",
+      "name": "Watch Crystal / Lens",
+      "category": "Optics / Protection",
+      "material": "Acrylic Plastic",
+      "manufacturingProcess": "Injection Molding / Polishing",
+      "assemblyMethod": "Press Fit / Adhesive Bonding",
+      "replaceable": false,
+      "confidence": 0.85,
+      "matched": false
+    },
+    {
+      "id": "comp_4",
+      "name": "Monochrome LCD Panel",
+      "category": "Display",
+      "material": "Glass",
+      "manufacturingProcess": "Photolithography / Liquid Crystal Assembly",
+      "assemblyMethod": "Zebra Connector / Mechanical Frame Fit",
+      "replaceable": false,
+      "confidence": 0.9,
+      "matched": false
+    },
+    {
+      "id": "comp_5",
+      "name": "Inner Dial Frame / Chapter Ring",
+      "category": "Structural / Aesthetic",
+      "material": "ABS Plastic",
+      "manufacturingProcess": "Injection Molding & Pad Printing",
+      "assemblyMethod": "Interlocking Snap Fit",
+      "replaceable": false,
+      "confidence": 0.85,
+      "matched": false
+    },
+    {
+      "id": "comp_6",
+      "name": "Push Buttons",
+      "category": "User Interface",
+      "material": "Polycarbonate / ABS",
+      "manufacturingProcess": "Injection Molding",
+      "assemblyMethod": "Spring-Loaded Shaft Retention",
+      "replaceable": false,
+      "confidence": 0.9,
+      "matched": false
+    },
+    {
+      "id": "comp_7",
+      "name": "Watch Strap",
+      "category": "Retention / Strap",
+      "material": "Silicone Rubber",
+      "manufacturingProcess": "Compression Molding",
+      "assemblyMethod": "Spring Bar Attachment",
+      "replaceable": true,
+      "confidence": 0.95,
+      "matched": false
+    }
+  ],
+  "materials": [
+    {
+      "name": "Polyurethane Resin",
+      "usedIn": [
+        "Outer Case & Bezel"
+      ]
+    },
+    {
+      "name": "Stainless Steel",
+      "usedIn": [
+        "Decorative Bezel Screws"
+      ]
+    },
+    {
+      "name": "Acrylic Plastic",
+      "usedIn": [
+        "Watch Crystal / Lens"
+      ]
+    },
+    {
+      "name": "ABS Plastic",
+      "usedIn": [
+        "Inner Dial Frame / Chapter Ring"
+      ]
+    },
+    {
+      "name": "Silicone Rubber",
+      "usedIn": [
+        "Watch Strap"
+      ]
+    },
+    {
+      "name": "Glass",
+      "usedIn": [
+        "Monochrome LCD Panel"
+      ]
+    }
+  ],
+  "manufacturing": [
+    {
+      "process": "Plastic Injection Molding",
+      "components": [
+        "Outer Case & Bezel",
+        "Inner Dial Frame / Chapter Ring",
+        "Push Buttons",
+        "Watch Crystal / Lens"
+      ]
+    },
+    {
+      "process": "Compression Molding",
+      "components": [
+        "Watch Strap"
+      ]
+    },
+    {
+      "process": "Precision Machining / Thread Rolling",
+      "components": [
+        "Decorative Bezel Screws"
+      ]
+    },
+    {
+      "process": "Pad Printing",
+      "components": [
+        "Inner Dial Frame / Chapter Ring"
+      ]
+    }
+  ],
+  "damage": [],
+  "summary": "The product is a Fastrack digital quartz wristwatch featuring a ruggedized resin casing with decorative external stainless steel accent screws. The design uses high-volume injection-molded polymer components for the bezel, case, and inner dial frame, coupled with a compression-molded flexible silicone strap. The internal quartz movement drives a custom multi-segment LCD displaying time, date, and mode indicators. Modular elements such as the strap and battery/caseback allow straightforward servicing, whereas internal display assembly requires complete replacement of the core digital module.",
+  "reconstructionPlan": {
+    "product": "Fastrack Digital Quartz Watch",
+    "strategy": "existing-model",
+    "confidence": 0.95,
+    "sources": [
+      "Sketchfab",
+      "CAD Library"
+    ]
+  },
+  "componentGraph": {
+    "nodes": [
+      {
+        "name": "Outer Case & Bezel",
+        "category": "Enclosure"
+      },
+      {
+        "name": "Decorative Bezel Screws",
+        "category": "Fasteners"
+      },
+      {
+        "name": "Watch Crystal / Lens",
+        "category": "Optics / Protection"
+      },
+      {
+        "name": "Monochrome LCD Panel",
+        "category": "Display"
+      },
+      {
+        "name": "Inner Dial Frame / Chapter Ring",
+        "category": "Structural / Aesthetic"
+      },
+      {
+        "name": "Push Buttons",
+        "category": "User Interface"
+      },
+      {
+        "name": "Watch Strap",
+        "category": "Retention / Strap"
+      }
+    ],
+    "edges": []
+  },
+  "explodedLayout": [
+    {
+      "translate": {
+        "x": 0.05,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.1,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.15000000000000002,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.2,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.25,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.3,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "translate": {
+        "x": 0.35,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "billOfMaterials": [
+    {
+      "item": 1,
+      "name": "Outer Case & Bezel",
+      "material": "Polyurethane Resin",
+      "process": "Plastic Injection Molding"
+    },
+    {
+      "item": 2,
+      "name": "Decorative Bezel Screws",
+      "material": "Stainless Steel",
+      "process": "Precision Machining / Thread Rolling"
+    },
+    {
+      "item": 3,
+      "name": "Watch Crystal / Lens",
+      "material": "Acrylic Plastic",
+      "process": "Injection Molding / Polishing"
+    },
+    {
+      "item": 4,
+      "name": "Monochrome LCD Panel",
+      "material": "Glass",
+      "process": "Photolithography / Liquid Crystal Assembly"
+    },
+    {
+      "item": 5,
+      "name": "Inner Dial Frame / Chapter Ring",
+      "material": "ABS Plastic",
+      "process": "Injection Molding & Pad Printing"
+    },
+    {
+      "item": 6,
+      "name": "Push Buttons",
+      "material": "Polycarbonate / ABS",
+      "process": "Injection Molding"
+    },
+    {
+      "item": 7,
+      "name": "Watch Strap",
+      "material": "Silicone Rubber",
+      "process": "Compression Molding"
+    }
+  ],
+  "createdAt": "2026-08-03T12:31:57.821Z"
+}

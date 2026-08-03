@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Image,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,11 +11,12 @@ import {
   View,
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useTheme } from '../../theme/ThemeProvider';
 import {
     analyzeInspection,
 } from '../../../backend/services/inspectionApi';
-import { deleteInspection, getInspection } from '../../storage/inspectionStorage';
-import { Inspection } from '../../storage/inspectionTypes';
+import { deleteInspection, getInspection, saveInspection } from '../../storage/inspectionStorage';
+import { Inspection, InspectionImage } from '../../storage/inspectionTypes';
 import type { RootStackParamList } from '../../types/navigation'; // Adjust path if needed
 import {
     uploadInspectionImage,
@@ -21,6 +24,8 @@ import {
 import type {
   NativeStackNavigationProp,
 } from "@react-navigation/native-stack";
+import Icon from "react-native-vector-icons/Ionicons";
+import { api } from "../../services/apiClient";
 type InspectionNavigationProp =
   NativeStackNavigationProp<
     RootStackParamList,
@@ -29,6 +34,7 @@ type InspectionNavigationProp =
 type InspectionRouteProp = RouteProp<RootStackParamList, 'InspectionDetails'>;
 
 const InspectionDetailsScreen = () => {
+const { theme } = useTheme();
 const navigation =
   useNavigation<InspectionNavigationProp>();
   const route = useRoute<InspectionRouteProp>();
@@ -38,17 +44,170 @@ const navigation =
   const [loading, setLoading] = useState(true);
 const [analyzing, setAnalyzing] =
     useState(false);
-async function loadInspection(): Promise<void> {
+  const [viewerImage, setViewerImage] = useState<InspectionImage | null>(null);
+
+  const styles = StyleSheet.create({
+    container: {
+      marginTop: 25,
+      padding: 20,
+      paddingBottom: 80,
+      backgroundColor: theme.colors.background,
+      flexGrow: 1,
+      marginBottom: 20,
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      paddingVertical: 8,
+      paddingRight: 16,
+      marginBottom: 8,
+    },
+    backText: {
+      color: theme.colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+      marginLeft: 6,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: theme.colors.textSecondary,
+      marginBottom: 20,
+    },
+    thumbnail: {
+      width: '100%',
+      height: 240,
+      borderRadius: 16,
+      marginTop: 20,
+      resizeMode: 'cover',
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    section: {
+      width: '100%',
+      marginTop: 16,
+    },
+    heading: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: theme.colors.textSecondary,
+    },
+    value: {
+      fontSize: 16,
+      marginTop: 4,
+      color: theme.colors.text,
+    },
+    galleryTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      marginTop: 30,
+      marginBottom: 12,
+      color: theme.colors.text,
+    },
+    imageCard: {
+      marginBottom: 24,
+    },
+    imageTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 8,
+      color: theme.colors.text,
+    },
+    snapshot: {
+      width: '100%',
+      height: 220,
+      borderRadius: 14,
+      marginBottom: 15,
+      resizeMode: 'cover',
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    viewerOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.85)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    viewerTitle: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    viewerImage: {
+      width: '100%',
+      height: '70%',
+      borderRadius: 12,
+      resizeMode: 'contain',
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    viewerClose: {
+      marginTop: 24,
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 28,
+      paddingVertical: 12,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    viewerCloseText: {
+      color: theme.colors.onPrimary,
+      fontWeight: '700',
+      fontSize: 16,
+    },
+    analyzeButton: {
+
+      marginTop: 40,
+
+      backgroundColor: '#1976D2',
+
+      padding: 16,
+
+      borderRadius: 12,
+
+      alignItems: 'center',
+
+  },
+
+  analyzeText: {
+
+      color: '#FFFFFF',
+
+      fontWeight: '700',
+
+      fontSize: 18,
+
+  },
+    deleteButton: {
+      marginTop: 40,
+      backgroundColor: '#D32F2F',
+      padding: 16,
+      width: '100%',
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    deleteText: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+      fontSize: 18,
+    },
+  });
+
+const loadInspection = useCallback(async (): Promise<void> => {
   const data = await getInspection(inspectionId);
 
   setInspection(data);
 
   setLoading(false);
-}
+}, [inspectionId]);
 
   useEffect(() => {
     loadInspection();
-  }, [inspectionId]);
+  }, [loadInspection]);
 
   const handleDelete = () => {
     Alert.alert(
@@ -72,7 +231,7 @@ async function loadInspection(): Promise<void> {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <Text style={styles.value}>Loading...</Text>
       </View>
     );
   }
@@ -80,7 +239,7 @@ async function loadInspection(): Promise<void> {
   if (!inspection) {
     return (
       <View style={styles.container}>
-        <Text>Inspection not found</Text>
+        <Text style={styles.value}>Inspection not found</Text>
       </View>
     );
   }
@@ -89,7 +248,7 @@ async function refreshInspection(): Promise<void> {
 }
 async function uploadImages(): Promise<void> {
 
-    if (!inspection) {
+    if (!inspection || inspection.images.length === 0) {
         return;
     }
 
@@ -123,8 +282,11 @@ async function uploadImages(): Promise<void> {
     );
 
 }
-async function analyzeCurrentInspection(inspectionId: string) {
-  return analyzeInspection(inspectionId);
+
+async function analyzeCurrentInspection(id: string) {
+  console.log("BASE URL:", api.defaults.baseURL);
+  const result = await analyzeInspection(id);
+  return result?.analysis ?? result;
 }
 
 async function handleAnalyze() {
@@ -133,13 +295,16 @@ async function handleAnalyze() {
         return;
     }
 
-    const inspectionId = inspection.id;
+    const id = inspection.id;
 
     try {
 
         setAnalyzing(true);
 
-        const totalStart = Date.now();
+        inspection.status = "PROCESSING";
+        inspection.updatedAt = new Date().toISOString();
+        await saveInspection(inspection);
+        setInspection({ ...inspection });
 
         const uploadStart = Date.now();
         await uploadImages();
@@ -147,36 +312,60 @@ async function handleAnalyze() {
             `UPLOAD TIME : ${Date.now() - uploadStart} ms`
         );
 
-        const analysisStart = Date.now();
-        const result = await analyzeCurrentInspection(
-            inspectionId,
-        );
-        console.log(
-            `ANALYSIS TIME : ${Date.now() - analysisStart} ms`
-        );
+        console.log("Starting backend analysis...");
+        const result = await analyzeCurrentInspection(id);
 
-        const refreshStart = Date.now();
+        const updatedInspection = {
+    ...inspection,
+    status: "COMPLETED" as const,
+    updatedAt: new Date().toISOString(),
+
+    // Save analysis locally
+    analysis: result,
+
+    // Optional: update object information
+    objectName:
+        result?.product?.name ??
+        inspection.objectName,
+
+    confidence:
+        result?.product?.confidence ??
+        inspection.confidence,
+};
+
+        setInspection(updatedInspection);
+        await saveInspection(updatedInspection);
+console.log("===== SAVED INSPECTION =====");
+console.log(JSON.stringify(updatedInspection, null, 2));
         await refreshInspection();
-        console.log(
-            `REFRESH TIME : ${Date.now() - refreshStart} ms`
+const reloaded = await getInspection(id);
+
+console.log("===== RELOADED INSPECTION =====");
+console.log(JSON.stringify(reloaded, null, 2));
+        navigation.navigate("Analysis", {
+            inspectionId: id,
+            analysis: result,
+        });
+
+    } catch (error: any) {
+
+        const failedInspection = {
+            ...inspection,
+            status: "FAILED" as const,
+            updatedAt: new Date().toISOString(),
+        };
+
+        setInspection(failedInspection);
+        await saveInspection(failedInspection);
+
+        console.log(error);
+
+        Alert.alert(
+            "Analysis Failed",
+            error?.response?.data?.error ??
+            error?.message ??
+            "Unknown error",
         );
-
-        console.log(
-            `TOTAL TIME : ${Date.now() - totalStart} ms`
-        );
-
-        navigation.navigate(
-            "Analysis",
-            {
-                inspectionId,
-                analysis: result,
-            },
-        );
-
-    } catch (e) {
-
-        console.log("MAIN ERROR");
-        console.log(e);
 
     } finally {
 
@@ -186,11 +375,23 @@ async function handleAnalyze() {
 
 }
   return (
+    <>
     <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+        <Icon name="arrow-back" size={24} color={theme.colors.text} />
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>{inspection.objectName}</Text>
       <Text style={styles.subtitle}>Inspection Details</Text>
 
-      <Image source={{ uri: inspection.thumbnail }} style={styles.thumbnail} />
+      <Pressable onPress={() => setViewerImage({
+        id: 'thumbnail',
+        fileName: 'Thumbnail',
+        filePath: inspection.thumbnail,
+        capturedAt: inspection.createdAt,
+      })}>
+        <Image source={{ uri: inspection.thumbnail }} style={styles.thumbnail} />
+      </Pressable>
 
       <View style={styles.section}>
         <Text style={styles.heading}>Object</Text>
@@ -216,28 +417,46 @@ async function handleAnalyze() {
 
       <Text style={styles.galleryTitle}>Captured Images</Text>
       {inspection.images.map((image) => (
-        <View key={image.id} style={styles.imageCard}>
+        <TouchableOpacity key={image.id} style={styles.imageCard} onPress={() => setViewerImage(image)} activeOpacity={0.8}>
           <Text style={styles.imageTitle}>{image.angle ?? image.fileName}</Text>
           <Image source={{ uri: image.filePath }} style={styles.snapshot} />
-        </View>
+        </TouchableOpacity>
       ))}
-<TouchableOpacity
-    style={styles.analyzeButton}
-    onPress={handleAnalyze}
-    disabled={analyzing}>
+{inspection.analysis ? (
 
-    <Text
-        style={styles.analyzeText}>
+    <TouchableOpacity
+        style={styles.analyzeButton}
+        onPress={() =>
+            navigation.navigate("Analysis", {
+                inspectionId: inspection.id,
+                analysis: inspection.analysis,
+            })
+        }>
 
-        {
-            analyzing
-                ? 'Analyzing...'
-                : 'Analyze Inspection'
-        }
+        <Text style={styles.analyzeText}>
+            View Analysis
+        </Text>
 
-    </Text>
+    </TouchableOpacity>
 
-</TouchableOpacity>
+) : (
+
+    <TouchableOpacity
+        style={styles.analyzeButton}
+        onPress={handleAnalyze}
+        disabled={analyzing}>
+
+        <Text style={styles.analyzeText}>
+
+            {analyzing
+                ? "Analyzing..."
+                : "Start Analysis"}
+
+        </Text>
+
+    </TouchableOpacity>
+
+)}
       <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
         <Text style={styles.deleteText}>Delete Inspection</Text>
       </TouchableOpacity>
@@ -256,98 +475,30 @@ async function handleAnalyze() {
         </Text>
       </View>
     </ScrollView>
+
+      <Modal
+        visible={viewerImage !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewerImage(null)}>
+        <View style={styles.viewerOverlay}>
+          {viewerImage && (
+            <>
+              <Text style={styles.viewerTitle}>{viewerImage.angle ?? viewerImage.fileName}</Text>
+              <Image
+                source={{ uri: viewerImage.filePath }}
+                style={styles.viewerImage}
+                resizeMode="contain"
+              />
+              <TouchableOpacity style={styles.viewerClose} onPress={() => setViewerImage(null)}>
+                <Text style={styles.viewerCloseText}>Close</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </Modal>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  thumbnail: {
-    width: '100%',
-    height: 240,
-    borderRadius: 16,
-    marginTop: 20,
-    resizeMode: 'cover',
-  },
-  section: {
-    width: '100%',
-    marginTop: 16,
-  },
-  heading: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  value: {
-    fontSize: 16,
-    marginTop: 4,
-  },
-  galleryTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 30,
-    marginBottom: 12,
-  },
-  imageCard: {
-    marginBottom: 24,
-  },
-  imageTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  snapshot: {
-    width: '100%',
-    height: 220,
-    borderRadius: 14,
-    marginBottom: 15,
-    resizeMode: 'cover',
-  },
-  analyzeButton: {
-
-    marginTop: 40,
-
-    backgroundColor: '#1976D2',
-
-    padding: 16,
-
-    borderRadius: 12,
-
-    alignItems: 'center',
-
-},
-
-analyzeText: {
-
-    color: '#FFFFFF',
-
-    fontWeight: '700',
-
-    fontSize: 18,
-
-},
-  deleteButton: {
-    marginTop: 40,
-    backgroundColor: '#D32F2F',
-    padding: 16,
-    width: '100%',
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  deleteText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 18,
-  },
-});
 
 export default InspectionDetailsScreen;

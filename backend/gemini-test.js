@@ -2,13 +2,16 @@ require("dotenv").config();
 
 const { GoogleGenAI } = require("@google/genai");
 
+const logger =
+    require("./utils/logger");
+
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY
 });
 
 async function main() {
 
-    console.log("Using model:", process.env.GEMINI_MODEL);
+    logger.info("Using model:", process.env.GEMINI_MODEL);
 
     try {
 
@@ -29,16 +32,16 @@ async function main() {
 
         });
 
-        console.log("\nSUCCESS");
-        console.log(response.text);
+        logger.info("\nSUCCESS");
+        logger.info(response.text);
 
     }
 
     catch (err) {
 
-        console.error("\nFAILED");
+        logger.error("\nFAILED");
 
-        console.error(err);
+        logger.error(err);
 
     }
 
