@@ -17,9 +17,7 @@ const discoveryRoutes =
 const scanRoutes =
     require("./routes/scanRoutes");
 
-const {
-    ensureFastApiServer,
-} = require("./services/fastApiManager");
+
 
 const app =
     express();
@@ -142,22 +140,6 @@ async function startServer() {
 
     try {
 
-        if (
-
-            config.env !== "production"
-
-        ) {
-
-            logger.info(
-
-                "Development mode detected.",
-
-            );
-
-            await ensureFastApiServer();
-
-        }
-
         app.listen(
 
             config.port,
@@ -165,15 +147,11 @@ async function startServer() {
             () => {
 
                 logger.info(
-
                     `Dissectra Backend running on port ${config.port}`,
-
                 );
 
                 logger.info(
-
                     `Environment: ${config.env}`,
-
                 );
 
             },
@@ -185,11 +163,8 @@ async function startServer() {
     catch (err) {
 
         logger.error(
-
             "Server startup failed",
-
             err,
-
         );
 
         process.exit(1);
