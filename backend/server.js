@@ -22,7 +22,7 @@ const {
 } = require("./config/database");
 
 
-await connectDatabase();
+
 
 const app =
     express();
@@ -145,6 +145,8 @@ async function startServer() {
 
     try {
 
+        await connectDatabase();
+
         app.listen(
 
             config.port,
@@ -177,6 +179,8 @@ async function startServer() {
     }
 
 }
+
+startServer();
 
 startServer();
 
