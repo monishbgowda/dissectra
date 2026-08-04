@@ -17,7 +17,12 @@ const discoveryRoutes =
 const scanRoutes =
     require("./routes/scanRoutes");
 
+const {
+    connectDatabase,
+} = require("./config/database");
 
+
+await connectDatabase();
 
 const app =
     express();
