@@ -8,25 +8,30 @@ async function connectDatabase() {
 
             process.env.MONGODB_URI,
 
+            {
+
+                serverSelectionTimeoutMS: 30000,
+
+                socketTimeoutMS: 45000,
+
+                maxPoolSize: 10,
+
+            },
+
         );
 
-        console.log(
-
-            "MongoDB Connected"
-
-        );
+        console.log("MongoDB Connected");
 
     }
 
     catch (err) {
+mongoose.connection.on("disconnected", () => {
+    console.log("MongoDB Disconnected");
+});
 
-        console.error(
-
-            "MongoDB Connection Failed"
-
-        );
-
-        console.error(err);
+mongoose.connection.on("error", (err) => {
+    console.error("MongoDB Error:", err);
+});
 
         process.exit(1);
 
@@ -35,7 +40,5 @@ async function connectDatabase() {
 }
 
 module.exports = {
-
     connectDatabase,
-
 };
