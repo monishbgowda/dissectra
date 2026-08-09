@@ -1,117 +1,313 @@
-# Dissectra
+# 🔬 Dissectra
 
-Dissectra is an AI-powered Android application that combines image capture, backend AI analysis, and interactive 3D anatomy model viewing. This repository includes the React Native mobile app and the Express backend used for AI processing.
+> **AI-Powered Product Dissection & 3D Inspection Platform**
 
-## Key Highlights
+Dissectra is an AI-powered mobile application that allows users to inspect real-world products by capturing multiple images. The application analyzes the object using Artificial Intelligence, identifies its internal components, predicts materials and manufacturing information, and prepares the data for interactive 3D visualization.
 
-- Android-only React Native app built with React Native 0.85.2 and React 19.2.3
-- Signed release APK ready for installation without Metro or `npm start`
-- Backend AI analysis service with Gemini-compatible integration
-- Local scan history, image upload, and 3D model viewer support
-- Release-ready build configuration and signing workflow
+The long-term vision of Dissectra is to become an educational and engineering platform where users can virtually disassemble products and explore their internal construction.
 
-## Repository Contents
+---
 
-- `android/` — Android native project and Gradle build configuration
-- `backend/` — Express server and AI analysis backend
-- `src/` — React Native source files, screens, services, and UI components
-- `App.tsx` — React Native app entry point
-- `package.json` — app dependencies and scripts
-- `README.md` — this file
-- `USER_GUIDE.md` — app usage guide
-- `RELEASE_NOTES.md` — release summary and validation notes
+## ✨ Features
 
-## Release APK
+### 📷 Multi-Angle Image Capture
 
-The signed Android release APK is available as `Dissectra-release.apk` in the repo root. This APK is a signed release build and does not require `npm start`, Metro, or a development server on the device.
+- Capture multiple images of an object
+- Automatic inspection creation
+- Organized inspection history
 
-> Recommended: Upload the APK as a GitHub Release asset for the best mobile install experience. GitHub Release assets avoid raw repository download issues and work more reliably on Android.
+### 🤖 AI Analysis
 
-## Install on Android
+- Product identification
+- Component detection
+- Material prediction
+- Manufacturing process prediction
+- Assembly method prediction
+- Replaceability prediction
+- Confidence scoring
 
-1. Download `Dissectra-release.apk` from the GitHub release or repository asset.
-2. Open device settings and allow installs from unknown sources for your browser or file manager.
-3. Tap the APK file to install.
-4. Launch Dissectra from your app drawer.
+### 📁 Inspection Management
 
-## Requirements
+- Local inspection storage
+- Inspection history
+- Thumbnail generation
+- Metadata management
 
-- Node.js 20+ or compatible LTS
-- Java JDK 17
-- Android SDK with API 33 / 34 installed
-- Android device or emulator running Android 7.0+ (API 24+)
+### 🎨 Modern UI
 
-## Local Development
+- Light & Dark mode
+- Dynamic accent colors
+- Responsive interface
+- Theme persistence
 
-1. Clone the repository.
-2. Install dependencies:
+### ⚡ Backend Pipeline
+
+- Modular inspection pipeline
+- AI analysis engine
+- Model generation pipeline
+- REST API architecture
+- Backend auto-discovery (Development)
+
+---
+
+# 🏗 Architecture
+
+```
+React Native App
+        │
+        ▼
+Node.js Backend (Express)
+        │
+        ▼
+Inspection Pipeline
+        │
+        ▼
+Gemini AI
+        │
+        ▼
+Structured Analysis
+        │
+        ▼
+3D Model Pipeline
+```
+
+---
+
+# 🛠 Tech Stack
+
+## Mobile
+
+- React Native
+- TypeScript
+- React Navigation
+- React Native FS
+- AsyncStorage
+
+## Backend
+
+- Node.js
+- Express.js
+- Multer
+- Pipeline Architecture
+- REST API
+
+## Artificial Intelligence
+
+- Google Gemini
+- OpenAI Compatible APIs
+- OpenRouter (Supported)
+
+## Storage
+
+- Local Storage (Current)
+- Cloud Storage (Planned)
+
+---
+
+# 📂 Project Structure
+
+```
+backend/
+│
+├── config/
+├── controllers/
+├── middleware/
+├── pipeline/
+├── routes/
+├── services/
+├── storage/
+├── utils/
+└── server.js
+
+mobile/
+│
+├── src/
+│   ├── screens/
+│   ├── components/
+│   ├── navigation/
+│   ├── services/
+│   ├── storage/
+│   ├── theme/
+│   └── utils/
+```
+
+---
+
+# 🚀 Getting Started
+
+## Clone Repository
+
+```bash
+git clone https://github.com/monishbgowda/dissectra.git
+
+cd dissectra
+```
+
+---
+
+## Install Dependencies
+
+### Mobile
 
 ```bash
 npm install
 ```
 
-3. Copy example environment files:
+### Backend
 
 ```bash
-cp .env.example .env
-cp backend/.env.example backend/.env
+cd backend
+npm install
 ```
 
-4. Add backend secrets to `backend/.env`.
+---
 
-5. Start the backend server:
+## Configure Environment
 
-```bash
-npm run backend
+Create a `.env` file inside the backend directory.
+
+Example:
+
+```env
+PORT=4000
+
+UPLOAD_ROOT=./storage
+
+AI_ANALYSIS_PROVIDER=gemini
+
+GEMINI_API_KEY=YOUR_API_KEY
 ```
 
-6. Start Metro (development packager):
+---
+
+## Start Backend
 
 ```bash
+cd backend
 npm start
 ```
 
-7. Run the app on Android device/emulator:
+---
+
+## Start React Native
 
 ```bash
+npm start
+
 npm run android
 ```
 
-## Build a Signed Release APK
+---
 
-The project already includes release signing configuration in `android/app/build.gradle` and `android/gradle.properties`. To build the signed APK locally:
+# 📱 Current Workflow
 
-```bash
-cd android
-./gradlew assembleRelease
+```
+Capture Images
+
+        ↓
+
+Create Inspection
+
+        ↓
+
+Upload Images
+
+        ↓
+
+AI Analysis
+
+        ↓
+
+Generate Structured Data
+
+        ↓
+
+Display Results
 ```
 
-The built APK will be available at `android/app/build/outputs/apk/release/app-release.apk`.
+---
 
-## Project Scripts
+# 🧠 Analysis Output
 
-- `npm start` — start Metro bundler
-- `npm run android` — install and launch on Android emulator/device
-- `npm run backend` — start Express backend server
-- `npm test` — run Jest tests
-- `npm run typecheck` — run TypeScript type checking
+Dissectra currently predicts:
 
-## Notes
+- Product Name
+- Brand
+- Model
+- Category
+- Components
+- Material
+- Manufacturing Process
+- Assembly Method
+- Replaceability
+- Confidence Score
 
-- This repository is currently focused on Android deployment.
-- The installed `Dissectra-release.apk` is a production-ready signed release build.
-- The Android app communicates with the backend for AI analysis and model generation.
+---
 
-## Troubleshooting
+# 🌐 Deployment Roadmap
 
-- If installation fails, ensure the device allows unknown-source installs.
-- If the APK download seems broken, use the GitHub Release asset instead of raw file downloads.
-- Make sure the Android device has enough free storage space.
+Current Status
 
-## Contribution
+- ✅ React Native Application
+- ✅ Backend API
+- ✅ AI Analysis Pipeline
+- ✅ Inspection History
+- ✅ Theme System
+- ✅ Backend Auto Discovery (Development)
 
-Contributions are welcome. For changes to the Android app or backend, open a pull request with a clear description of the fix or enhancement.
+Upcoming
 
-## License
+- Cloud Backend Deployment
+- Cloud Image Storage
+- User Authentication
+- Interactive 3D Viewer
+- Exploded View
+- Mechanical AI Integration
+- Real-time Model Generation
 
-This repository does not specify a license file. Add a license if you want to publish or share this code publicly.
+---
+
+# 📸 Screenshots
+
+> Screenshots will be added after the first stable release.
+
+---
+
+# 📈 Future Scope
+
+Dissectra aims to become an engineering and educational platform capable of:
+
+- Virtual Product Dissection
+- Interactive 3D Learning
+- Manufacturing Education
+- Reverse Engineering Assistance
+- Material Intelligence
+- Mechanical AI Assistant
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+Feel free to open issues or submit pull requests for improvements.
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+# 👨‍💻 Author
+
+**Monish B Gowda**
+
+Information Science Engineering Student
+
+GitHub: https://github.com/monishbgowda
+
+---
+
+⭐ If you found this project interesting, consider giving it a star!

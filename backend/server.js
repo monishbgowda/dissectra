@@ -1,21 +1,188 @@
-require('dotenv').config();
-const path = require('path');
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const scanRoutes = require('./routes/scanRoutes');
-const errorHandler = require('./middleware/errorHandler');
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
 
-const app = express();
-const PORT = process.env.PORT || 4000;
+const config =
+    require("./config/config");
 
-app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(morgan('dev'));
-app.use(express.json({ limit: '5mb' }));
-app.use('/files', express.static(path.join(__dirname, 'storage')));
-app.use('/', scanRoutes);
-app.use(errorHandler);
+const logger =
+    require("./utils/logger");
 
-app.listen(PORT, () => console.log(`Dissectra backend listening on ${PORT}`));
+const errorHandler =
+    require("./middleware/errorHandler");
+
+const discoveryRoutes =
+    require("./routes/discoveryRoutes");
+
+const scanRoutes =
+    require("./routes/scanRoutes");
+
+const {
+    connectDatabase,
+} = require("./config/database");
+
+
+
+
+const app =
+    express();
+
+/*
+|--------------------------------------------------------------------------
+| Global Middleware
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    cors(),
+
+);
+
+app.use(
+
+    express.json({
+        limit: "25mb",
+    }),
+
+);
+
+app.use(
+
+    express.urlencoded({
+
+        extended: true,
+
+        limit: "25mb",
+
+    }),
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| Static Assets
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    "/storage",
+
+    express.static(
+
+        path.join(
+            config.uploadRoot,
+        ),
+
+    ),
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| Routes
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    "/discover",
+
+    discoveryRoutes,
+
+);
+
+app.use(
+
+    "/api",
+
+    scanRoutes,
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| 404 Handler
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    (_req, res) => {
+
+        res.status(404).json({
+
+            success: false,
+
+            error: "Route not found.",
+
+        });
+
+    },
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| Error Handler
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+
+    errorHandler,
+
+);
+
+/*
+|--------------------------------------------------------------------------
+| Server Startup
+|--------------------------------------------------------------------------
+*/
+
+async function startServer() {
+
+    try {
+
+        await connectDatabase();
+
+        app.listen(
+
+            config.port,
+
+            () => {
+
+                logger.info(
+                    `Dissectra Backend running on port ${config.port}`,
+                );
+
+                logger.info(
+                    `Environment: ${config.env}`,
+                );
+
+            },
+
+        );
+
+    }
+
+    catch (err) {
+
+        logger.error(
+            "Server startup failed",
+            err,
+        );
+
+        process.exit(1);
+
+    }
+
+}
+
+startServer();
+
+startServer();
+
+module.exports =
+    app;

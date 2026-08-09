@@ -1,145 +1,555 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { GlassCard } from '../components/GlassCard';
-import { theme } from '../../theme/theme';
 
-interface SettingItemProps {
-  title: string;
-  description?: string;
-  onPress: () => void;
-  showArrow?: boolean;
+import {
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
+
+import {
+  SafeAreaView,
+} from 'react-native-safe-area-context';
+
+import {
+  accents,
+  AccentName,
+  AppearanceMode,
+} from '../../theme/theme';
+
+import {
+  useTheme,
+} from '../../theme/ThemeProvider';
+
+const modes: {
+  key: AppearanceMode;
+  label: string;
+}[] = [
+  {
+    key: 'light',
+    label: 'Light',
+  },
+  {
+    key: 'dark',
+    label: 'Dark',
+  },
+  {
+    key: 'system',
+    label: 'System',
+  },
+];
+
+const accentOptions: AccentName[] = [
+  'monochrome',
+  'blue',
+  'violet',
+  'green',
+  'orange',
+];
+
+export function SettingsScreen() {
+  const {
+    theme,
+    appearance,
+    accent,
+    setAppearance,
+    setAccent,
+  } = useTheme();
+
+  const styles = makeStyles(theme);
+
+  return (
+    <SafeAreaView
+      edges={[
+        'top',
+        'left',
+        'right',
+      ]}
+      style={styles.safe}
+    >
+      <ScrollView
+        contentContainerStyle={
+          styles.content
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            Settings
+          </Text>
+        </View>
+
+        <Text style={styles.sectionLabel}>
+          APPEARANCE
+        </Text>
+
+        <View style={styles.card}>
+          <View style={styles.settingBlock}>
+            <Text style={styles.settingLabel}>
+              Mode
+            </Text>
+
+            <View style={styles.segment}>
+              {modes.map(mode => {
+                const selected =
+                  appearance === mode.key;
+
+                return (
+                  <TouchableOpacity
+                    key={mode.key}
+                    style={[
+                      styles.segmentButton,
+                      selected &&
+                        styles.segmentSelected,
+                    ]}
+                    onPress={() =>
+                      setAppearance(mode.key)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.segmentText,
+                        selected &&
+                          styles.segmentTextSelected,
+                      ]}
+                    >
+                      {mode.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.settingBlock}>
+            <Text style={styles.settingLabel}>
+              Theme Color
+            </Text>
+
+            <View style={styles.colorRow}>
+              {accentOptions.map(name => {
+                const selected =
+                  accent === name;
+
+                const swatch =
+                  name === 'monochrome'
+                    ? theme.mode === 'dark'
+                      ? '#FFFFFF'
+                      : '#111111'
+                    : accents[name];
+
+                return (
+                  <TouchableOpacity
+                    key={name}
+                    accessibilityLabel={`${name} theme`}
+                    style={[
+                      styles.colorOuter,
+                      selected &&
+                        styles.colorOuterSelected,
+                    ]}
+                    onPress={() =>
+                      setAccent(name)
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.colorCircle,
+                        {
+                          backgroundColor:
+                            swatch,
+                        },
+                      ]}
+                    />
+
+                    {selected && (
+                      <Text
+                        style={[
+                          styles.check,
+                          {
+                            color:
+                              name ===
+                              'monochrome'
+                                ? theme.mode ===
+                                  'dark'
+                                  ? '#000'
+                                  : '#FFF'
+                                : '#FFF',
+                          },
+                        ]}
+                      >
+                        ✓
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.sectionLabel}>
+          GENERAL
+        </Text>
+
+        <View style={styles.card}>
+          <SettingToggle
+            label="Haptic Feedback"
+            theme={theme}
+            styles={styles}
+          />
+
+          <View style={styles.divider} />
+
+          <SettingToggle
+            label="Animations"
+            theme={theme}
+            styles={styles}
+          />
+        </View>
+
+        <Text style={styles.sectionLabel}>
+          DATA
+        </Text>
+
+        <View style={styles.card}>
+          <SettingRow
+    label="Manage Scan History"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "Manage Scan History",
+            "This feature will allow you to review and permanently delete previous inspections.",
+        )
+    }
+/>
+
+          <View style={styles.divider} />
+
+          <SettingRow
+    label="Clear Cached Models"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "Clear Cached Models",
+            "Downloaded 3D models and temporary files will be removed to free storage space.",
+        )
+    }
+/>
+        </View>
+
+        <Text style={styles.sectionLabel}>
+          ABOUT
+        </Text>
+
+        <View style={styles.card}>
+         <SettingRow
+    label="About Dissectra"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "About Dissectra",
+            "Dissectra uses Artificial Intelligence (AI) and interactive three-dimensional (3D) visualization to analyze products and explore their internal components.",
+        )
+    }
+/>
+
+          <View style={styles.divider} />
+
+          <SettingRow
+    label="Privacy Policy"
+    styles={styles}
+    onPress={() =>
+        showComingSoon(
+            "Privacy Policy",
+            "Our privacy policy will be available in a future update.",
+        )
+    }
+/>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.rowText}>
+              Version
+            </Text>
+
+            <Text style={styles.value}>
+              1.0.0
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+function showComingSoon(
+    title: string,
+    message: string,
+) {
+    Alert.alert(
+        title,
+        message,
+    );
 }
 
-function SettingItem({ title, description, onPress, showArrow = true }: SettingItemProps) {
+function SettingToggle({
+  label,
+  theme,
+  styles,
+}: any) {
+  const [enabled, setEnabled] =
+    React.useState(true);
+
   return (
-    <TouchableOpacity style={styles.settingItem} onPress={onPress}>
-      <View style={styles.settingContent}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        {description && <Text style={styles.settingDescription}>{description}</Text>}
-      </View>
-      {showArrow && <Text style={styles.arrow}>›</Text>}
+    <View style={styles.row}>
+      <Text style={styles.rowText}>
+        {label}
+      </Text>
+
+      <Switch
+        value={enabled}
+        onValueChange={setEnabled}
+        trackColor={{
+          false:
+            theme.colors.surfaceVariant,
+          true:
+            theme.colors.inverseBackground,
+        }}
+        thumbColor={
+          theme.colors.inverseText
+        }
+      />
+    </View>
+  );
+}
+function SettingRow({
+    label,
+    styles,
+    onPress,
+}: {
+    label: string;
+    styles: any;
+    onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+    style={styles.row}
+    onPress={onPress}
+>
+      <Text style={styles.rowText}>
+        {label}
+      </Text>
+
+      <Text style={styles.arrow}>
+        ›
+      </Text>
     </TouchableOpacity>
   );
 }
 
-export function SettingsScreen() {
-  return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Settings</Text>
-      
-      <GlassCard variant="elevated">
-        <Text style={styles.sectionTitle}>Appearance</Text>
-        <SettingItem
-          title="Dark Mode"
-          description="Currently enabled"
-          onPress={() => {}}
-        />
-        <View style={styles.divider} />
-        <SettingItem
-          title="Theme Color"
-          description="Cyan Blue"
-          onPress={() => {}}
-        />
-      </GlassCard>
+function makeStyles(theme: any) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
 
-      <GlassCard variant="elevated">
-        <Text style={styles.sectionTitle}>Storage</Text>
-        <SettingItem
-          title="Clear Cache"
-          description="Free up storage space"
-          onPress={() => {}}
-        />
-        <View style={styles.divider} />
-        <SettingItem
-          title="Manage Downloads"
-          description="View offline models"
-          onPress={() => {}}
-        />
-      </GlassCard>
+      backgroundColor:
+        theme.colors.background,
+    },
 
-      <GlassCard variant="elevated">
-        <Text style={styles.sectionTitle}>About</Text>
-        <SettingItem
-          title="Version"
-          description="1.0.0"
-          onPress={() => {}}
-          showArrow={false}
-        />
-        <View style={styles.divider} />
-        <SettingItem
-          title="Privacy Policy"
-          onPress={() => {}}
-        />
-        <View style={styles.divider} />
-        <SettingItem
-          title="Terms of Service"
-          onPress={() => {}}
-        />
-      </GlassCard>
+    content: {
+      width: '100%',
+      maxWidth: 720,
 
-      <GlassCard variant="elevated">
-        <SettingItem
-          title="Rate App"
-          description="Leave a review on Play Store"
-          onPress={() => {}}
-        />
-        <View style={styles.divider} />
-        <SettingItem
-          title="Send Feedback"
-          description="Report bugs or suggest features"
-          onPress={() => {}}
-        />
-      </GlassCard>
-    </ScrollView>
-  );
+      alignSelf: 'center',
+
+      paddingHorizontal: 20,
+      paddingBottom: 40,
+    },
+
+    header: {
+      minHeight: 64,
+
+      justifyContent: 'center',
+
+      borderBottomWidth: 1,
+      borderBottomColor:
+        theme.colors.divider,
+
+      marginBottom: 24,
+    },
+
+    title: {
+      color: theme.colors.text,
+
+      fontSize: 21,
+      fontWeight: '700',
+    },
+
+    sectionLabel: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 10,
+      fontWeight: '700',
+
+      letterSpacing: 0.7,
+
+      marginBottom: 9,
+      marginTop: 4,
+    },
+
+    card: {
+      backgroundColor:
+        theme.colors.card,
+
+      borderRadius: 15,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      paddingHorizontal: 16,
+
+      marginBottom: 26,
+
+      overflow: 'hidden',
+    },
+
+    settingBlock: {
+      paddingVertical: 16,
+    },
+
+    settingLabel: {
+      color: theme.colors.text,
+
+      fontSize: 13,
+      fontWeight: '500',
+
+      marginBottom: 12,
+    },
+
+    segment: {
+      flexDirection: 'row',
+
+      backgroundColor:
+        theme.colors.surfaceVariant,
+
+      padding: 4,
+
+      borderRadius: 12,
+    },
+
+    segmentButton: {
+      flex: 1,
+
+      minHeight: 40,
+
+      alignItems: 'center',
+      justifyContent: 'center',
+
+      borderRadius: 9,
+    },
+
+    segmentSelected: {
+      backgroundColor:
+        theme.colors.background,
+
+      ...theme.shadows.sm,
+    },
+
+    segmentText: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 12,
+      fontWeight: '500',
+    },
+
+    segmentTextSelected: {
+      color: theme.colors.text,
+
+      fontWeight: '700',
+    },
+
+    colorRow: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      gap: 13,
+    },
+
+    colorOuter: {
+      width: 34,
+      height: 34,
+
+      borderRadius: 17,
+
+      alignItems: 'center',
+      justifyContent: 'center',
+
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+
+    colorOuterSelected: {
+      borderColor:
+        theme.colors.text,
+    },
+
+    colorCircle: {
+      width: 24,
+      height: 24,
+
+      borderRadius: 12,
+    },
+
+    check: {
+      position: 'absolute',
+
+      fontSize: 13,
+      fontWeight: '900',
+    },
+
+    divider: {
+      height: 1,
+
+      backgroundColor:
+        theme.colors.divider,
+    },
+
+    row: {
+      minHeight: 56,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+
+    rowText: {
+      color: theme.colors.text,
+
+      fontSize: 14,
+    },
+
+    arrow: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 24,
+      fontWeight: '300',
+    },
+
+    value: {
+      color:
+        theme.colors.textSecondary,
+
+      fontSize: 13,
+    },
+  });
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  title: {
-    ...theme.typography.h2,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  sectionTitle: {
-    ...theme.typography.overline,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.md,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-  },
-  settingContent: {
-    flex: 1,
-  },
-  settingTitle: {
-    ...theme.typography.body1,
-    color: theme.colors.text,
-    fontWeight: '500',
-  },
-  settingDescription: {
-    ...theme.typography.body2,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  arrow: {
-    ...theme.typography.h3,
-    color: theme.colors.textSecondary,
-    marginLeft: theme.spacing.md,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.divider,
-    marginVertical: theme.spacing.sm,
-  },
-});

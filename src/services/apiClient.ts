@@ -1,18 +1,49 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../config/env';
+import axios from "axios";
 
-export const api = axios.create({ baseURL: API_BASE_URL, timeout: 120000 });
+export const api = axios.create({
+    timeout: 120000,
+});
+
+export function setApiBaseUrl(url: string) {
+    api.defaults.baseURL = url;
+}
+
+api.interceptors.request.use(config => {
+
+    console.log("=================================");
+    console.log("REQUEST");
+    console.log("BASE:", config.baseURL);
+    console.log("URL :", config.url);
+    console.log("METHOD:", config.method);
+    console.log("=================================");
+
+    return config;
+
+});
 
 api.interceptors.response.use(
-  response => response,
-  async error => {
-    const config = error.config || {};
-    config.__retryCount = config.__retryCount || 0;
-    if (config.__retryCount < 2 && (!error.response || error.response.status >= 500)) {
-      config.__retryCount += 1;
-      await new Promise<void>(resolve => setTimeout(resolve, 800 * config.__retryCount));
-      return api(config);
+
+    response => {
+
+        console.log("RESPONSE", response.status);
+
+        return response;
+
+    },
+
+    error => {
+
+        console.log("========= AXIOS =========");
+        console.log(error.message);
+        console.log(error.code);
+        console.log(error.config?.baseURL);
+        console.log(error.config?.url);
+        console.log(error.response?.status);
+        console.log(error.response?.data);
+        console.log("=========================");
+
+        return Promise.reject(error);
+
     }
-    return Promise.reject(error);
-  },
+
 );

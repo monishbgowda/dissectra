@@ -4,37 +4,69 @@ node_modules/
 # React Native
 .expo/
 .bundle/
+.metro-health-check*
 
 # Android
 android/.gradle/
 android/build/
 android/app/build/
-android/my-release-key.keystore
-*.apk
-*.aab
+android/app/.cxx/
+android/.cxx/
+android/local.properties
+android/*.keystore
+android/*.jks
+android/app/*.keystore
+android/app/*.jks
 
 # iOS
 ios/build/
 ios/Pods/
+
+# Build outputs
+build/
+dist/
+*.apk
+*.aab
+output-metadata.json
 
 # Environment
 .env
 .env.local
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # IDEs
-.vscode/
 .idea/
+.vscode/
+*.iml
 
 # macOS
 .DS_Store
 
-# Metro
-.metro-health-check*
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
 
-# Misc
+# Android Profiling
+*.hprof
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Image uploads
+/dissectra/uploads/inspections
+uploads/
+
+# Coverage
 coverage/
+temp-apk/
+tree.txt
+tsc-check.txt
+project_structure.txt
+backend/tree.txt
+backend/backend_structure*.txt

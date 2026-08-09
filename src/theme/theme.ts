@@ -1,59 +1,366 @@
-export const theme = {
-  colors: {
-    // Material Design 3 inspired dark theme
-    background: '#0A0E14',
-    surface: '#121820',
-    surfaceVariant: '#1A2230',
-    primary: '#00D4FF',
-    onPrimary: '#001018',
-    primaryContainer: '#004A5E',
-    secondary: '#7C5CFF',
-    onSecondary: '#FFFFFF',
-    secondaryContainer: '#2A1D5E',
-    tertiary: '#FFB74D',
-    error: '#FF5252',
-    onError: '#FFFFFF',
-    success: '#00E676',
-    text: '#E8F3FF',
-    textSecondary: '#8EA3B8',
-    textDisabled: '#4A5568',
-    border: 'rgba(255,255,255,0.08)',
-    divider: 'rgba(255,255,255,0.06)',
-    card: 'rgba(255,255,255,0.04)',
-    overlay: 'rgba(0,0,0,0.6)',
-  },
-  spacing: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 48,
-  },
-  radius: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 24,
-    full: 9999,
-  },
-  typography: {
-    h1: { fontSize: 32, fontWeight: '700' as const, lineHeight: 40 },
-    h2: { fontSize: 28, fontWeight: '700' as const, lineHeight: 36 },
-    h3: { fontSize: 24, fontWeight: '600' as const, lineHeight: 32 },
-    h4: { fontSize: 20, fontWeight: '600' as const, lineHeight: 28 },
-    h5: { fontSize: 18, fontWeight: '600' as const, lineHeight: 26 },
-    h6: { fontSize: 16, fontWeight: '600' as const, lineHeight: 24 },
-    body1: { fontSize: 16, fontWeight: '400' as const, lineHeight: 24 },
-    body2: { fontSize: 14, fontWeight: '400' as const, lineHeight: 20 },
-    subtitle1: { fontSize: 14, fontWeight: '500' as const, lineHeight: 20 },
-    subtitle2: { fontSize: 12, fontWeight: '500' as const, lineHeight: 16 },
-    caption: { fontSize: 12, fontWeight: '400' as const, lineHeight: 16 },
-    overline: { fontSize: 11, fontWeight: '500' as const, lineHeight: 16, textTransform: 'uppercase' as const },
-  },
-  shadows: {
-    sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-    md: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 2 },
-    lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
-  },
+export type ThemeMode = 'light' | 'dark';
+
+export type AppearanceMode =
+  | 'system'
+  | 'light'
+  | 'dark';
+
+export type AccentName =
+  | 'monochrome'
+  | 'blue'
+  | 'violet'
+  | 'green'
+  | 'orange';
+
+// Compatibility alias
+export type AccentColor = AccentName;
+
+export const accents: Record<
+  AccentName,
+  string
+> = {
+  monochrome: '#FFFFFF',
+  blue: '#3488F5',
+  violet: '#A855F7',
+  green: '#22C55E',
+  orange: '#FF6846',
 };
+
+export function createTheme(
+  mode: ThemeMode,
+  accent: AccentName = 'monochrome',
+) {
+  const dark = mode === 'dark';
+
+  const accentColor =
+    accent === 'monochrome'
+      ? dark
+        ? '#FFFFFF'
+        : '#111111'
+      : accents[accent];
+
+  return {
+    mode,
+    dark,
+
+    colors: {
+      background:
+        dark
+          ? '#000000'
+          : '#F7F7F7',
+
+      surface:
+        dark
+          ? '#111111'
+          : '#FFFFFF',
+
+      surfaceVariant:
+        dark
+          ? '#181818'
+          : '#F2F2F2',
+
+      elevated:
+        dark
+          ? '#1A1A1A'
+          : '#FFFFFF',
+       card:
+    dark
+      ? '#111111'
+      : '#FFFFFF',
+
+info:
+    dark
+        ? "#38BDF8"
+        : "#0284C7",
+
+replaceable:
+    "#22C55E",
+
+nonReplaceable:
+    "#EF4444",
+
+chip:
+    dark
+        ? "#1C1C1C"
+        : "#F2F2F2",
+
+chipBorder:
+    dark
+        ? "#303030"
+        : "#E5E5E5",
+      primary: accentColor,
+
+      onPrimary:
+        accent === 'monochrome'
+          ? dark
+            ? '#000000'
+            : '#FFFFFF'
+          : '#FFFFFF',
+
+      text:
+        dark
+          ? '#FFFFFF'
+          : '#111111',
+
+      textSecondary:
+        dark
+          ? '#A3A3A3'
+          : '#666666',
+
+      textDisabled:
+        dark
+          ? '#666666'
+          : '#AAAAAA',
+
+      border:
+        dark
+          ? '#292929'
+          : '#E5E5E5',
+
+      divider:
+        dark
+          ? '#202020'
+          : '#EBEBEB',
+
+      success: '#22C55E',
+      warning: '#F59E0B',
+      error: '#EF4444',
+
+      overlay:
+        'rgba(0,0,0,0.55)',
+
+      tabBar:
+        dark
+          ? '#080808'
+          : '#FFFFFF',
+
+      tabInactive:
+        dark
+          ? '#858585'
+          : '#777777',
+
+      inverseSurface:
+        dark
+          ? '#FFFFFF'
+          : '#111111',
+
+      inverseBackground:
+        dark
+          ? '#FFFFFF'
+          : '#111111',
+
+      inverseText:
+        dark
+          ? '#111111'
+          : '#FFFFFF',
+        confidenceHigh: "#22C55E",
+
+confidenceMedium: "#F59E0B",
+
+confidenceLow: "#EF4444",
+
+componentBorder:
+    dark
+        ? "#2D2D2D"
+        : "#E6E6E6",
+
+componentBackground:
+    dark
+        ? "#151515"
+        : "#FCFCFC",
+    },
+gradients: {
+
+    hero:
+        dark
+            ? ["#181818", "#111111"]
+            : ["#FFFFFF", "#F7F7F7"],
+
+    primary:
+        dark
+            ? [accentColor, "#181818"]
+            : [accentColor, "#FFFFFF"],
+
+},
+status: {
+
+    completed: "#22C55E",
+
+    processing: "#3B82F6",
+
+    pending: "#F59E0B",
+
+    failed: "#EF4444",
+
+},
+materials: {
+
+    metal: "#9CA3AF",
+
+    plastic: "#60A5FA",
+
+    glass: "#67E8F9",
+
+    rubber: "#4ADE80",
+
+    ceramic: "#FBBF24",
+
+    composite: "#C084FC",
+
+},
+icons: {
+
+    active: accentColor,
+
+    inactive:
+        dark
+            ? "#808080"
+            : "#999999",
+
+},
+
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 12,
+      lg: 16,
+      xl: 24,
+      xxl: 32,
+    },
+
+    radius: {
+      sm: 10,
+      md: 16,
+      lg: 22,
+      xl: 28,
+      pill: 999,
+    },
+
+typography: {
+  display: {
+    fontSize: 28,
+    fontWeight: '800' as const,
+  },
+
+  h1: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+  },
+
+  h2: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+
+  // Legacy compatibility
+  h4: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+
+  h6: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+
+  subtitle1: {
+    fontSize: 15,
+    fontWeight: '400' as const,
+  },
+
+  caption: {
+    fontSize: 12,
+    fontWeight: '400' as const,
+  },
+
+  body1: {
+    fontSize: 15,
+    fontWeight: '400' as const,
+  },
+
+  body2: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+  },
+
+  label: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+  },
+},
+
+    shadows: {
+      sm: {
+        shadowColor: '#000000',
+
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+
+        shadowOpacity:
+          dark ? 0.35 : 0.08,
+
+        shadowRadius: 5,
+
+        elevation: 2,
+      },
+
+      md: {
+        shadowColor: '#000000',
+
+        shadowOffset: {
+          width: 0,
+          height: 6,
+        },
+
+        shadowOpacity:
+          dark ? 0.4 : 0.12,
+
+        shadowRadius: 12,
+
+        elevation: 5,
+      },
+      lg: {
+
+    shadowColor: "#000",
+
+    shadowOffset: {
+
+        width: 0,
+
+        height: 10,
+
+    },
+
+    shadowOpacity:
+        dark ? 0.45 : 0.18,
+
+    shadowRadius: 18,
+
+    elevation: 8,
+
+},
+    },
+  };
+}
+
+export type AppTheme =
+  ReturnType<typeof createTheme>;
+
+/*
+ * Legacy compatibility theme.
+ *
+ * Older components that still do:
+ *
+ * import { theme } from '../../theme/theme'
+ *
+ * can continue compiling.
+ *
+ * New screens should use useTheme().
+ */
+export const theme =
+  createTheme(
+    'dark',
+    'monochrome',
+  );

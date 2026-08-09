@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #090909;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    #status {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #hint {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 16px;
+      color: rgba(255, 255, 255, 0.55);
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="status">
+    Loading 3D model...
+  </div>
+
+  <div id="hint">
+    Drag to rotate • Pinch to zoom • Tap a component
+  </div>
+
+  <script src="./viewer.bundle.js"></script>
+
+  <script>
+    (function () {
+
+      /* =========================================================
+         REACT NATIVE BRIDGE
+      ========================================================= */
+
+      function sendToApp(data) {
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify(data)
+          );
+        }
+      }
+
+      sendToApp({
+        type: 'debug',
+        message: 'viewer.html JavaScript started'
+      });
+
+      window.onerror = function (
+        message,
+        source,
+        line,
+        column,
+        error
+      ) {
+        sendToApp({
+          type: 'javascriptError',
+          message: String(message),
+          source: String(source),
+          line: line,
+          column: column,
+          error: error ? String(error) : ''
+        });
+      };
+
+
+      /* =========================================================
+         VERIFY 3D ENGINE
+      ========================================================= */
+
+      if (!window.Dissectra3D) {
+        document.getElementById('status').innerHTML =
+          '3D engine failed to load';
+
+        sendToApp({
+          type: 'engineError',
+          message: 'window.Dissectra3D is undefined'
+        });
+
+        return;
+      }
+
+      const {
+        THREE,
+        GLTFLoader
+      } = window.Dissectra3D;
+
+      const status =
+        document.getElementById('status');
+
+
+      /* =========================================================
+         SCENE
+      ========================================================= */
+
+      const scene =
+        new THREE.Scene();
+
+      scene.background =
+        new THREE.Color(0x090909);
+
+
+      /* =========================================================
+         CAMERA
+      ========================================================= */
+
+      const camera =
+        new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth /
+            window.innerHeight,
+          0.01,
+          1000
+        );
+
+      const DEFAULT_CAMERA_Z = 5;
+
+      /*
+       * Allow substantially more zoom-out.
+       *
+       * The exploded model does NOT need to be
+       * automatically squeezed into the original frame.
+       */
+      const MIN_CAMERA_Z = 1.5;
+      const MAX_CAMERA_Z = 35;
+
+      camera.position.set(
+        0,
+        0,
+        DEFAULT_CAMERA_Z
+      );
+
+
+      /* =========================================================
+         RENDERER
+      ========================================================= */
+
+      const renderer =
+        new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: false
+        });
+
+      renderer.setPixelRatio(
+        Math.min(
+          window.devicePixelRatio || 1,
+          2
+        )
+      );
+
+      renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+      );
+
+      renderer.outputColorSpace =
+        THREE.SRGBColorSpace;
+
+      document.body.appendChild(
+        renderer.domElement
+      );
+
+
+      /* =========================================================
+         LIGHTING
+      ========================================================= */
+
+      const hemisphere =
+        new THREE.HemisphereLight(
+          0xffffff,
+          0x333333,
+          2.5
+        );
+
+      scene.add(hemisphere);
+
+      const keyLight =
+        new THREE.DirectionalLight(
+          0xffffff,
+          3
+        );
+
+      keyLight.position.set(
+        4,
+        6,
+        5
+      );
+
+      scene.add(keyLight);
+
+      const fillLight =
+        new THREE.DirectionalLight(
+          0xffffff,
+          1.5
+        );
+
+      fillLight.position.set(
+        -4,
+        1,
+        3
+      );
+
+      scene.add(fillLight);
+
+
+      /* =========================================================
+         MODEL ROOT
+      ========================================================= */
+
+      const modelRoot =
+        new THREE.Group();
+
+      scene.add(modelRoot);
+
+      let loadedModel = null;
+
+      const selectableMeshes = [];
+
+
+      /* =========================================================
+         RAYCASTER
+      ========================================================= */
+
+      const raycaster =
+        new THREE.Raycaster();
+
+      const pointer =
+        new THREE.Vector2();
+
+      let selectedMesh = null;
+
+
+      /* =========================================================
+         COMPONENT INFORMATION
+      ========================================================= */
+
+      function cleanName(name) {
+        if (!name) {
+          return '3D Component';
+        }
+
+        return name
+          .replace(/[_-]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+
+      function getMaterialName(mesh) {
+        if (!mesh.material) {
+          return 'Unknown material';
+        }
+
+        if (Array.isArray(mesh.material)) {
+          const names =
+            mesh.material
+              .map(function (material) {
+                return (
+                  material.name ||
+                  'Material'
+                );
+              })
+              .filter(Boolean);
+
+          return (
+            names.join(', ') ||
+            'Material'
+          );
+        }
+
+        return (
+          mesh.material.name ||
+          'Material'
+        );
+      }
+
+
+      function buildComponentInfo(mesh) {
+        const name =
+          cleanName(mesh.name);
+
+        return {
+          name: name,
+
+          material:
+            getMaterialName(mesh),
+
+          description:
+            'Selected 3D component: ' +
+            name +
+            '. This component was identified directly from the tapped mesh in the bundled 3D model.'
+        };
+      }
+
+
+      /* =========================================================
+         EXPLOSION DATA BUILDER
+      ========================================================= */
+
+      function buildExplosionData() {
+
+        if (
+          !loadedModel ||
+          selectableMeshes.length === 0
+        ) {
+          return;
+        }
+
+        /*
+         * Ensure all world matrices contain the
+         * final centered/scaled model transforms.
+         */
+        modelRoot.updateMatrixWorld(true);
+
+        loadedModel.updateMatrixWorld(true);
+
+        const explosionComponents = [];
+
+
+        /* ---------------------------------------------------------
+           COLLECT BOUNDS FOR EACH MESH
+        --------------------------------------------------------- */
+
+        selectableMeshes.forEach(
+          function (mesh) {
+
+            mesh.updateWorldMatrix(
+              true,
+              false
+            );
+
+            const box =
+              new THREE.Box3()
+                .setFromObject(mesh);
+
+            if (box.isEmpty()) {
+              return;
+            }
+
+            const center =
+              new THREE.Vector3();
+
+            const size =
+              new THREE.Vector3();
+
+            box.getCenter(center);
+
+            box.getSize(size);
+
+            const volume =
+              Math.max(size.x, 0.001) *
+              Math.max(size.y, 0.001) *
+              Math.max(size.z, 0.001);
+
+            explosionComponents.push({
+              mesh: mesh,
+              box: box,
+              center: center,
+              size: size,
+              volume: volume,
+              targetWorldX:
+                center.x
+            });
+          }
+        );
+
+
+        if (
+          explosionComponents.length === 0
+        ) {
+          return;
+        }
+
+
+        /* ---------------------------------------------------------
+           FIND ANCHOR / MAIN BODY
+        --------------------------------------------------------- */
+
+        /*
+         * Largest bounding-volume mesh becomes
+         * the stationary anchor.
+         */
+
+        let anchorComponent =
+          explosionComponents[0];
+
+        explosionComponents.forEach(
+          function (component) {
+            if (
+              component.volume >
+              anchorComponent.volume
+            ) {
+              anchorComponent =
+                component;
+            }
+          }
+        );
+
+        const anchorX =
+          anchorComponent.center.x;
+
+
+        /* ---------------------------------------------------------
+           CALCULATE COMPACT GAP
+        --------------------------------------------------------- */
+
+        const fullModelBox =
+          new THREE.Box3()
+            .setFromObject(
+              loadedModel
+            );
+
+        const fullModelSize =
+          new THREE.Vector3();
+
+        fullModelBox.getSize(
+          fullModelSize
+        );
+
+        /*
+         * Small visual gap.
+         *
+         * This is deliberately compact.
+         *
+         * Increase 0.045 slightly if parts
+         * still overlap.
+         *
+         * Decrease it if they are too far apart.
+         */
+
+        const componentGap =
+          THREE.MathUtils.clamp(
+            fullModelSize.x * 0.045,
+            0.06,
+            0.16
+          );
+
+
+        /* ---------------------------------------------------------
+           SPLIT LEFT / RIGHT
+        --------------------------------------------------------- */
+
+        const leftComponents = [];
+        const rightComponents = [];
+
+        explosionComponents.forEach(
+          function (component) {
+
+            if (
+              component ===
+              anchorComponent
+            ) {
+              return;
+            }
+
+            if (
+              component.center.x <
+              anchorX
+            ) {
+              leftComponents.push(
+                component
+              );
+            } else {
+              rightComponents.push(
+                component
+              );
+            }
+          }
+        );
+
+
+        /*
+         * Components nearest to anchor first.
+         */
+
+        leftComponents.sort(
+          function (a, b) {
+            return (
+              b.center.x -
+              a.center.x
+            );
+          }
+        );
+
+        rightComponents.sort(
+          function (a, b) {
+            return (
+              a.center.x -
+              b.center.x
+            );
+          }
+        );
+
+
+        /* ---------------------------------------------------------
+           ANCHOR DOES NOT MOVE
+        --------------------------------------------------------- */
+
+        anchorComponent
+          .mesh
+          .userData
+          .explodeOffset =
+          new THREE.Vector3(
+            0,
+            0,
+            0
+          );
+
+
+        /* ---------------------------------------------------------
+           LEFT-SIDE PLACEMENT
+        --------------------------------------------------------- */
+
+        let leftCursor =
+          anchorComponent.box.min.x -
+          componentGap;
+
+        leftComponents.forEach(
+          function (component) {
+
+            /*
+             * Put component immediately to
+             * the left of previous component.
+             */
+
+            const targetCenterX =
+              leftCursor -
+              component.size.x * 0.5;
+
+            component.targetWorldX =
+              targetCenterX;
+
+            leftCursor =
+              targetCenterX -
+              component.size.x * 0.5 -
+              componentGap;
+          }
+        );
+
+
+        /* ---------------------------------------------------------
+           RIGHT-SIDE PLACEMENT
+        --------------------------------------------------------- */
+
+        let rightCursor =
+          anchorComponent.box.max.x +
+          componentGap;
+
+        rightComponents.forEach(
+          function (component) {
+
+            /*
+             * Put component immediately to
+             * the right of previous component.
+             */
+
+            const targetCenterX =
+              rightCursor +
+              component.size.x * 0.5;
+
+            component.targetWorldX =
+              targetCenterX;
+
+            rightCursor =
+              targetCenterX +
+              component.size.x * 0.5 +
+              componentGap;
+          }
+        );
+
+
+        /* ---------------------------------------------------------
+           CREATE LOCAL OFFSETS FROM WORLD-X MOVEMENT
+        --------------------------------------------------------- */
+
+        explosionComponents.forEach(
+          function (component) {
+
+            const mesh =
+              component.mesh;
+
+            if (
+              component ===
+              anchorComponent
+            ) {
+              mesh.userData
+                .explodeOffset =
+                new THREE.Vector3(
+                  0,
+                  0,
+                  0
+                );
+
+              return;
+            }
+
+            /*
+             * This is the ONLY world-space
+             * movement we request.
+             *
+             * No Y movement.
+             * No Z movement.
+             */
+
+            const worldMoveX =
+              component.targetWorldX -
+              component.center.x;
+
+            const originalWorld =
+              new THREE.Vector3();
+
+            mesh.getWorldPosition(
+              originalWorld
+            );
+
+            const targetWorld =
+              originalWorld.clone();
+
+            /*
+             * STRICT WORLD X ONLY.
+             */
+            targetWorld.x +=
+              worldMoveX;
+
+            /*
+             * Convert world-space X displacement
+             * into the mesh parent's local space.
+             *
+             * This is critical because GLB nodes may
+             * have rotations/scales.
+             */
+
+            if (mesh.parent) {
+
+              mesh.parent.updateWorldMatrix(
+                true,
+                false
+              );
+
+              const originalLocal =
+                mesh.parent.worldToLocal(
+                  originalWorld.clone()
+                );
+
+              const targetLocal =
+                mesh.parent.worldToLocal(
+                  targetWorld.clone()
+                );
+
+              mesh.userData
+                .explodeOffset =
+                targetLocal.sub(
+                  originalLocal
+                );
+
+            } else {
+
+              mesh.userData
+                .explodeOffset =
+                new THREE.Vector3(
+                  worldMoveX,
+                  0,
+                  0
+                );
+            }
+          }
+        );
+
+
+        sendToApp({
+          type: 'debug',
+
+          message:
+            'Compact X-axis explosion prepared',
+
+          componentCount:
+            explosionComponents.length,
+
+          anchor:
+            anchorComponent.mesh.name ||
+            '(unnamed)',
+
+          leftCount:
+            leftComponents.length,
+
+          rightCount:
+            rightComponents.length,
+
+          gap:
+            componentGap
+        });
+      }
+
+
+      /* =========================================================
+         MODEL LOADING
+      ========================================================= */
+
+      const loader =
+        new GLTFLoader();
+
+      const modelUrl =
+        'file:///android_asset/demo3d/demo-device.glb';
+
+      sendToApp({
+        type: 'debug',
+        message:
+          'Starting bundled GLB load',
+        modelUrl: modelUrl
+      });
+
+      /*
+       * XMLHttpRequest is used instead of
+       * loader.load() because Android WebView
+       * file:// fetch behavior can block Fetch API.
+       */
+
+      const xhr =
+        new XMLHttpRequest();
+
+      xhr.open(
+        'GET',
+        modelUrl,
+        true
+      );
+
+      xhr.responseType =
+        'arraybuffer';
+
+
+      xhr.onprogress =
+        function (event) {
+
+          sendToApp({
+            type: 'modelProgress',
+
+            loaded:
+              event.loaded || 0,
+
+            total:
+              event.total || 0
+          });
+        };
+
+
+      xhr.onerror =
+        function () {
+
+          status.innerHTML =
+            'Unable to read bundled 3D model';
+
+          sendToApp({
+            type: 'modelError',
+
+            message:
+              'XMLHttpRequest failed while reading bundled GLB'
+          });
+        };
+
+
+      xhr.onload =
+        function () {
+
+          const bytes =
+            xhr.response
+              ? xhr.response.byteLength
+              : 0;
+
+          sendToApp({
+            type: 'debug',
+
+            message:
+              'GLB XHR completed',
+
+            status:
+              xhr.status,
+
+            bytes:
+              bytes
+          });
+
+
+          if (
+            xhr.status !== 200 &&
+            xhr.status !== 0
+          ) {
+
+            status.innerHTML =
+              'Unable to load bundled 3D model';
+
+            sendToApp({
+              type: 'modelError',
+
+              message:
+                'GLB request failed: ' +
+                xhr.status
+            });
+
+            return;
+          }
+
+
+          if (
+            !xhr.response ||
+            bytes === 0
+          ) {
+
+            status.innerHTML =
+              'Bundled 3D model is empty';
+
+            sendToApp({
+              type: 'modelError',
+
+              message:
+                'GLB returned zero bytes'
+            });
+
+            return;
+          }
+
+
+          loader.parse(
+
+            xhr.response,
+
+            '',
+
+            function (gltf) {
+
+              loadedModel =
+                gltf.scene;
+
+
+              /* -----------------------------------------
+                 INITIAL MODEL BOUNDS
+              ----------------------------------------- */
+
+              const initialBox =
+                new THREE.Box3()
+                  .setFromObject(
+                    loadedModel
+                  );
+
+              const center =
+                new THREE.Vector3();
+
+              const size =
+                new THREE.Vector3();
+
+              initialBox.getCenter(
+                center
+              );
+
+              initialBox.getSize(
+                size
+              );
+
+
+              /* -----------------------------------------
+                 CENTER MODEL
+              ----------------------------------------- */
+
+              loadedModel.position.sub(
+                center
+              );
+
+
+              /* -----------------------------------------
+                 SCALE MODEL
+              ----------------------------------------- */
+
+              const maxDimension =
+                Math.max(
+                  size.x,
+                  size.y,
+                  size.z
+                );
+
+              if (
+                maxDimension > 0
+              ) {
+
+                const scale =
+                  3 / maxDimension;
+
+                loadedModel.scale.setScalar(
+                  scale
+                );
+              }
+
+
+              /* -----------------------------------------
+                 REGISTER MESHES
+              ----------------------------------------- */
+
+              selectableMeshes.length =
+                0;
+
+              loadedModel.traverse(
+                function (object) {
+
+                  if (!object.isMesh) {
+                    return;
+                  }
+
+                  selectableMeshes.push(
+                    object
+                  );
+
+                  /*
+                   * Store exact original local
+                   * transform.
+                   */
+
+                  object.userData
+                    .originalPosition =
+                    object.position.clone();
+
+                  object.userData
+                    .explodeOffset =
+                    new THREE.Vector3(
+                      0,
+                      0,
+                      0
+                    );
+
+                  object.userData
+                    .originalScale =
+                    object.scale.clone();
+
+                  object.userData
+                    .originalQuaternion =
+                    object.quaternion.clone();
+
+                  /*
+                   * Save original color for
+                   * selection highlighting.
+                   */
+
+                  if (
+                    object.material &&
+                    !Array.isArray(
+                      object.material
+                    ) &&
+                    object.material.color
+                  ) {
+
+                    object.userData
+                      .originalColor =
+                      object.material
+                        .color
+                        .clone();
+                  }
+                }
+              );
+
+
+              /*
+               * Add model before calculating
+               * world-space explosion data.
+               */
+
+              modelRoot.add(
+                loadedModel
+              );
+
+              modelRoot.updateMatrixWorld(
+                true
+              );
+
+
+              /* -----------------------------------------
+                 BUILD EXPLOSION
+              ----------------------------------------- */
+
+              buildExplosionData();
+
+
+              /* -----------------------------------------
+                 MODEL READY
+              ----------------------------------------- */
+
+              status.style.display =
+                'none';
+
+              /*
+               * Send both names for compatibility
+               * with different React Native handlers.
+               */
+
+              sendToApp({
+                type: 'modelLoaded',
+
+                meshCount:
+                  selectableMeshes.length
+              });
+
+              sendToApp({
+                type: 'modelReady',
+
+                meshCount:
+                  selectableMeshes.length,
+
+                meshNames:
+                  selectableMeshes.map(
+                    function (mesh) {
+                      return (
+                        mesh.name ||
+                        '(unnamed)'
+                      );
+                    }
+                  )
+              });
+
+            },
+
+            function (error) {
+
+              console.error(
+                'GLTF parse error:',
+                error
+              );
+
+              status.innerHTML =
+                'Unable to parse bundled 3D model';
+
+              sendToApp({
+                type: 'modelError',
+
+                message:
+                  error &&
+                  error.message
+                    ? error.message
+                    : String(error)
+              });
+            }
+          );
+        };
+
+
+      xhr.send();
+
+
+      /* =========================================================
+         MODEL SELECTION
+      ========================================================= */
+
+      function restoreSelection() {
+
+        if (!selectedMesh) {
+          return;
+        }
+
+        if (
+          selectedMesh.material &&
+          !Array.isArray(
+            selectedMesh.material
+          ) &&
+          selectedMesh.material.color &&
+          selectedMesh.userData
+            .originalColor
+        ) {
+
+          selectedMesh.material
+            .color
+            .copy(
+              selectedMesh
+                .userData
+                .originalColor
+            );
+        }
+
+        selectedMesh = null;
+      }
+
+
+      function highlightMesh(mesh) {
+
+        restoreSelection();
+
+        selectedMesh = mesh;
+
+        if (
+          mesh.material &&
+          !Array.isArray(
+            mesh.material
+          ) &&
+          mesh.material.color
+        ) {
+
+          /*
+           * Clone shared material before
+           * changing its color.
+           */
+
+          mesh.material =
+            mesh.material.clone();
+
+          if (
+            !mesh.userData
+              .originalColor
+          ) {
+
+            mesh.userData
+              .originalColor =
+              mesh.material
+                .color
+                .clone();
+          }
+
+          mesh.material.color.lerp(
+            new THREE.Color(
+              0xffffff
+            ),
+            0.35
+          );
+        }
+      }
+
+
+      function selectAt(
+        clientX,
+        clientY
+      ) {
+
+        if (
+          selectableMeshes.length === 0
+        ) {
+          return;
+        }
+
+        const rect =
+          renderer.domElement
+            .getBoundingClientRect();
+
+        pointer.x =
+          (
+            (
+              clientX -
+              rect.left
+            ) /
+            rect.width
+          ) *
+          2 -
+          1;
+
+        pointer.y =
+          -(
+            (
+              clientY -
+              rect.top
+            ) /
+            rect.height
+          ) *
+          2 +
+          1;
+
+        raycaster.setFromCamera(
+          pointer,
+          camera
+        );
+
+        const intersections =
+          raycaster.intersectObjects(
+            selectableMeshes,
+            true
+          );
+
+        if (
+          intersections.length === 0
+        ) {
+
+          restoreSelection();
+
+          sendToApp({
+            type:
+              'selectionCleared'
+          });
+
+          return;
+        }
+
+        const mesh =
+          intersections[0].object;
+
+        highlightMesh(mesh);
+
+        const component =
+          buildComponentInfo(
+            mesh
+          );
+
+        /*
+         * Keep component object because this
+         * matches your existing viewer protocol.
+         */
+
+        sendToApp({
+          type:
+            'componentSelected',
+
+          component:
+            component,
+
+          /*
+           * Also expose flat properties for
+           * compatibility with Demo3DViewer.tsx.
+           */
+
+          name:
+            component.name,
+
+          material:
+            component.material,
+
+          description:
+            component.description
+        });
+      }
+
+
+      /* =========================================================
+         GESTURE SYSTEM
+
+         1 finger tap:
+         component selection
+
+         1 finger drag:
+         rotate
+
+         2 fingers:
+         pinch = zoom
+         midpoint movement = rotate simultaneously
+      ========================================================= */
+
+      const activePointers =
+        new Map();
+
+      let gestureMode =
+        'none';
+
+      let previousX = 0;
+      let previousY = 0;
+
+      let pointerDownX = 0;
+      let pointerDownY = 0;
+
+      let moved = false;
+
+      let previousGesture =
+        null;
+
+
+      function getTwoFingerGesture() {
+
+        const points =
+          Array.from(
+            activePointers.values()
+          );
+
+        if (
+          points.length < 2
+        ) {
+          return null;
+        }
+
+        const first =
+          points[0];
+
+        const second =
+          points[1];
+
+        const dx =
+          first.x -
+          second.x;
+
+        const dy =
+          first.y -
+          second.y;
+
+        return {
+
+          distance:
+            Math.sqrt(
+              dx * dx +
+              dy * dy
+            ),
+
+          centerX:
+            (
+              first.x +
+              second.x
+            ) / 2,
+
+          centerY:
+            (
+              first.y +
+              second.y
+            ) / 2
+        };
+      }
+
+
+      function clampRotation() {
+
+        modelRoot.rotation.x =
+          Math.max(
+            -1.4,
+
+            Math.min(
+              1.4,
+              modelRoot.rotation.x
+            )
+          );
+      }
+
+
+      /* =========================================================
+         POINTER DOWN
+      ========================================================= */
+
+      renderer.domElement.addEventListener(
+        'pointerdown',
+
+        function (event) {
+
+          event.preventDefault();
+
+          activePointers.set(
+            event.pointerId,
+
+            {
+              x: event.clientX,
+              y: event.clientY
+            }
+          );
+
+          try {
+
+            renderer.domElement
+              .setPointerCapture(
+                event.pointerId
+              );
+
+          } catch (error) {
+            // Safe to ignore.
+          }
+
+
+          if (
+            activePointers.size === 1
+          ) {
+
+            gestureMode =
+              'single';
+
+            moved = false;
+
+            previousX =
+              event.clientX;
+
+            previousY =
+              event.clientY;
+
+            pointerDownX =
+              event.clientX;
+
+            pointerDownY =
+              event.clientY;
+
+            previousGesture =
+              null;
+          }
+
+
+          else if (
+            activePointers.size === 2
+          ) {
+
+            gestureMode =
+              'multi';
+
+            /*
+             * Once second finger appears,
+             * this cannot be considered tap.
+             */
+
+            moved = true;
+
+            previousGesture =
+              getTwoFingerGesture();
+          }
+        }
+      );
+
+
+      /* =========================================================
+         POINTER MOVE
+      ========================================================= */
+
+      renderer.domElement.addEventListener(
+        'pointermove',
+
+        function (event) {
+
+          if (
+            !activePointers.has(
+              event.pointerId
+            )
+          ) {
+            return;
+          }
+
+          event.preventDefault();
+
+          activePointers.set(
+            event.pointerId,
+
+            {
+              x: event.clientX,
+              y: event.clientY
+            }
+          );
+
+
+          /* -------------------------------------------------------
+             TWO-FINGER ZOOM + ROTATE
+          ------------------------------------------------------- */
+
+          if (
+            activePointers.size >= 2
+          ) {
+
+            gestureMode =
+              'multi';
+
+            moved = true;
+
+            const currentGesture =
+              getTwoFingerGesture();
+
+            if (
+              currentGesture &&
+              previousGesture
+            ) {
+
+              /*
+               * PINCH ZOOM
+               */
+
+              const distanceDelta =
+                currentGesture.distance -
+                previousGesture.distance;
+
+              /*
+               * Fingers apart:
+               * camera comes closer.
+               *
+               * Fingers together:
+               * camera moves farther away.
+               */
+
+              const zoomSensitivity =
+                0.012;
+
+              camera.position.z -=
+                distanceDelta *
+                zoomSensitivity;
+
+              /*
+               * IMPORTANT:
+               *
+               * MAX is now 35.
+               *
+               * User can zoom far enough out
+               * to inspect the full exploded
+               * assembly if necessary.
+               */
+
+              camera.position.z =
+                THREE.MathUtils.clamp(
+                  camera.position.z,
+                  MIN_CAMERA_Z,
+                  MAX_CAMERA_Z
+                );
+
+
+              /*
+               * SIMULTANEOUS ROTATION
+               */
+
+              const centerDX =
+                currentGesture.centerX -
+                previousGesture.centerX;
+
+              const centerDY =
+                currentGesture.centerY -
+                previousGesture.centerY;
+
+              modelRoot.rotation.y +=
+                centerDX *
+                0.008;
+
+              modelRoot.rotation.x +=
+                centerDY *
+                0.008;
+
+              clampRotation();
+            }
+
+            previousGesture =
+              currentGesture;
+
+            return;
+          }
+
+
+          /* -------------------------------------------------------
+             ONE-FINGER ROTATION
+          ------------------------------------------------------- */
+
+          if (
+            activePointers.size === 1 &&
+            gestureMode === 'single'
+          ) {
+
+            const dx =
+              event.clientX -
+              previousX;
+
+            const dy =
+              event.clientY -
+              previousY;
+
+            const totalMovement =
+              Math.abs(
+                event.clientX -
+                pointerDownX
+              ) +
+              Math.abs(
+                event.clientY -
+                pointerDownY
+              );
+
+            if (
+              totalMovement > 6
+            ) {
+              moved = true;
+            }
+
+            if (moved) {
+
+              modelRoot.rotation.y +=
+                dx * 0.008;
+
+              modelRoot.rotation.x +=
+                dy * 0.008;
+
+              clampRotation();
+            }
+
+            previousX =
+              event.clientX;
+
+            previousY =
+              event.clientY;
+          }
+        }
+      );
+
+
+      /* =========================================================
+         POINTER FINISH
+      ========================================================= */
+
+      function finishPointer(event) {
+
+        const isTap =
+          activePointers.size === 1 &&
+          gestureMode === 'single' &&
+          !moved;
+
+        if (isTap) {
+
+          selectAt(
+            event.clientX,
+            event.clientY
+          );
+        }
+
+        activePointers.delete(
+          event.pointerId
+        );
+
+        try {
+
+          renderer.domElement
+            .releasePointerCapture(
+              event.pointerId
+            );
+
+        } catch (error) {
+          // Safe to ignore.
+        }
+
+
+        if (
+          activePointers.size === 0
+        ) {
+
+          gestureMode =
+            'none';
+
+          moved = false;
+
+          previousGesture =
+            null;
+
+          return;
+        }
+
+
+        /*
+         * One finger remains after pinch.
+         *
+         * Allow it to continue rotating but
+         * never accidentally count it as tap.
+         */
+
+        if (
+          activePointers.size === 1
+        ) {
+
+          const remaining =
+            Array.from(
+              activePointers.values()
+            )[0];
+
+          gestureMode =
+            'single';
+
+          moved = true;
+
+          previousX =
+            remaining.x;
+
+          previousY =
+            remaining.y;
+
+          pointerDownX =
+            remaining.x;
+
+          pointerDownY =
+            remaining.y;
+
+          previousGesture =
+            null;
+        }
+
+        else {
+
+          gestureMode =
+            'multi';
+
+          previousGesture =
+            getTwoFingerGesture();
+        }
+      }
+
+
+      renderer.domElement.addEventListener(
+        'pointerup',
+        finishPointer
+      );
+
+      renderer.domElement.addEventListener(
+        'pointercancel',
+        finishPointer
+      );
+
+
+      /* =========================================================
+         SMOOTH EXPLODED VIEW
+      ========================================================= */
+
+      let explodeTarget = 0;
+
+      let explodeAmount = 0;
+
+      /*
+       * Larger = faster animation.
+       *
+       * 4.5 gives a smooth mechanical feel
+       * without being too slow.
+       */
+
+      const explodeResponse =
+        4.5;
+
+
+      function updateExplosion(
+        deltaSeconds
+      ) {
+
+        if (!loadedModel) {
+          return;
+        }
+
+        /*
+         * Frame-rate-independent exponential
+         * smoothing.
+         */
+
+        const smoothing =
+          1 -
+          Math.exp(
+            -explodeResponse *
+            deltaSeconds
+          );
+
+        explodeAmount +=
+          (
+            explodeTarget -
+            explodeAmount
+          ) *
+          smoothing;
+
+        if (
+          Math.abs(
+            explodeTarget -
+            explodeAmount
+          ) <
+          0.0005
+        ) {
+
+          explodeAmount =
+            explodeTarget;
+        }
+
+
+        /*
+         * Smoothstep:
+         *
+         * slow start
+         * smooth middle
+         * slow finish
+         */
+
+        const easedAmount =
+          explodeAmount *
+          explodeAmount *
+          (
+            3 -
+            2 *
+            explodeAmount
+          );
+
+
+        selectableMeshes.forEach(
+          function (mesh) {
+
+            const original =
+              mesh.userData
+                .originalPosition;
+
+            const offset =
+              mesh.userData
+                .explodeOffset;
+
+            if (
+              !original ||
+              !offset
+            ) {
+              return;
+            }
+
+            /*
+             * Every frame starts from the exact
+             * original position.
+             *
+             * This prevents accumulated drift.
+             */
+
+            mesh.position
+              .copy(original)
+              .addScaledVector(
+                offset,
+                easedAmount
+              );
+          }
+        );
+      }
+
+
+      /* =========================================================
+         COMMANDS FROM REACT NATIVE
+      ========================================================= */
+
+      function handleNativeMessage(
+        rawData
+      ) {
+
+        try {
+
+          const data =
+            typeof rawData ===
+            'string'
+              ? JSON.parse(
+                  rawData
+                )
+              : rawData;
+
+          if (
+            !data ||
+            !data.type
+          ) {
+            return;
+          }
+
+
+          /* -------------------------------------------------------
+             SUPPORT CURRENT TOGGLE COMMAND
+          ------------------------------------------------------- */
+
+          if (
+            data.type ===
+            'toggleExplode'
+          ) {
+
+            explodeTarget =
+              explodeTarget > 0.5
+                ? 0
+                : 1;
+
+            return;
+          }
+
+
+          /* -------------------------------------------------------
+             EXPLICIT EXPLODE
+          ------------------------------------------------------- */
+
+          if (
+            data.type ===
+            'explode'
+          ) {
+
+            explodeTarget = 1;
+
+            return;
+          }
+
+
+          /* -------------------------------------------------------
+             EXPLICIT ASSEMBLE
+          ------------------------------------------------------- */
+
+          if (
+            data.type ===
+            'assemble'
+          ) {
+
+            explodeTarget = 0;
+
+            return;
+          }
+
+
+          /* -------------------------------------------------------
+             BACKGROUND
+          ------------------------------------------------------- */
+
+          if (
+            data.type ===
+            'setBackground'
+          ) {
+
+            const backgrounds = {
+
+              black:
+                0x090909,
+
+              charcoal:
+                0x1c1c1e,
+
+              gray:
+                0x5a5a5f,
+
+              light:
+                0xd9d9de,
+
+              white:
+                0xffffff,
+
+              navy:
+                0x101827
+            };
+
+            /*
+             * Support either predefined names
+             * or a direct CSS/hex color string.
+             */
+
+            if (
+              Object.prototype
+                .hasOwnProperty.call(
+                  backgrounds,
+                  data.color
+                )
+            ) {
+
+              scene.background =
+                new THREE.Color(
+                  backgrounds[
+                    data.color
+                  ]
+                );
+
+            } else if (
+              typeof data.color ===
+              'string'
+            ) {
+
+              try {
+
+                scene.background =
+                  new THREE.Color(
+                    data.color
+                  );
+
+              } catch (error) {
+
+                sendToApp({
+                  type: 'debug',
+                  message:
+                    'Invalid background color: ' +
+                    data.color
+                });
+              }
+            }
+
+            return;
+          }
+
+
+          /* -------------------------------------------------------
+             RESET
+          ------------------------------------------------------- */
+
+          if (
+            data.type ===
+            'reset'
+          ) {
+
+            explodeTarget = 0;
+
+            explodeAmount = 0;
+
+            modelRoot.rotation.set(
+              0,
+              0,
+              0
+            );
+
+            camera.position.set(
+              0,
+              0,
+              DEFAULT_CAMERA_Z
+            );
+
+            restoreSelection();
+
+            selectableMeshes.forEach(
+              function (mesh) {
+
+                if (
+                  mesh.userData
+                    .originalPosition
+                ) {
+
+                  mesh.position.copy(
+                    mesh.userData
+                      .originalPosition
+                  );
+                }
+
+                if (
+                  mesh.userData
+                    .originalScale
+                ) {
+
+                  mesh.scale.copy(
+                    mesh.userData
+                      .originalScale
+                  );
+                }
+
+                if (
+                  mesh.userData
+                    .originalQuaternion
+                ) {
+
+                  mesh.quaternion.copy(
+                    mesh.userData
+                      .originalQuaternion
+                  );
+                }
+              }
+            );
+
+            modelRoot.updateMatrixWorld(
+              true
+            );
+
+            sendToApp({
+              type:
+                'selectionCleared'
+            });
+
+            return;
+          }
+
+        } catch (error) {
+
+          sendToApp({
+            type:
+              'javascriptError',
+
+            message:
+              'Native command parse error: ' +
+              String(error)
+          });
+        }
+      }
+
+
+      /*
+       * React Native WebView Android path.
+       */
+
+      document.addEventListener(
+        'message',
+
+        function (event) {
+
+          handleNativeMessage(
+            event.data
+          );
+        }
+      );
+
+
+      /*
+       * Compatibility path.
+       */
+
+      window.addEventListener(
+        'message',
+
+        function (event) {
+
+          handleNativeMessage(
+            event.data
+          );
+        }
+      );
+
+
+      /* =========================================================
+         RESIZE / ORIENTATION
+      ========================================================= */
+
+      window.addEventListener(
+        'resize',
+
+        function () {
+
+          camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+          camera.updateProjectionMatrix();
+
+          renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+          );
+        }
+      );
+
+
+      /* =========================================================
+         RENDER LOOP
+      ========================================================= */
+
+      let previousFrameTime =
+        performance.now();
+
+
+      function animate(
+        frameTime
+      ) {
+
+        requestAnimationFrame(
+          animate
+        );
+
+        const deltaSeconds =
+          Math.min(
+            (
+              frameTime -
+              previousFrameTime
+            ) /
+            1000,
+
+            0.05
+          );
+
+        previousFrameTime =
+          frameTime;
+
+        updateExplosion(
+          deltaSeconds
+        );
+
+        renderer.render(
+          scene,
+          camera
+        );
+      }
+
+
+      requestAnimationFrame(
+        animate
+      );
+
+
+      sendToApp({
+        type: 'debug',
+        message:
+          'Three.js viewer initialized'
+      });
+
+    })();
+  </script>
+
+</body>
+</html>

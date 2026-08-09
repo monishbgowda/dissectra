@@ -1,0 +1,124 @@
+{
+  "analysis": {
+    "product": {
+      "brand": "MockBrand",
+      "model": "MockModel",
+      "name": "MockProduct",
+      "category": "MockCategory",
+      "confidence": 0.9
+    },
+    "components": [
+      {
+        "id": "c1",
+        "name": "MockComponent",
+        "category": "Mock",
+        "material": "Mock",
+        "manufacturingProcess": "Mock",
+        "assemblyMethod": "Mock",
+        "replaceable": true,
+        "confidence": 0.95
+      }
+    ],
+    "materials": [
+      {
+        "name": "Mock",
+        "usedIn": []
+      }
+    ],
+    "manufacturing": [
+      {
+        "process": "Mock",
+        "components": []
+      }
+    ],
+    "damage": [],
+    "engineering": {
+      "repairability": 5
+    },
+    "summary": "Mock summary",
+    "compositeConfidence": 0.8766666666666667,
+    "confidenceBreakdown": {
+      "aiConfidence": 0.9,
+      "multiViewEvidence": 0.6666666666666666,
+      "completeness": 1,
+      "consistency": 1
+    }
+  },
+  "product": {
+    "brand": "MockBrand",
+    "model": "MockModel",
+    "name": "MockProduct",
+    "category": "MockCategory",
+    "confidence": 0.9
+  },
+  "components": [
+    {
+      "id": "c1",
+      "name": "MockComponent",
+      "category": "Mock",
+      "material": "Mock",
+      "manufacturingProcess": "Mock",
+      "assemblyMethod": "Mock",
+      "replaceable": true,
+      "confidence": 0.95,
+      "matched": false
+    }
+  ],
+  "materials": [
+    {
+      "name": "Mock",
+      "usedIn": []
+    }
+  ],
+  "manufacturing": [
+    {
+      "process": "Mock",
+      "components": []
+    }
+  ],
+  "damage": [],
+  "summary": "Mock summary",
+  "compositeConfidence": 0.8766666666666667,
+  "confidenceBreakdown": {
+    "aiConfidence": 0.9,
+    "multiViewEvidence": 0.6666666666666666,
+    "completeness": 1,
+    "consistency": 1
+  },
+  "reconstructionPlan": {
+    "product": "MockProduct",
+    "strategy": "hybrid",
+    "confidence": 0.8766666666666667,
+    "sources": [
+      "Sketchfab",
+      "Meshy"
+    ]
+  },
+  "componentGraph": {
+    "nodes": [
+      {
+        "name": "MockComponent",
+        "category": "Mock"
+      }
+    ],
+    "edges": []
+  },
+  "explodedLayout": [
+    {
+      "translate": {
+        "x": 0.05,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "billOfMaterials": [
+    {
+      "item": 1,
+      "name": "MockComponent",
+      "material": "Mock",
+      "process": "Mock"
+    }
+  ],
+  "createdAt": "2026-08-09T17:31:40.061Z"
+}
