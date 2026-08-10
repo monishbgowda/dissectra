@@ -21,7 +21,8 @@ const {
     connectDatabase,
 } = require("./config/database");
 
-
+const authRoutes =
+    require("./routes/authRoutes");
 
 
 const app =
@@ -98,6 +99,14 @@ app.use(
     "/api",
 
     scanRoutes,
+
+);
+
+app.use(
+
+    "/auth",
+
+    authRoutes,
 
 );
 
