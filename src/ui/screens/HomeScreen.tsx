@@ -105,7 +105,10 @@ const openDemo =
   useCallback(() => {
     navigation
       .getParent()
-      ?.navigate("Demo3D");
+      ?.navigate("Demo3D", {
+        inspectionId: "demo-sample",
+        deviceType: "mouse",
+      });
   }, [navigation]);
 
 useFocusEffect(

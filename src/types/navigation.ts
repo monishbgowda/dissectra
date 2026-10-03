@@ -4,6 +4,8 @@ import type {
   NavigatorScreenParams,
 } from "@react-navigation/native";
 
+import type { Supported3DDevice } from '../utils/resolveSupported3DDevice';
+
 export type RootTabParamList = {
    Scan: undefined;
     Home: undefined;
@@ -27,6 +29,7 @@ export type RootStackParamList = {
 
     Demo3D: {
         inspectionId: string;
+        deviceType: Supported3DDevice;
     };
 
 };

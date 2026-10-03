@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../../types/navigation";
 import { getInspection } from "../../../storage/inspectionStorage";
 import type { Inspection } from "../../../storage/inspectionTypes";
+import { resolveSupported3DDevice } from "../../../utils/resolveSupported3DDevice";
 
 
 type AnalysisRouteProp = RouteProp<RootStackParamList, "Analysis">;
@@ -410,7 +411,67 @@ export default function AnalysisScreen() {
 
         },
 
+        view3dContainer: {
+            marginBottom: theme.spacing.xl,
+        },
+
+        view3dButton: {
+            backgroundColor: '#1976D2',
+            borderRadius: theme.radius.lg,
+            paddingVertical: 16,
+            paddingHorizontal: 18,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            ...theme.shadows.md,
+        },
+
+        view3dButtonContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            flex: 1,
+        },
+
+        view3dButtonText: {
+            color: '#FFFFFF',
+            fontWeight: '700',
+            fontSize: 15,
+            letterSpacing: 0.5,
+            flex: 1,
+        },
+
+        unsupportedCard: {
+            backgroundColor: theme.colors.card,
+            borderRadius: theme.radius.lg,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            padding: theme.spacing.md,
+            flexDirection: 'column',
+            gap: 6,
+        },
+
+        unsupportedHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+
+        unsupportedTitle: {
+            ...theme.typography.body1,
+            fontWeight: '600',
+            color: theme.colors.textSecondary,
+        },
+
+        unsupportedText: {
+            ...theme.typography.caption,
+            color: theme.colors.textSecondary,
+            lineHeight: 18,
+        },
+
     });
+
+    const supportedDevice = resolveSupported3DDevice(analysis);
 
     if (loading) {
         return (
@@ -496,6 +557,42 @@ export default function AnalysisScreen() {
                     {Math.round((analysis.product?.confidence ?? 0) * 100)}%
                 </Text>
 
+            </View>
+
+            {/* 3D Dissection Action / Unsupported Notice */}
+            <View style={styles.view3dContainer}>
+                {supportedDevice ? (
+                    <TouchableOpacity
+                        style={styles.view3dButton}
+                        activeOpacity={0.85}
+                        onPress={() =>
+                            navigation.navigate("Demo3D", {
+                                inspectionId: route.params?.inspectionId || inspection?.id,
+                                deviceType: supportedDevice,
+                            })
+                        }
+                    >
+                        <View style={styles.view3dButtonContent}>
+                            <Icon name="cube-outline" size={22} color="#FFFFFF" />
+                            <Text style={styles.view3dButtonText}>
+                                {supportedDevice === 'mouse'
+                                    ? 'VIEW 3D EXPLODED VIEW (MOUSE)'
+                                    : 'VIEW 3D EXPLODED VIEW (PEN DRIVE)'}
+                            </Text>
+                        </View>
+                        <Icon name="chevron-forward" size={20} color="#FFFFFF" />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={styles.unsupportedCard}>
+                        <View style={styles.unsupportedHeader}>
+                            <Icon name="information-circle-outline" size={18} color={theme.colors.textSecondary} />
+                            <Text style={styles.unsupportedTitle}>3D Model Unavailable</Text>
+                        </View>
+                        <Text style={styles.unsupportedText}>
+                            3D exploded view is currently available for Computer Mouse and USB Flash Drive only.
+                        </Text>
+                    </View>
+                )}
             </View>
 
             <Text style={styles.section}>

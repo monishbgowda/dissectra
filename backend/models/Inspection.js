@@ -22,6 +22,9 @@ class Inspection {
         this.summary =
             analysis.summary || "";
 
+        this.deviceClassification =
+            analysis.deviceClassification || null;
+
         this.reconstructionPlan = null;
 
         this.componentGraph = null;

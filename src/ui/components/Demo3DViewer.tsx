@@ -25,6 +25,8 @@ import {
   useTheme,
 } from '../../theme/ThemeProvider';
 
+import type { Supported3DDevice } from '../../utils/resolveSupported3DDevice';
+
 /*
  * Data returned by viewer.html
  * when the user taps a component.
@@ -33,6 +35,11 @@ export type SelectedComponent = {
   name: string;
   material: string;
   description: string;
+  function?: string;
+  usedIn?: string[];
+  failureSymptoms?: string[];
+  replaceable?: boolean;
+  replacement?: string;
 };
 
 
@@ -50,10 +57,16 @@ export type Demo3DViewerRef = {
   setBackground: (
     color: string,
   ) => void;
+
+  loadDevice: (
+    device: Supported3DDevice,
+  ) => void;
 };
 
 
 type Demo3DViewerProps = {
+  deviceType?: Supported3DDevice;
+
   onComponentSelected?: (
     component: SelectedComponent,
   ) => void;
@@ -73,12 +86,32 @@ type ViewerMessage = {
 
   description?: string;
 
+  function?: string;
+
+  usedIn?: string[];
+
+  failureSymptoms?: string[];
+
+  replaceable?: boolean;
+
+  replacement?: string;
+
   component?: {
     name?: string;
 
     material?: string;
 
     description?: string;
+
+    function?: string;
+
+    usedIn?: string[];
+
+    failureSymptoms?: string[];
+
+    replaceable?: boolean;
+
+    replacement?: string;
   };
 
   message?: string;
@@ -95,6 +128,7 @@ export const Demo3DViewer =
     Demo3DViewerProps
   >(function Demo3DViewer(
     {
+      deviceType,
       onComponentSelected,
     },
     ref,
@@ -108,6 +142,12 @@ const webViewRef =
       typeof WebView
     >
   >(null);
+
+    const viewerReadyRef =
+      useRef(false);
+
+    const lastLoadedDeviceRef =
+      useRef<Supported3DDevice | null>(null);
 
     const [
       loading,
@@ -142,6 +182,24 @@ const webViewRef =
           ),
         );
     }
+
+    /*
+     * When deviceType changes after viewer is ready,
+     * send loadDevice command if deviceType changed.
+     */
+    React.useEffect(() => {
+      if (
+        viewerReadyRef.current &&
+        deviceType &&
+        lastLoadedDeviceRef.current !== deviceType
+      ) {
+        lastLoadedDeviceRef.current = deviceType;
+        sendCommand({
+          type: 'loadDevice',
+          deviceType,
+        });
+      }
+    }, [deviceType]);
 
 
     /*
@@ -178,6 +236,15 @@ const webViewRef =
         color,
       });
     },
+
+    loadDevice(
+      device: Supported3DDevice,
+    ) {
+      sendCommand({
+        type: 'loadDevice',
+        deviceType: device,
+      });
+    },
   }),
 
   [],
@@ -199,6 +266,30 @@ const webViewRef =
             event.nativeEvent
               .data,
           );
+
+
+        /*
+         * Viewer ready handshake from viewer.html.
+         */
+        if (
+          data.type ===
+          'viewerReady'
+        ) {
+          viewerReadyRef.current = true;
+
+          if (
+            deviceType &&
+            lastLoadedDeviceRef.current !== deviceType
+          ) {
+            lastLoadedDeviceRef.current = deviceType;
+            sendCommand({
+              type: 'loadDevice',
+              deviceType,
+            });
+          }
+
+          return;
+        }
 
 
         /*
@@ -256,6 +347,30 @@ const webViewRef =
     data.description ??
     'No description available.';
 
+  const func =
+    component?.function ??
+    data.function ??
+    '';
+
+  const usedIn =
+    component?.usedIn ??
+    data.usedIn ??
+    [];
+
+  const failureSymptoms =
+    component?.failureSymptoms ??
+    data.failureSymptoms ??
+    [];
+
+  const replaceable =
+    component?.replaceable ??
+    data.replaceable ??
+    true;
+
+  const replacement =
+    component?.replacement ??
+    data.replacement ??
+    '';
 
   console.log(
     '[Dissectra 3D] Component selected:',
@@ -263,16 +378,24 @@ const webViewRef =
       name,
       material,
       description,
+      function: func,
+      usedIn,
+      failureSymptoms,
+      replaceable,
+      replacement,
     },
   );
 
 
   onComponentSelected?.({
     name,
-
     material,
-
     description,
+    function: func,
+    usedIn,
+    failureSymptoms,
+    replaceable,
+    replacement,
   });
 
 

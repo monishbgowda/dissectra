@@ -315,6 +315,53 @@
 
 
       function buildComponentInfo(mesh) {
+        if (mesh && mesh.userData && mesh.userData.componentInfo) {
+          const info =
+            mesh.userData.componentInfo;
+
+          return {
+            name:
+              info.name ||
+              mesh.userData.displayName ||
+              cleanName(mesh.name),
+
+            material:
+              info.material ||
+              getMaterialName(mesh),
+
+            description:
+              info.description ||
+              (
+                'Selected 3D component: ' +
+                cleanName(mesh.name) +
+                '.'
+              ),
+
+            function:
+              info.function ||
+              '',
+
+            usedIn:
+              Array.isArray(info.usedIn)
+                ? info.usedIn
+                : (info.usedIn ? [info.usedIn] : []),
+
+            failureSymptoms:
+              Array.isArray(info.failureSymptoms)
+                ? info.failureSymptoms
+                : (info.failureSymptoms ? [info.failureSymptoms] : []),
+
+            replaceable:
+              typeof info.replaceable === 'boolean'
+                ? info.replaceable
+                : true,
+
+            replacement:
+              info.replacement ||
+              ''
+          };
+        }
+
         const name =
           cleanName(mesh.name);
 
@@ -327,7 +374,22 @@
           description:
             'Selected 3D component: ' +
             name +
-            '. This component was identified directly from the tapped mesh in the bundled 3D model.'
+            '. This component was identified directly from the tapped mesh in the bundled 3D model.',
+
+          function:
+            'Structural or functional component of the device.',
+
+          usedIn:
+            ['Electronic devices'],
+
+          failureSymptoms:
+            ['Physical damage or electrical failure'],
+
+          replaceable:
+            true,
+
+          replacement:
+            'Use a compatible replacement according to manufacturer specifications.'
         };
       }
 
@@ -340,7 +402,8 @@
 
         if (
           !loadedModel ||
-          selectableMeshes.length === 0
+          selectableMeshes.length === 0 ||
+          (loadedModel.userData && loadedModel.userData.isProcedural)
         ) {
           return;
         }
@@ -732,352 +795,1130 @@
 
 
       /* =========================================================
-         MODEL LOADING
+         PROCEDURAL MOUSE GENERATOR
       ========================================================= */
 
-      const loader =
-        new GLTFLoader();
+      function createProceduralMouse() {
+        const mouseGroup = new THREE.Group();
+        mouseGroup.name = 'procedural_computer_mouse';
 
-      const modelUrl =
-        'file:///android_asset/demo3d/demo-device.glb';
+        /* ---------------------------------------------------------
+           1. BOTTOM SHELL (Structural base of the mouse)
+        --------------------------------------------------------- */
+        const bottomShellGeo = new THREE.BoxGeometry(1.85, 0.12, 2.9);
+        const bottomShellMat = new THREE.MeshStandardMaterial({
+          color: 0x18181c,
+          roughness: 0.65,
+          metalness: 0.2
+        });
+        const bottomShell = new THREE.Mesh(bottomShellGeo, bottomShellMat);
+        bottomShell.name = 'mouse_bottom_shell';
+        bottomShell.position.set(0, -0.38, 0);
+        bottomShell.userData = {
+          displayName: 'Bottom Shell',
+          explodeOffset: new THREE.Vector3(0, -1.85, 0),
+          componentInfo: {
+            name: 'Bottom Shell',
+            material: 'ABS Plastic',
+            description: 'Lower structural housing of the mouse.',
+            function: 'Supports the PCB and internal components and forms the lower protective enclosure.',
+            usedIn: [
+              'Computer mice',
+              'Trackball devices',
+              'Small handheld electronics'
+            ],
+            failureSymptoms: [
+              'Cracked mounting points',
+              'Loose PCB',
+              'Unstable mouse body',
+              'Damaged screw mounts'
+            ],
+            replaceable: true,
+            replacement: 'Use a bottom shell designed for the same mouse model or one with identical mounting and screw locations.'
+          }
+        };
+        mouseGroup.add(bottomShell);
 
-      sendToApp({
-        type: 'debug',
-        message:
-          'Starting bundled GLB load',
-        modelUrl: modelUrl
-      });
+        /* ---------------------------------------------------------
+           2. OPTICAL SENSOR (Surface tracking unit)
+        --------------------------------------------------------- */
+        const sensorGeo = new THREE.BoxGeometry(0.36, 0.16, 0.42);
+        const sensorMat = new THREE.MeshStandardMaterial({
+          color: 0x8b0000,
+          roughness: 0.25,
+          metalness: 0.5,
+          emissive: 0x220000
+        });
+        const sensor = new THREE.Mesh(sensorGeo, sensorMat);
+        sensor.name = 'mouse_optical_sensor';
+        sensor.position.set(0, -0.31, -0.05);
+        sensor.userData = {
+          displayName: 'Optical Sensor',
+          explodeOffset: new THREE.Vector3(0, -0.85, 0.25),
+          componentInfo: {
+            name: 'Optical Sensor',
+            material: 'Semiconductor / Optical Assembly',
+            description: 'Electronic optical tracking device mounted on the PCB.',
+            function: 'Captures surface movement and converts it into positional data used to move the cursor.',
+            usedIn: [
+              'Computer mice',
+              'Gaming mice',
+              'Optical tracking systems',
+              'Motion-sensing equipment'
+            ],
+            failureSymptoms: [
+              'Cursor does not move',
+              'Cursor movement is erratic',
+              'Tracking skips',
+              'Tracking fails on surfaces that previously worked'
+            ],
+            replaceable: true,
+            replacement: 'Use the same optical sensor model or an electrically and mechanically compatible sensor supported by the PCB and controller firmware.'
+          }
+        };
+        mouseGroup.add(sensor);
 
-      /*
-       * XMLHttpRequest is used instead of
-       * loader.load() because Android WebView
-       * file:// fetch behavior can block Fetch API.
-       */
-
-      const xhr =
-        new XMLHttpRequest();
-
-      xhr.open(
-        'GET',
-        modelUrl,
-        true
-      );
-
-      xhr.responseType =
-        'arraybuffer';
-
-
-      xhr.onprogress =
-        function (event) {
-
-          sendToApp({
-            type: 'modelProgress',
-
-            loaded:
-              event.loaded || 0,
-
-            total:
-              event.total || 0
-          });
+        /* ---------------------------------------------------------
+           3. PCB (Main printed circuit board)
+        --------------------------------------------------------- */
+        const pcbGeo = new THREE.BoxGeometry(1.5, 0.06, 2.3);
+        const pcbMat = new THREE.MeshStandardMaterial({
+          color: 0x1b5e20,
+          roughness: 0.35,
+          metalness: 0.3
+        });
+        const pcb = new THREE.Mesh(pcbGeo, pcbMat);
+        pcb.name = 'mouse_pcb';
+        pcb.position.set(0, -0.24, -0.05);
+        pcb.userData = {
+          displayName: 'Printed Circuit Board',
+          explodeOffset: new THREE.Vector3(0, 0, 0),
+          componentInfo: {
+            name: 'Printed Circuit Board',
+            material: 'FR-4 / Copper / Electronic Components',
+            description: 'Main electronic circuit board of the mouse.',
+            function: 'Connects and processes signals from the optical sensor, buttons, scroll wheel and communication interface.',
+            usedIn: [
+              'Computer mice',
+              'Keyboards',
+              'Game controllers',
+              'USB devices',
+              'Consumer electronics'
+            ],
+            failureSymptoms: [
+              'Mouse is not detected',
+              'Multiple controls stop working',
+              'Intermittent USB connection',
+              'Device receives no power'
+            ],
+            replaceable: true,
+            replacement: 'A PCB from the same mouse model is preferred. A different PCB is suitable only when its dimensions, sensor, switches and communication interface are compatible.'
+          }
         };
 
+        /* Decorative PCB electronic details (children of PCB, non-selectable) */
+        const mcuGeo = new THREE.BoxGeometry(0.38, 0.05, 0.38);
+        const mcuMat = new THREE.MeshStandardMaterial({
+          color: 0x111111,
+          roughness: 0.3,
+          metalness: 0.6
+        });
+        const mcu = new THREE.Mesh(mcuGeo, mcuMat);
+        mcu.position.set(0, 0.05, 0.3);
+        pcb.add(mcu);
 
-      xhr.onerror =
-        function () {
+        const smdMatAmber = new THREE.MeshStandardMaterial({
+          color: 0xd4af37,
+          roughness: 0.4,
+          metalness: 0.5
+        });
+        const smdMatSilver = new THREE.MeshStandardMaterial({
+          color: 0xb0bec5,
+          roughness: 0.3,
+          metalness: 0.7
+        });
 
-          status.innerHTML =
-            'Unable to read bundled 3D model';
+        const smd1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.16), smdMatAmber);
+        smd1.position.set(-0.35, 0.04, 0.2);
+        pcb.add(smd1);
+
+        const smd2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.16), smdMatSilver);
+        smd2.position.set(0.35, 0.04, 0.2);
+        pcb.add(smd2);
+
+        const smd3 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.08), smdMatSilver);
+        smd3.position.set(-0.25, 0.04, -0.6);
+        pcb.add(smd3);
+
+        const crystalGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.22, 12);
+        const crystal = new THREE.Mesh(crystalGeo, smdMatSilver);
+        crystal.rotation.z = Math.PI / 2;
+        crystal.position.set(0.25, 0.05, -0.6);
+        pcb.add(crystal);
+
+        mouseGroup.add(pcb);
+
+        /* ---------------------------------------------------------
+           4. LEFT MICROSWITCH (Left click switch)
+        --------------------------------------------------------- */
+        const switchGeo = new THREE.BoxGeometry(0.26, 0.22, 0.42);
+        const switchMatL = new THREE.MeshStandardMaterial({
+          color: 0x212121,
+          roughness: 0.5,
+          metalness: 0.4
+        });
+        const leftSwitch = new THREE.Mesh(switchGeo, switchMatL);
+        leftSwitch.name = 'mouse_left_microswitch';
+        leftSwitch.position.set(-0.48, -0.1, 0.75);
+        leftSwitch.userData = {
+          displayName: 'Left Microswitch',
+          explodeOffset: new THREE.Vector3(-0.6, 0.7, 0.65),
+          componentInfo: {
+            name: 'Left Microswitch',
+            material: 'Plastic / Metal Contacts',
+            description: 'Small electromechanical switch activated by the left mouse button.',
+            function: 'Converts the mechanical left-click action into an electrical signal.',
+            usedIn: [
+              'Computer mice',
+              'Gaming mice',
+              'Industrial controls',
+              'Small electronic switches'
+            ],
+            failureSymptoms: [
+              'Double-clicking when pressed once',
+              'Click not detected',
+              'Intermittent clicking',
+              'Click requires excessive force'
+            ],
+            replaceable: true,
+            replacement: 'Use a microswitch with matching electrical rating, pin arrangement, dimensions and operating force.'
+          }
+        };
+        mouseGroup.add(leftSwitch);
+
+        /* ---------------------------------------------------------
+           5. RIGHT MICROSWITCH (Right click switch)
+        --------------------------------------------------------- */
+        const switchMatR = new THREE.MeshStandardMaterial({
+          color: 0x212121,
+          roughness: 0.5,
+          metalness: 0.4
+        });
+        const rightSwitch = new THREE.Mesh(switchGeo.clone(), switchMatR);
+        rightSwitch.name = 'mouse_right_microswitch';
+        rightSwitch.position.set(0.48, -0.1, 0.75);
+        rightSwitch.userData = {
+          displayName: 'Right Microswitch',
+          explodeOffset: new THREE.Vector3(0.6, 0.7, 0.65),
+          componentInfo: {
+            name: 'Right Microswitch',
+            material: 'Plastic / Metal Contacts',
+            description: 'Small electromechanical switch activated by the right mouse button.',
+            function: 'Converts the mechanical right-click action into an electrical signal.',
+            usedIn: [
+              'Computer mice',
+              'Gaming mice',
+              'Industrial controls',
+              'Small electronic switches'
+            ],
+            failureSymptoms: [
+              'Right click does not register',
+              'Multiple clicks occur from one press',
+              'Intermittent operation'
+            ],
+            replaceable: true,
+            replacement: 'Use a microswitch with compatible dimensions, electrical characteristics and pin arrangement.'
+          }
+        };
+        mouseGroup.add(rightSwitch);
+
+        /* ---------------------------------------------------------
+           6. SCROLL WHEEL (Rotary encoder wheel)
+        --------------------------------------------------------- */
+        const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 24);
+        const wheelMat = new THREE.MeshStandardMaterial({
+          color: 0x2b303a,
+          roughness: 0.8,
+          metalness: 0.1
+        });
+        const scrollWheel = new THREE.Mesh(wheelGeo, wheelMat);
+        scrollWheel.name = 'mouse_scroll_wheel';
+        scrollWheel.rotation.z = Math.PI / 2;
+        scrollWheel.position.set(0, 0.22, 0.78);
+        scrollWheel.userData = {
+          displayName: 'Scroll Wheel',
+          explodeOffset: new THREE.Vector3(0, 1.4, 0.95),
+          componentInfo: {
+            name: 'Scroll Wheel',
+            material: 'Plastic / Rubber',
+            description: 'Rotating wheel mounted near the front-center of the mouse.',
+            function: 'Provides scrolling input by interacting with a rotary encoder. It may also act as a middle-click button.',
+            usedIn: [
+              'Computer mice',
+              'Gaming mice',
+              'Control panels',
+              'Rotary user interfaces'
+            ],
+            failureSymptoms: [
+              'Scrolling skips',
+              'Scrolling direction reverses unexpectedly',
+              'Wheel does not register',
+              'Wheel becomes physically loose'
+            ],
+            replaceable: true,
+            replacement: 'Use a wheel and rotary encoder compatible with the original dimensions and encoder shaft arrangement.'
+          }
+        };
+
+        // Scroll wheel axle (decorative child, non-selectable)
+        const axleGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.26, 16);
+        const axleMat = new THREE.MeshStandardMaterial({
+          color: 0x78909c,
+          roughness: 0.3,
+          metalness: 0.7
+        });
+        const axle = new THREE.Mesh(axleGeo, axleMat);
+        scrollWheel.add(axle);
+
+        mouseGroup.add(scrollWheel);
+
+        /* ---------------------------------------------------------
+           7. LEFT BUTTON (Front-left click paddle)
+        --------------------------------------------------------- */
+        const btnGeoL = new THREE.BoxGeometry(0.72, 0.08, 0.95);
+        const btnMatL = new THREE.MeshStandardMaterial({
+          color: 0x263238,
+          roughness: 0.5,
+          metalness: 0.2
+        });
+        const leftBtn = new THREE.Mesh(btnGeoL, btnMatL);
+        leftBtn.name = 'mouse_left_button';
+        leftBtn.position.set(-0.43, 0.21, 0.8);
+        leftBtn.rotation.x = 0.06;
+        leftBtn.userData = {
+          displayName: 'Left Button',
+          explodeOffset: new THREE.Vector3(-0.65, 1.8, 0.85),
+          componentInfo: {
+            name: 'Left Button',
+            material: 'ABS Plastic',
+            description: 'Mechanical button surface positioned above the left microswitch.',
+            function: "Transfers the user's left-click force to the microswitch underneath.",
+            usedIn: [
+              'Computer mice',
+              'Gaming mice',
+              'Trackball devices'
+            ],
+            failureSymptoms: [
+              'Button feels loose',
+              'Button does not press correctly',
+              'Button remains stuck',
+              'Click requires excessive force'
+            ],
+            replaceable: true,
+            replacement: 'Use a button or upper-shell assembly compatible with the mouse body and microswitch position.'
+          }
+        };
+        mouseGroup.add(leftBtn);
+
+        /* ---------------------------------------------------------
+           8. RIGHT BUTTON (Front-right click paddle)
+        --------------------------------------------------------- */
+        const btnGeoR = new THREE.BoxGeometry(0.72, 0.08, 0.95);
+        const btnMatR = new THREE.MeshStandardMaterial({
+          color: 0x263238,
+          roughness: 0.5,
+          metalness: 0.2
+        });
+        const rightBtn = new THREE.Mesh(btnGeoR, btnMatR);
+        rightBtn.name = 'mouse_right_button';
+        rightBtn.position.set(0.43, 0.21, 0.8);
+        rightBtn.rotation.x = 0.06;
+        rightBtn.userData = {
+          displayName: 'Right Button',
+          explodeOffset: new THREE.Vector3(0.65, 1.8, 0.85),
+          componentInfo: {
+            name: 'Right Button',
+            material: 'ABS Plastic',
+            description: 'Mechanical button surface positioned above the right microswitch.',
+            function: "Transfers the user's right-click action to the right microswitch.",
+            usedIn: [
+              'Computer mice',
+              'Gaming mice',
+              'Trackball devices'
+            ],
+            failureSymptoms: [
+              'Right click does not register consistently',
+              'Button feels loose',
+              'Button becomes stuck'
+            ],
+            replaceable: true,
+            replacement: 'Use a compatible button or upper-shell assembly matching the mouse body dimensions.'
+          }
+        };
+        mouseGroup.add(rightBtn);
+
+        /* ---------------------------------------------------------
+           9. TOP SHELL (Main ergonomic palm cover)
+        --------------------------------------------------------- */
+        const topShellGeo = new THREE.SphereGeometry(
+          0.94,
+          32,
+          24,
+          0,
+          Math.PI * 2,
+          0,
+          Math.PI * 0.5
+        );
+        const topShellMat = new THREE.MeshStandardMaterial({
+          color: 0x1e272c,
+          roughness: 0.45,
+          metalness: 0.25
+        });
+        const topShell = new THREE.Mesh(topShellGeo, topShellMat);
+        topShell.name = 'mouse_top_shell';
+        topShell.scale.set(0.96, 0.46, 1.25);
+        topShell.position.set(0, 0.06, -0.28);
+        topShell.userData = {
+          displayName: 'Top Shell',
+          explodeOffset: new THREE.Vector3(0, 2.5, -0.3),
+          componentInfo: {
+            name: 'Top Shell',
+            material: 'ABS Plastic',
+            description: 'Upper external housing of the mouse.',
+            function: 'Protects internal components and provides the ergonomic surface held by the user.',
+            usedIn: [
+              'Computer mice',
+              'Trackball devices',
+              'Handheld electronic controllers'
+            ],
+            failureSymptoms: [
+              'Cracks',
+              'Broken mounting clips',
+              'Loose body',
+              'Poor button alignment'
+            ],
+            replaceable: true,
+            replacement: 'Use a shell designed for the same mouse model or a mechanically compatible replacement with matching mounting points.'
+          }
+        };
+        mouseGroup.add(topShell);
+
+        return mouseGroup;
+      }
+
+
+      /* =========================================================
+         PROCEDURAL PEN DRIVE GENERATOR
+      ========================================================= */
+
+      function createProceduralPenDrive() {
+        const penDriveGroup = new THREE.Group();
+        penDriveGroup.name = 'procedural_usb_flash_drive';
+
+        /* ---------------------------------------------------------
+           1. BOTTOM CASING (Lower protective plastic enclosure)
+        --------------------------------------------------------- */
+        const bottomCasingGeo = new THREE.BoxGeometry(1.22, 0.14, 2.65);
+        const bottomCasingMat = new THREE.MeshStandardMaterial({
+          color: 0x18181c,
+          roughness: 0.6,
+          metalness: 0.2
+        });
+        const bottomCasing = new THREE.Mesh(bottomCasingGeo, bottomCasingMat);
+        bottomCasing.name = 'pendrive_bottom_casing';
+        bottomCasing.position.set(0, -0.18, -0.15);
+        bottomCasing.userData = {
+          displayName: 'Bottom Casing',
+          explodeOffset: new THREE.Vector3(0, -1.75, -0.15),
+          componentInfo: {
+            name: 'Bottom Casing',
+            material: 'ABS Plastic / Polycarbonate',
+            description: 'Lower structural enclosure of the USB flash drive.',
+            function: 'Supports the PCB and forms the lower protective body of the device.',
+            usedIn: [
+              'USB flash drives',
+              'Portable storage devices',
+              'Small electronics'
+            ],
+            failureSymptoms: [
+              'Broken mounting points',
+              'Loose PCB',
+              'Device body separates',
+              'Internal components become exposed'
+            ],
+            replaceable: true,
+            replacement: 'Use a casing with matching dimensions and internal mounting geometry.'
+          }
+        };
+        penDriveGroup.add(bottomCasing);
+
+        /* ---------------------------------------------------------
+           2. USB CONNECTOR (Type-A metal plug interface)
+        --------------------------------------------------------- */
+        const connectorGeo = new THREE.BoxGeometry(0.88, 0.32, 0.95);
+        const connectorMat = new THREE.MeshStandardMaterial({
+          color: 0xcfd8dc,
+          roughness: 0.2,
+          metalness: 0.9
+        });
+        const usbConnector = new THREE.Mesh(connectorGeo, connectorMat);
+        usbConnector.name = 'pendrive_usb_connector';
+        usbConnector.position.set(0, 0, 1.45);
+        usbConnector.userData = {
+          displayName: 'USB Connector',
+          explodeOffset: new THREE.Vector3(0, 0, 1.35),
+          componentInfo: {
+            name: 'USB Connector',
+            material: 'Metal / Copper Contacts / Plastic Insulator',
+            description: 'Physical connector used to attach the flash drive to a USB host port.',
+            function: 'Provides electrical power and transfers USB data signals between the flash drive and the host device.',
+            usedIn: [
+              'USB flash drives',
+              'Keyboards',
+              'Computer mice',
+              'USB cables',
+              'External storage devices'
+            ],
+            failureSymptoms: [
+              'Device disconnects when moved',
+              'Computer does not detect the drive',
+              'Connector feels loose',
+              'Bent or damaged USB plug'
+            ],
+            replaceable: true,
+            replacement: 'Use a connector with the same USB standard, PCB footprint, pin arrangement and mechanical dimensions.'
+          }
+        };
+
+        // Non-selectable decorative USB 3.0 blue tongue
+        const tongueGeo = new THREE.BoxGeometry(0.72, 0.08, 0.65);
+        const tongueMat = new THREE.MeshStandardMaterial({
+          color: 0x1976d2,
+          roughness: 0.4,
+          metalness: 0.1
+        });
+        const tongue = new THREE.Mesh(tongueGeo, tongueMat);
+        tongue.position.set(0, 0.06, 0.08);
+        usbConnector.add(tongue);
+
+        penDriveGroup.add(usbConnector);
+
+        /* ---------------------------------------------------------
+           3. PCB (Main circuit board)
+        --------------------------------------------------------- */
+        const pcbGeo = new THREE.BoxGeometry(0.96, 0.05, 2.4);
+        const pcbMat = new THREE.MeshStandardMaterial({
+          color: 0x1b5e20,
+          roughness: 0.35,
+          metalness: 0.3
+        });
+        const pcb = new THREE.Mesh(pcbGeo, pcbMat);
+        pcb.name = 'pendrive_pcb';
+        pcb.position.set(0, 0, -0.15);
+        pcb.userData = {
+          displayName: 'Printed Circuit Board',
+          explodeOffset: new THREE.Vector3(0, 0, 0),
+          componentInfo: {
+            name: 'Printed Circuit Board',
+            material: 'FR-4 / Copper / Electronic Components',
+            description: 'Main electronic board of the USB flash drive.',
+            function: 'Electrically connects the USB connector, controller, NAND flash memory, oscillator and indicator components.',
+            usedIn: [
+              'USB flash drives',
+              'SSDs',
+              'Memory cards',
+              'Consumer electronics'
+            ],
+            failureSymptoms: [
+              'Device receives no power',
+              'Computer cannot detect the device',
+              'Intermittent connection',
+              'Multiple internal components appear to fail simultaneously'
+            ],
+            replaceable: true,
+            replacement: 'PCB replacement should normally come from the same flash drive model because controller firmware, NAND layout and physical dimensions must match.'
+          }
+        };
+
+        // Non-selectable decorative SMD elements on PCB
+        const smdMatAmber = new THREE.MeshStandardMaterial({
+          color: 0xd4af37,
+          roughness: 0.4,
+          metalness: 0.5
+        });
+        const smdMatSilver = new THREE.MeshStandardMaterial({
+          color: 0xb0bec5,
+          roughness: 0.3,
+          metalness: 0.7
+        });
+
+        const goldFingersGeo = new THREE.BoxGeometry(0.65, 0.02, 0.3);
+        const goldFingersMat = new THREE.MeshStandardMaterial({
+          color: 0xffd700,
+          roughness: 0.3,
+          metalness: 0.8
+        });
+        const goldFingers = new THREE.Mesh(goldFingersGeo, goldFingersMat);
+        goldFingers.position.set(0, 0.035, 1.05);
+        pcb.add(goldFingers);
+
+        const smdCap1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.12), smdMatAmber);
+        smdCap1.position.set(0.38, 0.04, 0.4);
+        pcb.add(smdCap1);
+
+        const smdCap2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.12), smdMatSilver);
+        smdCap2.position.set(-0.38, 0.04, 0.1);
+        pcb.add(smdCap2);
+
+        const smdCap3 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.12), smdMatSilver);
+        smdCap3.position.set(0.38, 0.04, -0.9);
+        pcb.add(smdCap3);
+
+        penDriveGroup.add(pcb);
+
+        /* ---------------------------------------------------------
+           4. USB CONTROLLER IC (Microcontroller)
+        --------------------------------------------------------- */
+        const controllerGeo = new THREE.BoxGeometry(0.48, 0.07, 0.48);
+        const controllerMat = new THREE.MeshStandardMaterial({
+          color: 0x181818,
+          roughness: 0.4,
+          metalness: 0.4
+        });
+        const controllerIc = new THREE.Mesh(controllerGeo, controllerMat);
+        controllerIc.name = 'pendrive_controller_ic';
+        controllerIc.position.set(0, 0.06, 0.4);
+        controllerIc.userData = {
+          displayName: 'USB Controller IC',
+          explodeOffset: new THREE.Vector3(-0.45, 0.85, 0.3),
+          componentInfo: {
+            name: 'USB Controller IC',
+            material: 'Semiconductor',
+            description: 'Integrated circuit responsible for managing USB communication and NAND flash access.',
+            function: 'Translates USB commands from the host computer into operations performed on the NAND flash memory.',
+            usedIn: [
+              'USB flash drives',
+              'Memory card readers',
+              'Embedded storage systems',
+              'External storage devices'
+            ],
+            failureSymptoms: [
+              'Flash drive is not detected',
+              'Device appears with incorrect capacity',
+              'Frequent disconnects',
+              'NAND memory cannot be accessed'
+            ],
+            replaceable: true,
+            replacement: 'Replacement usually requires the same or firmware-compatible controller IC and professional soldering/reprogramming.'
+          }
+        };
+        penDriveGroup.add(controllerIc);
+
+        /* ---------------------------------------------------------
+           5. NAND FLASH MEMORY (Non-volatile storage chip)
+        --------------------------------------------------------- */
+        const nandGeo = new THREE.BoxGeometry(0.72, 0.09, 1.05);
+        const nandMat = new THREE.MeshStandardMaterial({
+          color: 0x1f1f24,
+          roughness: 0.35,
+          metalness: 0.5
+        });
+        const nandFlash = new THREE.Mesh(nandGeo, nandMat);
+        nandFlash.name = 'pendrive_nand_flash';
+        nandFlash.position.set(0, 0.07, -0.48);
+        nandFlash.userData = {
+          displayName: 'NAND Flash Memory',
+          explodeOffset: new THREE.Vector3(0.35, 0.95, -0.4),
+          componentInfo: {
+            name: 'NAND Flash Memory',
+            material: 'Semiconductor',
+            description: "Non-volatile memory chip that stores the user's data.",
+            function: 'Stores files electrically and retains the data even when power is removed.',
+            usedIn: [
+              'USB flash drives',
+              'SSDs',
+              'Smartphones',
+              'Memory cards',
+              'Embedded devices'
+            ],
+            failureSymptoms: [
+              'Files become corrupted',
+              'Device becomes read-only',
+              'Storage capacity appears incorrect',
+              'Files disappear',
+              'Drive becomes unreadable'
+            ],
+            replaceable: true,
+            replacement: 'Replacement requires a compatible NAND flash chip. In many devices, controller configuration and memory parameters must also match.'
+          }
+        };
+        penDriveGroup.add(nandFlash);
+
+        /* ---------------------------------------------------------
+           6. CRYSTAL OSCILLATOR (Clock reference)
+        --------------------------------------------------------- */
+        const crystalGeo = new THREE.BoxGeometry(0.18, 0.08, 0.32);
+        const crystalMat = new THREE.MeshStandardMaterial({
+          color: 0xb0bec5,
+          roughness: 0.25,
+          metalness: 0.85
+        });
+        const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+        crystal.name = 'pendrive_crystal_oscillator';
+        crystal.position.set(-0.32, 0.065, 0.4);
+        crystal.userData = {
+          displayName: 'Crystal Oscillator',
+          explodeOffset: new THREE.Vector3(-0.65, 0.65, 0.4),
+          componentInfo: {
+            name: 'Crystal Oscillator',
+            material: 'Quartz / Metal Package',
+            description: 'Timing component used by the controller circuitry.',
+            function: 'Provides a stable clock reference used for digital communication and controller timing.',
+            usedIn: [
+              'USB devices',
+              'Microcontroller circuits',
+              'Computers',
+              'Communication electronics'
+            ],
+            failureSymptoms: [
+              'USB communication fails',
+              'Device is not recognized',
+              'Unstable operation'
+            ],
+            replaceable: true,
+            replacement: 'Use an oscillator with the same frequency, voltage requirements and PCB footprint.'
+          }
+        };
+        penDriveGroup.add(crystal);
+
+        /* ---------------------------------------------------------
+           7. LED INDICATOR (Status LED)
+        --------------------------------------------------------- */
+        const ledGeo = new THREE.BoxGeometry(0.12, 0.08, 0.16);
+        const ledMat = new THREE.MeshStandardMaterial({
+          color: 0x00e676,
+          roughness: 0.2,
+          metalness: 0.2,
+          emissive: 0x00a34c
+        });
+        const led = new THREE.Mesh(ledGeo, ledMat);
+        led.name = 'pendrive_led';
+        led.position.set(0, 0.065, -1.18);
+        led.userData = {
+          displayName: 'LED Indicator',
+          explodeOffset: new THREE.Vector3(0, 0.7, -1.0),
+          componentInfo: {
+            name: 'LED Indicator',
+            material: 'Semiconductor / Plastic',
+            description: 'Small light-emitting component used to display flash-drive activity or power status.',
+            function: 'Provides a visual indication when the device is powered or accessing data.',
+            usedIn: [
+              'USB flash drives',
+              'Routers',
+              'Computers',
+              'Chargers',
+              'Consumer electronics'
+            ],
+            failureSymptoms: [
+              'LED does not illuminate',
+              'LED remains permanently on',
+              'Indicator no longer corresponds to device activity'
+            ],
+            replaceable: true,
+            replacement: 'Use an LED with compatible size, voltage, polarity and PCB footprint.'
+          }
+        };
+        penDriveGroup.add(led);
+
+        /* ---------------------------------------------------------
+           8. TOP CASING (Upper protective plastic enclosure)
+        --------------------------------------------------------- */
+        const topCasingGeo = new THREE.BoxGeometry(1.22, 0.14, 2.65);
+        const topCasingMat = new THREE.MeshStandardMaterial({
+          color: 0x1e272c,
+          roughness: 0.45,
+          metalness: 0.25
+        });
+        const topCasing = new THREE.Mesh(topCasingGeo, topCasingMat);
+        topCasing.name = 'pendrive_top_casing';
+        topCasing.position.set(0, 0.18, -0.15);
+        topCasing.userData = {
+          displayName: 'Top Casing',
+          explodeOffset: new THREE.Vector3(0, 1.75, -0.15),
+          componentInfo: {
+            name: 'Top Casing',
+            material: 'ABS Plastic / Polycarbonate',
+            description: 'Upper protective enclosure of the USB flash drive.',
+            function: 'Protects the internal PCB and electronic components from physical damage, dust and handling.',
+            usedIn: [
+              'USB flash drives',
+              'Portable electronics',
+              'Small storage devices'
+            ],
+            failureSymptoms: [
+              'Cracked casing',
+              'Loose enclosure',
+              'Internal PCB becomes exposed',
+              'USB connector loses mechanical support'
+            ],
+            replaceable: true,
+            replacement: 'Use a casing compatible with the PCB dimensions and USB connector position.'
+          }
+        };
+        penDriveGroup.add(topCasing);
+
+        return penDriveGroup;
+      }
+
+
+      /* =========================================================
+         INITIALIZE PROCEDURAL MODELS
+      ========================================================= */
+
+      let initialModelRotation = new THREE.Euler(0.35, -0.45, 0);
+
+      function setupProceduralModel(modelGroup, initialRotation) {
+        /*
+         * 1. Deselect any active selection and restore original color
+         */
+        restoreSelection();
+
+        /*
+         * 2. Clear all previous children from model root
+         */
+        while (modelRoot.children.length > 0) {
+          modelRoot.remove(modelRoot.children[0]);
+        }
+
+        loadedModel =
+          modelGroup;
+
+        loadedModel.userData.isProcedural =
+          true;
+
+        /*
+         * 3. Clear previous selectable meshes and reset explosion state
+         */
+        selectableMeshes.length = 0;
+        selectedMesh = null;
+        explodeTarget = 0;
+        explodeAmount = 0;
+        camera.position.set(0, 0, DEFAULT_CAMERA_Z);
+
+        /* -----------------------------------------
+           REGISTER MESHES (Only primary components with componentInfo)
+        ----------------------------------------- */
+        loadedModel.traverse(function (object) {
+          if (!object.isMesh || !object.userData || !object.userData.componentInfo) {
+            return;
+          }
+
+          selectableMeshes.push(object);
+
+          object.userData.originalPosition =
+            object.position.clone();
+
+          if (!object.userData.explodeOffset) {
+            object.userData.explodeOffset =
+              new THREE.Vector3(0, 0, 0);
+          }
+
+          object.userData.originalScale =
+            object.scale.clone();
+
+          object.userData.originalQuaternion =
+            object.quaternion.clone();
+
+          if (
+            object.material &&
+            !Array.isArray(object.material) &&
+            object.material.color
+          ) {
+            object.userData.originalColor =
+              object.material.color.clone();
+          }
+        });
+
+        modelRoot.add(loadedModel);
+
+        modelRoot.updateMatrixWorld(true);
+
+        if (initialRotation) {
+          initialModelRotation = new THREE.Euler(
+            initialRotation.x || 0,
+            initialRotation.y || 0,
+            initialRotation.z || 0
+          );
+          modelRoot.rotation.copy(initialModelRotation);
+        }
+
+        status.style.display = 'none';
+
+        sendToApp({
+          type: 'modelLoaded',
+          meshCount: selectableMeshes.length
+        });
+
+        sendToApp({
+          type: 'modelReady',
+          meshCount: selectableMeshes.length,
+          meshNames: selectableMeshes.map(function (mesh) {
+            return (
+              (mesh.userData && mesh.userData.displayName) ||
+              mesh.name ||
+              '(unnamed)'
+            );
+          })
+        });
+      }
+
+      function initProceduralMouse() {
+        sendToApp({
+          type: 'debug',
+          message: 'Initializing procedural computer mouse'
+        });
+
+        const mouseGroup =
+          createProceduralMouse();
+
+        setupProceduralModel(mouseGroup, { x: 0.35, y: -0.45, z: 0 });
+      }
+
+      function initProceduralPenDrive() {
+        sendToApp({
+          type: 'debug',
+          message: 'Initializing procedural USB pen drive'
+        });
+
+        const penDriveGroup =
+          createProceduralPenDrive();
+
+        setupProceduralModel(penDriveGroup, { x: 0.45, y: -0.65, z: 0.1 });
+      }
+
+      function initProceduralModel(deviceType) {
+        if (deviceType === 'mouse') {
+          initProceduralMouse();
+        } else if (deviceType === 'pendrive') {
+          initProceduralPenDrive();
+        } else {
+          status.style.display = 'block';
+          status.innerHTML = 'Unsupported 3D device type';
 
           sendToApp({
             type: 'modelError',
-
-            message:
-              'XMLHttpRequest failed while reading bundled GLB'
+            message: 'Unsupported device type requested: ' + String(deviceType)
           });
-        };
+        }
+      }
 
 
-      xhr.onload =
-        function () {
+      /* =========================================================
+         OPTIONAL BUNDLED GLB LOADER (PRESERVED FOR FALLBACK)
+      ========================================================= */
 
-          const bytes =
-            xhr.response
-              ? xhr.response.byteLength
-              : 0;
+      function loadBundledGlb() {
+        const loader =
+          new GLTFLoader();
 
-          sendToApp({
-            type: 'debug',
+        const modelUrl =
+          'file:///android_asset/demo3d/demo-device.glb';
 
-            message:
-              'GLB XHR completed',
+        sendToApp({
+          type: 'debug',
+          message:
+            'Starting bundled GLB load',
+          modelUrl: modelUrl
+        });
 
-            status:
-              xhr.status,
+        const xhr =
+          new XMLHttpRequest();
 
-            bytes:
-              bytes
-          });
+        xhr.open(
+          'GET',
+          modelUrl,
+          true
+        );
 
+        xhr.responseType =
+          'arraybuffer';
 
-          if (
-            xhr.status !== 200 &&
-            xhr.status !== 0
-          ) {
+        xhr.onprogress =
+          function (event) {
+            sendToApp({
+              type: 'modelProgress',
+              loaded: event.loaded || 0,
+              total: event.total || 0
+            });
+          };
 
+        xhr.onerror =
+          function () {
             status.innerHTML =
-              'Unable to load bundled 3D model';
+              'Unable to read bundled 3D model';
 
             sendToApp({
               type: 'modelError',
-
               message:
-                'GLB request failed: ' +
-                xhr.status
+                'XMLHttpRequest failed while reading bundled GLB'
             });
+          };
 
-            return;
-          }
+        xhr.onload =
+          function () {
+            const bytes =
+              xhr.response
+                ? xhr.response.byteLength
+                : 0;
 
+            if (
+              xhr.status !== 200 &&
+              xhr.status !== 0
+            ) {
+              status.innerHTML =
+                'Unable to load bundled 3D model';
 
-          if (
-            !xhr.response ||
-            bytes === 0
-          ) {
+              sendToApp({
+                type: 'modelError',
+                message:
+                  'GLB request failed: ' +
+                  xhr.status
+              });
 
-            status.innerHTML =
-              'Bundled 3D model is empty';
+              return;
+            }
 
-            sendToApp({
-              type: 'modelError',
+            if (
+              !xhr.response ||
+              bytes === 0
+            ) {
+              status.innerHTML =
+                'Bundled 3D model is empty';
 
-              message:
-                'GLB returned zero bytes'
-            });
+              sendToApp({
+                type: 'modelError',
+                message:
+                  'GLB returned zero bytes'
+              });
 
-            return;
-          }
+              return;
+            }
 
+            loader.parse(
+              xhr.response,
+              '',
+              function (gltf) {
+                loadedModel =
+                  gltf.scene;
 
-          loader.parse(
-
-            xhr.response,
-
-            '',
-
-            function (gltf) {
-
-              loadedModel =
-                gltf.scene;
-
-
-              /* -----------------------------------------
-                 INITIAL MODEL BOUNDS
-              ----------------------------------------- */
-
-              const initialBox =
-                new THREE.Box3()
-                  .setFromObject(
+                const initialBox =
+                  new THREE.Box3().setFromObject(
                     loadedModel
                   );
 
-              const center =
-                new THREE.Vector3();
+                const center =
+                  new THREE.Vector3();
 
-              const size =
-                new THREE.Vector3();
+                const size =
+                  new THREE.Vector3();
 
-              initialBox.getCenter(
-                center
-              );
+                initialBox.getCenter(center);
+                initialBox.getSize(size);
 
-              initialBox.getSize(
-                size
-              );
+                loadedModel.position.sub(center);
 
+                const maxDimension =
+                  Math.max(size.x, size.y, size.z);
 
-              /* -----------------------------------------
-                 CENTER MODEL
-              ----------------------------------------- */
+                if (maxDimension > 0) {
+                  const scale =
+                    3 / maxDimension;
+                  loadedModel.scale.setScalar(scale);
+                }
 
-              loadedModel.position.sub(
-                center
-              );
+                selectableMeshes.length = 0;
 
-
-              /* -----------------------------------------
-                 SCALE MODEL
-              ----------------------------------------- */
-
-              const maxDimension =
-                Math.max(
-                  size.x,
-                  size.y,
-                  size.z
-                );
-
-              if (
-                maxDimension > 0
-              ) {
-
-                const scale =
-                  3 / maxDimension;
-
-                loadedModel.scale.setScalar(
-                  scale
-                );
-              }
-
-
-              /* -----------------------------------------
-                 REGISTER MESHES
-              ----------------------------------------- */
-
-              selectableMeshes.length =
-                0;
-
-              loadedModel.traverse(
-                function (object) {
-
+                loadedModel.traverse(function (object) {
                   if (!object.isMesh) {
                     return;
                   }
 
-                  selectableMeshes.push(
-                    object
-                  );
+                  selectableMeshes.push(object);
 
-                  /*
-                   * Store exact original local
-                   * transform.
-                   */
-
-                  object.userData
-                    .originalPosition =
+                  object.userData.originalPosition =
                     object.position.clone();
 
-                  object.userData
-                    .explodeOffset =
-                    new THREE.Vector3(
-                      0,
-                      0,
-                      0
-                    );
+                  object.userData.explodeOffset =
+                    new THREE.Vector3(0, 0, 0);
 
-                  object.userData
-                    .originalScale =
+                  object.userData.originalScale =
                     object.scale.clone();
 
-                  object.userData
-                    .originalQuaternion =
+                  object.userData.originalQuaternion =
                     object.quaternion.clone();
-
-                  /*
-                   * Save original color for
-                   * selection highlighting.
-                   */
 
                   if (
                     object.material &&
-                    !Array.isArray(
-                      object.material
-                    ) &&
+                    !Array.isArray(object.material) &&
                     object.material.color
                   ) {
-
-                    object.userData
-                      .originalColor =
-                      object.material
-                        .color
-                        .clone();
+                    object.userData.originalColor =
+                      object.material.color.clone();
                   }
-                }
-              );
+                });
 
+                modelRoot.add(loadedModel);
+                modelRoot.updateMatrixWorld(true);
 
-              /*
-               * Add model before calculating
-               * world-space explosion data.
-               */
+                buildExplosionData();
 
-              modelRoot.add(
-                loadedModel
-              );
+                status.style.display = 'none';
 
-              modelRoot.updateMatrixWorld(
-                true
-              );
+                sendToApp({
+                  type: 'modelLoaded',
+                  meshCount: selectableMeshes.length
+                });
 
-
-              /* -----------------------------------------
-                 BUILD EXPLOSION
-              ----------------------------------------- */
-
-              buildExplosionData();
-
-
-              /* -----------------------------------------
-                 MODEL READY
-              ----------------------------------------- */
-
-              status.style.display =
-                'none';
-
-              /*
-               * Send both names for compatibility
-               * with different React Native handlers.
-               */
-
-              sendToApp({
-                type: 'modelLoaded',
-
-                meshCount:
-                  selectableMeshes.length
-              });
-
-              sendToApp({
-                type: 'modelReady',
-
-                meshCount:
-                  selectableMeshes.length,
-
-                meshNames:
-                  selectableMeshes.map(
+                sendToApp({
+                  type: 'modelReady',
+                  meshCount: selectableMeshes.length,
+                  meshNames: selectableMeshes.map(
                     function (mesh) {
-                      return (
-                        mesh.name ||
-                        '(unnamed)'
-                      );
+                      return mesh.name || '(unnamed)';
                     }
                   )
-              });
+                });
+              },
+              function (error) {
+                console.error(
+                  'GLTF parse error:',
+                  error
+                );
 
-            },
+                status.innerHTML =
+                  'Unable to parse bundled 3D model';
 
-            function (error) {
+                sendToApp({
+                  type: 'modelError',
+                  message:
+                    error && error.message
+                      ? error.message
+                      : String(error)
+                });
+              }
+            );
+          };
 
-              console.error(
-                'GLTF parse error:',
-                error
-              );
+        xhr.send();
+      }
 
-              status.innerHTML =
-                'Unable to parse bundled 3D model';
-
-              sendToApp({
-                type: 'modelError',
-
-                message:
-                  error &&
-                  error.message
-                    ? error.message
-                    : String(error)
-              });
-            }
-          );
-        };
-
-
-      xhr.send();
+      /*
+       * Notify React Native WebView bridge that viewer is ready
+       * to receive loadDevice commands.
+       */
+      sendToApp({
+        type: 'viewerReady'
+      });
 
 
       /* =========================================================
@@ -1253,7 +2094,22 @@
             component.material,
 
           description:
-            component.description
+            component.description,
+
+          function:
+            component.function,
+
+          usedIn:
+            component.usedIn,
+
+          failureSymptoms:
+            component.failureSymptoms,
+
+          replaceable:
+            component.replaceable,
+
+          replacement:
+            component.replacement
         });
       }
 
@@ -1858,6 +2714,21 @@
 
 
           /* -------------------------------------------------------
+             DYNAMIC DEVICE LOADER
+          ------------------------------------------------------- */
+
+          if (
+            data.type ===
+            'loadDevice'
+          ) {
+
+            initProceduralModel(data.deviceType);
+
+            return;
+          }
+
+
+          /* -------------------------------------------------------
              SUPPORT CURRENT TOGGLE COMMAND
           ------------------------------------------------------- */
 
@@ -1995,10 +2866,8 @@
 
             explodeAmount = 0;
 
-            modelRoot.rotation.set(
-              0,
-              0,
-              0
+            modelRoot.rotation.copy(
+              initialModelRotation
             );
 
             camera.position.set(

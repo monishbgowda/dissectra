@@ -6,6 +6,10 @@ const {
     saveAnalysis
 } = require("../services/geminiService");
 
+const {
+    classifyDevice
+} = require("../services/deviceClassificationService");
+
 class AnalyzeStage extends PipelineStage {
 
     constructor() {
@@ -21,10 +25,19 @@ class AnalyzeStage extends PipelineStage {
                 context.inspectionFolder
             );
 
-        const analysis =
-            await analyzeInspection(
-                imageFiles
-            );
+        // Run detailed engineering analysis and dedicated device classification
+        const [analysis, deviceClassification] = await Promise.all([
+            analyzeInspection(imageFiles),
+            classifyDevice(imageFiles).catch(err => ({
+                predictedClass: null,
+                confidenceAvailable: false,
+                calibrated: false,
+                reason: `CLASSIFICATION_FAILED: ${err.message || 'Unknown error'}`
+            }))
+        ]);
+
+        // Attach new statistical classification result (preserving existing fields)
+        analysis.deviceClassification = deviceClassification;
 
         await saveAnalysis(
             context.inspectionFolder,
