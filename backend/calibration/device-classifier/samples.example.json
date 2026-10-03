@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "classifierConfigVersion": "device-abc-v1",
+  "description": "Example manifest for Dissectra device classifier temperature scaling calibration.",
+  "samples": [
+    {
+      "id": "mouse_001",
+      "label": "mouse",
+      "split": "calibration",
+      "images": [
+        "C:/path/to/dataset/mouse_01/top.jpg",
+        "C:/path/to/dataset/mouse_01/side.jpg"
+      ]
+    },
+    {
+      "id": "mouse_002",
+      "label": "mouse",
+      "split": "calibration",
+      "images": [
+        "C:/path/to/dataset/mouse_02/front.jpg"
+      ]
+    },
+    {
+      "id": "mouse_eval_001",
+      "label": "mouse",
+      "split": "evaluation",
+      "images": [
+        "C:/path/to/dataset/mouse_eval_01/angle.jpg"
+      ]
+    },
+    {
+      "id": "pendrive_001",
+      "label": "pendrive",
+      "split": "calibration",
+      "images": [
+        "C:/path/to/dataset/pendrive_01/top.jpg"
+      ]
+    },
+    {
+      "id": "pendrive_eval_001",
+      "label": "pendrive",
+      "split": "evaluation",
+      "images": [
+        "C:/path/to/dataset/pendrive_eval_01/top.jpg"
+      ]
+    },
+    {
+      "id": "other_001",
+      "label": "other",
+      "split": "calibration",
+      "images": [
+        "C:/path/to/dataset/keyboard_01/top.jpg"
+      ]
+    },
+    {
+      "id": "other_eval_001",
+      "label": "other",
+      "split": "evaluation",
+      "images": [
+        "C:/path/to/dataset/charger_01/front.jpg"
+      ]
+    }
+  ]
+}

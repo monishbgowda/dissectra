@@ -26,6 +26,7 @@ import type {
 } from "@react-navigation/native-stack";
 import Icon from "react-native-vector-icons/Ionicons";
 import { api } from "../../services/apiClient";
+import { DeviceClassificationCard } from "../components/DeviceClassificationCard";
 type InspectionNavigationProp =
   NativeStackNavigationProp<
     RootStackParamList,
@@ -414,6 +415,13 @@ console.log(JSON.stringify(reloaded, null, 2));
           {inspection.confidence ? `${Math.round(inspection.confidence * 100)}%` : '--'}
         </Text>
       </View>
+
+      {/* Render Local MobileNetV2 Device Identification if present */}
+      {inspection.analysis?.deviceClassification ? (
+        <View style={{ marginTop: 16 }}>
+          <DeviceClassificationCard deviceClassification={inspection.analysis.deviceClassification} />
+        </View>
+      ) : null}
 
       <Text style={styles.galleryTitle}>Captured Images</Text>
       {inspection.images.map((image) => (

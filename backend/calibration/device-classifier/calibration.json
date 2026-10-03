@@ -1,0 +1,107 @@
+{
+  "method": "temperature_scaling",
+  "temperature": 0.9723,
+  "classifierModel": "MobileNetV2",
+  "classifierConfigVersion": "device-abc-v1",
+  "classes": [
+    "mouse",
+    "pendrive",
+    "other"
+  ],
+  "artifactReference": "device_classifier.pth",
+  "preprocessing": {
+    "imageFormat": "RGB",
+    "inputSize": [
+      224,
+      224
+    ],
+    "normalization": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    },
+    "alphaCompositing": "solid_white_background"
+  },
+  "calibrationSampleCount": 6,
+  "evaluationSampleCount": 6,
+  "createdAt": "2026-10-03T20:53:40.669Z",
+  "metrics": {
+    "calibration": {
+      "raw": {
+        "accuracy": 0.8333,
+        "nll": 0.68924,
+        "brierScore": 0.39999,
+        "ece": 0.3516
+      },
+      "calibrated": {
+        "accuracy": 0.8333,
+        "nll": 0.68904,
+        "brierScore": 0.39895,
+        "ece": 0.3494
+      }
+    },
+    "evaluation": {
+      "raw": {
+        "accuracy": 0.8333,
+        "nll": 0.54236,
+        "brierScore": 0.32072,
+        "ece": 0.1091
+      },
+      "calibrated": {
+        "accuracy": 0.8333,
+        "nll": 0.54072,
+        "brierScore": 0.32038,
+        "ece": 0.1105
+      }
+    }
+  },
+  "reliabilityBins": [
+    {
+      "binIndex": 0,
+      "lowerBound": 0,
+      "upperBound": 0.2,
+      "count": 0,
+      "meanConfidence": 0,
+      "accuracy": 0
+    },
+    {
+      "binIndex": 1,
+      "lowerBound": 0.2,
+      "upperBound": 0.4,
+      "count": 0,
+      "meanConfidence": 0,
+      "accuracy": 0
+    },
+    {
+      "binIndex": 2,
+      "lowerBound": 0.4,
+      "upperBound": 0.6,
+      "count": 1,
+      "meanConfidence": 0.5783,
+      "accuracy": 1
+    },
+    {
+      "binIndex": 3,
+      "lowerBound": 0.6,
+      "upperBound": 0.8,
+      "count": 3,
+      "meanConfidence": 0.7115,
+      "accuracy": 0.6667
+    },
+    {
+      "binIndex": 4,
+      "lowerBound": 0.8,
+      "upperBound": 1,
+      "count": 2,
+      "meanConfidence": 0.9466,
+      "accuracy": 1
+    }
+  ]
+}

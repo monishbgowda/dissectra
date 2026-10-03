@@ -1,0 +1,247 @@
+{
+  "collectedAt": "2026-10-03T20:44:44Z",
+  "classifierConfigVersion": "device-abc-v1",
+  "totalCount": 12,
+  "samples": [
+    {
+      "id": "calibration_mouse_1-za13-dw-top.png",
+      "trueLabel": "mouse",
+      "split": "calibration",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": 1.234899640083313,
+        "pendrive": -1.8049867153167725,
+        "other": 1.075649380683899
+      },
+      "predictedClass": "mouse",
+      "rawClassProbability": 0.5261431932449341,
+      "rawProbabilities": {
+        "mouse": 0.5261431932449341,
+        "pendrive": 0.025170858949422836,
+        "other": 0.4486859142780304
+      },
+      "normalizedEntropy": 0.7192
+    },
+    {
+      "id": "calibration_mouse_Kryptronix-Cyber-Mouse.png",
+      "trueLabel": "mouse",
+      "split": "calibration",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": 1.1826967000961304,
+        "pendrive": -0.10004199296236038,
+        "other": -0.71253901720047
+      },
+      "predictedClass": "mouse",
+      "rawClassProbability": 0.7004960775375366,
+      "rawProbabilities": {
+        "mouse": 0.7004960775375366,
+        "pendrive": 0.19423136115074158,
+        "other": 0.10527258366346359
+      },
+      "normalizedEntropy": 0.7324
+    },
+    {
+      "id": "calibration_pendrive_pny-pro-elite-v3-512.png",
+      "trueLabel": "pendrive",
+      "split": "calibration",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -1.8382810354232788,
+        "pendrive": 2.010155200958252,
+        "other": -0.08510155975818634
+      },
+      "predictedClass": "pendrive",
+      "rawClassProbability": 0.8738572001457214,
+      "rawProbabilities": {
+        "mouse": 0.018624551594257355,
+        "pendrive": 0.8738572001457214,
+        "other": 0.10751820355653763
+      },
+      "normalizedEntropy": 0.393
+    },
+    {
+      "id": "calibration_pendrive_usb-flash-drive-1-3843008.png",
+      "trueLabel": "pendrive",
+      "split": "calibration",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -0.2381563037633896,
+        "pendrive": 0.956850528717041,
+        "other": -0.6718612313270569
+      },
+      "predictedClass": "pendrive",
+      "rawClassProbability": 0.6671630144119263,
+      "rawProbabilities": {
+        "mouse": 0.2019515037536621,
+        "pendrive": 0.6671630144119263,
+        "other": 0.13088548183441162
+      },
+      "normalizedEntropy": 0.7821
+    },
+    {
+      "id": "calibration_other_adce72c1-8894-40fa-92ec-4f8f65967250_GQBF2U4Z4I_MN_19022026.png",
+      "trueLabel": "other",
+      "split": "calibration",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -0.2494177669286728,
+        "pendrive": -0.5967358350753784,
+        "other": 1.1896097660064697
+      },
+      "predictedClass": "other",
+      "rawClassProbability": 0.7118807435035706,
+      "rawProbabilities": {
+        "mouse": 0.16882839798927307,
+        "pendrive": 0.11929087340831757,
+        "other": 0.7118807435035706
+      },
+      "normalizedEntropy": 0.7244
+    },
+    {
+      "id": "calibration_other_images.png",
+      "trueLabel": "other",
+      "split": "calibration",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -1.1222752332687378,
+        "pendrive": 1.6235466003417969,
+        "other": -0.4616570472717285
+      },
+      "predictedClass": "pendrive",
+      "rawClassProbability": 0.8414127826690674,
+      "rawProbabilities": {
+        "mouse": 0.05401492491364479,
+        "pendrive": 0.8414127826690674,
+        "other": 0.10457230359315872
+      },
+      "normalizedEntropy": 0.4907
+    },
+    {
+      "id": "evaluation_mouse_05UuGuaC1DeBtIUmi0vstl3-16..v1751049536.png",
+      "trueLabel": "mouse",
+      "split": "evaluation",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": 1.4225910902023315,
+        "pendrive": -1.4300518035888672,
+        "other": 0.4640776216983795
+      },
+      "predictedClass": "mouse",
+      "rawClassProbability": 0.693888247013092,
+      "rawProbabilities": {
+        "mouse": 0.693888247013092,
+        "pendrive": 0.0400315523147583,
+        "other": 0.2660801112651825
+      },
+      "normalizedEntropy": 0.6687
+    },
+    {
+      "id": "evaluation_mouse_Gemini_Generated_Image_1w2g221w2g221w2g.png",
+      "trueLabel": "mouse",
+      "split": "evaluation",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": 3.4358181953430176,
+        "pendrive": -1.3139586448669434,
+        "other": -1.57919442653656
+      },
+      "predictedClass": "mouse",
+      "rawClassProbability": 0.9849390983581543,
+      "rawProbabilities": {
+        "mouse": 0.9849390983581543,
+        "pendrive": 0.00852329470217228,
+        "other": 0.006537580396980047
+      },
+      "normalizedEntropy": 0.0805
+    },
+    {
+      "id": "evaluation_pendrive_HP-32-GB-2.0-METAL-BODY-PENDRIVE-1.png",
+      "trueLabel": "pendrive",
+      "split": "evaluation",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -1.5354775190353394,
+        "pendrive": 1.2757917642593384,
+        "other": 0.4031001925468445
+      },
+      "predictedClass": "pendrive",
+      "rawClassProbability": 0.6766110062599182,
+      "rawProbabilities": {
+        "mouse": 0.04068368673324585,
+        "pendrive": 0.6766110062599182,
+        "other": 0.28270527720451355
+      },
+      "normalizedEntropy": 0.6843
+    },
+    {
+      "id": "evaluation_pendrive_download.png",
+      "trueLabel": "pendrive",
+      "split": "evaluation",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -1.1728274822235107,
+        "pendrive": 2.0461888313293457,
+        "other": -0.5827784538269043
+      },
+      "predictedClass": "pendrive",
+      "rawClassProbability": 0.8991614580154419,
+      "rawProbabilities": {
+        "mouse": 0.03596140444278717,
+        "pendrive": 0.8991614580154419,
+        "other": 0.06487713754177094
+      },
+      "normalizedEntropy": 0.3574
+    },
+    {
+      "id": "evaluation_other_247645_0_3pi7BcpWr.png",
+      "trueLabel": "other",
+      "split": "evaluation",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": -0.7917966246604919,
+        "pendrive": 1.239196538925171,
+        "other": -0.27896109223365784
+      },
+      "predictedClass": "pendrive",
+      "rawClassProbability": 0.7405650019645691,
+      "rawProbabilities": {
+        "mouse": 0.09716593474149704,
+        "pendrive": 0.7405650019645691,
+        "other": 0.16226905584335327
+      },
+      "normalizedEntropy": 0.6773
+    },
+    {
+      "id": "evaluation_other_510uTHyDqGL.png",
+      "trueLabel": "other",
+      "split": "evaluation",
+      "success": true,
+      "classifierModel": "MobileNetV2",
+      "classLogScores": {
+        "mouse": 0.25587597489356995,
+        "pendrive": -0.8168111443519592,
+        "other": 0.8414170145988464
+      },
+      "predictedClass": "other",
+      "rawClassProbability": 0.572317898273468,
+      "rawProbabilities": {
+        "mouse": 0.3186691999435425,
+        "pendrive": 0.10901292413473129,
+        "other": 0.572317898273468
+      },
+      "normalizedEntropy": 0.8424
+    }
+  ]
+}

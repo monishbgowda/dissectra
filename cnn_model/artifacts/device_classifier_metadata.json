@@ -1,0 +1,67 @@
+{
+  "architecture": "MobileNetV2",
+  "pretrainedWeights": "MobileNetV2_Weights.DEFAULT",
+  "classes": [
+    "mouse",
+    "pendrive",
+    "other"
+  ],
+  "classToIndex": {
+    "mouse": 0,
+    "pendrive": 1,
+    "other": 2
+  },
+  "inputSize": [
+    224,
+    224
+  ],
+  "normalization": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "trainingTimestamp": "2026-10-03T20:31:40Z",
+  "realTrainingImages": {
+    "mouse": 6,
+    "pendrive": 6,
+    "other": 6
+  },
+  "totalTrainingImages": 18,
+  "twoStageStrategy": {
+    "stageA": {
+      "description": "Classifier Head Training (Backbone Frozen)",
+      "epochs": 15,
+      "learningRate": 0.001,
+      "finalLoss": 0.5442,
+      "finalAccuracy": 0.7778
+    },
+    "stageB": {
+      "description": "Partial Fine-Tuning (Unfrozen feature blocks 14-18)",
+      "unfrozenBlocks": "features[14:]",
+      "epochs": 15,
+      "backboneLearningRate": 1e-05,
+      "headLearningRate": 0.0001,
+      "weightDecay": 0.001,
+      "finalLoss": 0.2204,
+      "finalAccuracy": 0.9444
+    }
+  },
+  "augmentation": [
+    "RandomResizedCrop(224, scale=(0.8, 1.0))",
+    "RandomHorizontalFlip(p=0.5)",
+    "RandomRotation(degrees=15)",
+    "ColorJitter(brightness=0.15, contrast=0.15, saturation=0.1)"
+  ],
+  "hyperparameters": {
+    "batchSize": 4,
+    "seed": 42
+  },
+  "artifactFilename": "device_classifier.pth"
+}

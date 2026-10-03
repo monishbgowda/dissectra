@@ -1,22 +1,36 @@
 """
-FastAPI Server for Dissectra CNN Product Classifier
-Provides REST endpoints for product classification and component detection.
+FastAPI Server for Dissectra Local MobileNetV2 Device Classifier
+
+Provides local REST endpoints for 3-class device classification:
+  - mouse (0)
+  - pendrive (1)
+  - other (2)
 """
 
 import io
 import os
-from fastapi import FastAPI, File, UploadFile, HTTPException
+import sys
+from typing import List, Optional
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from PIL import Image
 import torch
-import torchvision.transforms as transforms
 
-from product_classifier import ProductClassifier, get_product_info, export_to_onnx
+# Add current directory to path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from product_classifier import (
+    DeviceClassifier,
+    CLASSES,
+    CLASS_TO_INDEX,
+    INDEX_TO_CLASS,
+    predict_single_image,
+    predict_multi_images,
+)
 
 app = FastAPI(
-    title="Dissectra CNN Classification API",
-    description="FastAPI service for product image classification & component breakdown",
+    title="Dissectra Local Classifier API",
+    description="FastAPI service for 3-class MobileNetV2 device classification",
     version="1.0.0"
 )
 
@@ -29,100 +43,118 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Lazy loading model instance
-MODEL_PATH = "product_classifier.onnx"
+ARTIFACTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "artifacts")
+WEIGHTS_PATH = os.path.join(ARTIFACTS_DIR, "device_classifier.pth")
+
 _model = None
+_model_loaded = False
 
 
-def get_model():
-    global _model
-    if _model is None:
-        _model = ProductClassifier(num_classes=10, num_components=5)
-        _model.eval()
-    return _model
+def load_model_if_available():
+    global _model, _model_loaded
+    if _model_loaded and _model is not None:
+        return _model
 
-
-# Image preprocessing pipeline
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-    )
-])
+    if os.path.exists(WEIGHTS_PATH):
+        try:
+            model = DeviceClassifier(num_classes=3, freeze_backbone=True)
+            state_dict = torch.load(WEIGHTS_PATH, map_location=torch.device('cpu'))
+            model.load_state_dict(state_dict)
+            model.eval()
+            _model = model
+            _model_loaded = True
+            print(f"✓ Successfully loaded trained weights from {WEIGHTS_PATH}")
+            return _model
+        except Exception as err:
+            print(f"[ERROR] Failed to load model weights at {WEIGHTS_PATH}: {err}")
+            _model = None
+            _model_loaded = False
+            return None
+    else:
+        _model = None
+        _model_loaded = False
+        return None
 
 
 @app.get("/")
 def read_root():
     return {
         "status": "online",
-        "service": "Dissectra CNN FastAPI Server",
+        "service": "Dissectra Local Classifier FastAPI Server",
         "version": "1.0.0",
+        "model_loaded": os.path.exists(WEIGHTS_PATH),
         "endpoints": {
             "health": "/health",
-            "products": "/products",
-            "predict": "POST /predict",
-            "docs": "/docs"
+            "classifyDevice": "POST /classify-device"
         }
     }
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "model_loaded": _model is not None}
+    model_ready = os.path.exists(WEIGHTS_PATH)
+    return {
+        "status": "ok",
+        "model_loaded": model_ready,
+        "weights_path": WEIGHTS_PATH if model_ready else None
+    }
 
 
 @app.get("/products")
 def list_products():
-    """Return catalog of supported product categories and their components."""
-    catalog = {}
-    for idx in range(10):
-        catalog[idx] = get_product_info(idx)
-    return {"total": len(catalog), "catalog": catalog}
+    """Return catalog of supported 3-class categories."""
+    return {"total": len(CLASSES), "catalog": INDEX_TO_CLASS}
+
+
+@app.post("/classify-device")
+async def classify_device_endpoint(files: List[UploadFile] = File(...)):
+    """
+    Accepts 1 or more uploaded inspection images for the same physical device.
+    Element-wise averages raw pre-softmax logits across images, then computes stable softmax.
+    """
+    if not files or len(files) == 0:
+        raise HTTPException(status_code=400, detail="At least one image file is required.")
+
+    model = load_model_if_available()
+    if model is None:
+        return {
+            "success": False,
+            "confidenceAvailable": False,
+            "calibrated": False,
+            "temperature": None,
+            "reason": "LOCAL_CLASSIFIER_NOT_READY",
+            "message": "Local PyTorch model weights do not exist on disk yet. Run train_device_classifier.py after dataset collection."
+        }
+
+    try:
+        image_bytes_list = []
+        for file in files:
+            contents = await file.read()
+            image_bytes_list.append(contents)
+
+        if len(image_bytes_list) == 1:
+            result = predict_single_image(model, image_bytes_list[0])
+            result["imageCount"] = 1
+        else:
+            result = predict_multi_images(model, image_bytes_list)
+
+        result["success"] = True
+        return result
+
+    except Exception as e:
+        return {
+            "success": False,
+            "confidenceAvailable": False,
+            "calibrated": False,
+            "temperature": None,
+            "reason": f"INFERENCE_ERROR: {str(e)}"
+        }
 
 
 @app.post("/predict")
-async def predict_image(file: UploadFile = File(...)):
-    """Accept an uploaded product image and return classification & detected components."""
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Uploaded file must be an image.")
-
-    try:
-        contents = await file.read()
-        image = Image.open(io.BytesIO(contents)).convert("RGB")
-        input_tensor = transform(image).unsqueeze(0)
-
-        model = get_model()
-        with torch.no_grad():
-            class_logits, component_logits = model(input_tensor)
-            class_probs = torch.softmax(class_logits, dim=1)
-            component_probs = torch.sigmoid(component_logits)
-
-            predicted_idx = torch.argmax(class_probs, dim=1).item()
-            confidence = class_probs[0][predicted_idx].item()
-            detected_flags = (component_probs > 0.5).squeeze().tolist()
-
-        product_info = get_product_info(predicted_idx)
-
-        # Map component flags to component names
-        all_components = product_info.get("components", [])
-        detected_component_names = [
-            comp for idx, comp in enumerate(all_components)
-            if idx < len(detected_flags) and (detected_flags[idx] if isinstance(detected_flags, list) else detected_flags)
-        ]
-
-        return {
-            "success": True,
-            "product": product_info,
-            "confidence": round(confidence, 4),
-            "predicted_class_id": predicted_idx,
-            "detected_components": detected_component_names,
-            "all_components": all_components
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
+async def predict_legacy(file: UploadFile = File(...)):
+    """Legacy compatibility endpoint."""
+    return await classify_device_endpoint(files=[file])
 
 
 if __name__ == "__main__":

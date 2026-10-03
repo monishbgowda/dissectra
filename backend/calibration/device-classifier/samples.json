@@ -1,0 +1,102 @@
+{
+  "version": "1.0.0",
+  "classifierConfigVersion": "device-abc-v1",
+  "samples": [
+    {
+      "id": "calibration_mouse_1-za13-dw-top.png",
+      "label": "mouse",
+      "split": "calibration",
+      "images": [
+        "cnn_model/dataset\\calibration\\mouse\\1-za13-dw-top.png"
+      ]
+    },
+    {
+      "id": "calibration_mouse_Kryptronix-Cyber-Mouse.png",
+      "label": "mouse",
+      "split": "calibration",
+      "images": [
+        "cnn_model/dataset\\calibration\\mouse\\Kryptronix-Cyber-Mouse.png"
+      ]
+    },
+    {
+      "id": "calibration_pendrive_pny-pro-elite-v3-512.png",
+      "label": "pendrive",
+      "split": "calibration",
+      "images": [
+        "cnn_model/dataset\\calibration\\pendrive\\pny-pro-elite-v3-512.png"
+      ]
+    },
+    {
+      "id": "calibration_pendrive_usb-flash-drive-1-3843008.png",
+      "label": "pendrive",
+      "split": "calibration",
+      "images": [
+        "cnn_model/dataset\\calibration\\pendrive\\usb-flash-drive-1-3843008.png"
+      ]
+    },
+    {
+      "id": "calibration_other_adce72c1-8894-40fa-92ec-4f8f65967250_GQBF2U4Z4I_MN_19022026.png",
+      "label": "other",
+      "split": "calibration",
+      "images": [
+        "cnn_model/dataset\\calibration\\other\\adce72c1-8894-40fa-92ec-4f8f65967250_GQBF2U4Z4I_MN_19022026.png"
+      ]
+    },
+    {
+      "id": "calibration_other_images.png",
+      "label": "other",
+      "split": "calibration",
+      "images": [
+        "cnn_model/dataset\\calibration\\other\\images.png"
+      ]
+    },
+    {
+      "id": "evaluation_mouse_05UuGuaC1DeBtIUmi0vstl3-16..v1751049536.png",
+      "label": "mouse",
+      "split": "evaluation",
+      "images": [
+        "cnn_model/dataset\\evaluation\\mouse\\05UuGuaC1DeBtIUmi0vstl3-16..v1751049536.png"
+      ]
+    },
+    {
+      "id": "evaluation_mouse_Gemini_Generated_Image_1w2g221w2g221w2g.png",
+      "label": "mouse",
+      "split": "evaluation",
+      "images": [
+        "cnn_model/dataset\\evaluation\\mouse\\Gemini_Generated_Image_1w2g221w2g221w2g.png"
+      ]
+    },
+    {
+      "id": "evaluation_pendrive_HP-32-GB-2.0-METAL-BODY-PENDRIVE-1.png",
+      "label": "pendrive",
+      "split": "evaluation",
+      "images": [
+        "cnn_model/dataset\\evaluation\\pendrive\\HP-32-GB-2.0-METAL-BODY-PENDRIVE-1.png"
+      ]
+    },
+    {
+      "id": "evaluation_pendrive_download.png",
+      "label": "pendrive",
+      "split": "evaluation",
+      "images": [
+        "cnn_model/dataset\\evaluation\\pendrive\\download.png"
+      ]
+    },
+    {
+      "id": "evaluation_other_247645_0_3pi7BcpWr.png",
+      "label": "other",
+      "split": "evaluation",
+      "images": [
+        "cnn_model/dataset\\evaluation\\other\\247645_0_3pi7BcpWr.png"
+      ]
+    },
+    {
+      "id": "evaluation_other_510uTHyDqGL.png",
+      "label": "other",
+      "split": "evaluation",
+      "images": [
+        "cnn_model/dataset\\evaluation\\other\\510uTHyDqGL.png"
+      ]
+    }
+  ]
+}

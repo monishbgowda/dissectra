@@ -1,39 +1,32 @@
 const fs = require('fs/promises');
+const fsSync = require('fs');
+const path = require('path');
+const axios = require('axios');
 const logger = require('../utils/logger');
+const config = require('../config/config');
 const {
   logSumExp,
   stableSoftmax,
   normalizedShannonEntropy,
   getUncertaintyLabel,
 } = require('../utils/probabilityMath');
+const {
+  scaleLogScores,
+  validateCalibrationArtifact,
+} = require('../utils/temperatureCalibration');
 
-/**
- * Strict closed-set classification prompt for first-token probability extraction.
- */
-const CLASSIFIER_PROMPT = `You are performing closed-set device classification.
-
-Inspect all supplied images and classify the PRIMARY physical device.
-
-Return exactly ONE uppercase character and nothing else.
-
-A = Computer Mouse
-B = USB Flash Drive / Pen Drive
-C = Other
-
-Rules:
-- Mouse includes wired, wireless, optical and gaming mice.
-- USB flash drive includes pen drive, thumb drive and USB memory stick.
-- USB cable, USB charger, keyboard, phone, laptop, adapter, mouse pad etc. are C.
-- If multiple unrelated devices are visible and there is no clear primary subject, return C.
-- If the image is too ambiguous to identify reliably, return C.
-- Do not explain your answer.
-- Do not return JSON.
-- Do not add punctuation.`;
+const CLASSIFIER_CONFIG_VERSION = 'device-abc-v1';
 
 const CLASS_MAPPING = {
   A: 'mouse',
   B: 'pendrive',
   C: 'other',
+};
+
+const TOKEN_MAPPING = {
+  mouse: 'A',
+  pendrive: 'B',
+  other: 'C',
 };
 
 const CLASS_DESCRIPTIONS = {
@@ -42,123 +35,236 @@ const CLASS_DESCRIPTIONS = {
   C: 'Other',
 };
 
-let aiClient = null;
+const DEFAULT_CALIBRATION_PATH = path.join(
+  __dirname,
+  '../calibration/device-classifier/calibration.json',
+);
 
-function getAiClient() {
-  if (!aiClient) {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is missing.');
-    }
-    const { GoogleGenAI } = require('@google/genai');
-    aiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+/**
+ * Returns the frozen classifier configuration descriptor for compatibility verification.
+ *
+ * @param {string} [model='MobileNetV2'] - The model identifier.
+ * @returns {object} Classifier configuration object.
+ */
+function getClassifierConfig(model = 'MobileNetV2') {
+  return {
+    version: CLASSIFIER_CONFIG_VERSION,
+    model,
+    classes: ['mouse', 'pendrive', 'other'],
+    classMapping: CLASS_MAPPING,
+    artifactReference: 'device_classifier.pth',
+    preprocessing: {
+      imageFormat: 'RGB',
+      inputSize: [224, 224],
+      normalization: {
+        mean: [0.485, 0.456, 0.406],
+        std: [0.229, 0.224, 0.225],
+      },
+      alphaCompositing: 'solid_white_background',
+    },
+  };
+}
+
+/**
+ * Safely loads a calibration artifact from disk if present.
+ *
+ * @param {string} [customPath] - Optional custom path.
+ * @returns {object|null} The parsed calibration artifact, or null if absent/invalid.
+ */
+function loadCalibrationArtifact(customPath) {
+  const artifactPath = customPath || DEFAULT_CALIBRATION_PATH;
+  if (!fsSync.existsSync(artifactPath)) {
+    return null;
   }
-  return aiClient;
+
+  try {
+    const content = fsSync.readFileSync(artifactPath, 'utf8');
+    return JSON.parse(content);
+  } catch (err) {
+    logger.warn(`[DeviceClassifier] Failed to parse calibration artifact at ${artifactPath}: ${err.message}`);
+    return null;
+  }
+}
+
+/**
+ * Processes raw class log scores from the local classifier and applies optional temperature scaling.
+ *
+ * @param {Record<string, number>} classLogScores - Pre-softmax logits map { mouse, pendrive, other }.
+ * @param {string} classifierModel - Model identifier string.
+ * @param {object|null} [calibrationArtifact=null] - Optional calibration artifact.
+ * @returns {object} Standardized deviceClassification result object.
+ */
+function processLocalClassificationLogits(
+  classLogScores,
+  classifierModel = 'MobileNetV2',
+  calibrationArtifact = null,
+) {
+  if (
+    !classLogScores ||
+    typeof classLogScores.mouse !== 'number' ||
+    typeof classLogScores.pendrive !== 'number' ||
+    typeof classLogScores.other !== 'number'
+  ) {
+    return {
+      predictedClass: null,
+      predictedToken: null,
+      confidenceAvailable: false,
+      calibrated: false,
+      temperature: null,
+      reason: 'INVALID_LOCAL_LOGITS',
+      classifierModel,
+      method: 'Local MobileNetV2 classifier',
+      classes: CLASS_DESCRIPTIONS,
+    };
+  }
+
+  // Raw uncalibrated probabilities (T = 1.0)
+  const rawProbabilities = stableSoftmax(classLogScores);
+
+  let maxRawProb = -1;
+  let topRawClass = 'other';
+  for (const cls of ['mouse', 'pendrive', 'other']) {
+    if (rawProbabilities[cls] > maxRawProb) {
+      maxRawProb = rawProbabilities[cls];
+      topRawClass = cls;
+    }
+  }
+
+  const currentConfig = getClassifierConfig(classifierModel);
+  let isCalibrated = false;
+  let calibrationReason = null;
+  let temperature = null;
+  let activeProbabilities = rawProbabilities;
+  let activeTopConfidence = maxRawProb;
+  let activePredictedClass = topRawClass;
+
+  if (calibrationArtifact) {
+    const validation = validateCalibrationArtifact(calibrationArtifact, currentConfig);
+    if (validation.compatible) {
+      isCalibrated = true;
+      temperature = calibrationArtifact.temperature;
+
+      const scaledProbs = scaleLogScores(classLogScores, temperature);
+      activeProbabilities = {
+        mouse: scaledProbs.mouse ?? 0,
+        pendrive: scaledProbs.pendrive ?? 0,
+        other: scaledProbs.other ?? 0,
+      };
+
+      let maxCalProb = -1;
+      let topCalClass = 'other';
+      for (const cls of ['mouse', 'pendrive', 'other']) {
+        if (activeProbabilities[cls] > maxCalProb) {
+          maxCalProb = activeProbabilities[cls];
+          topCalClass = cls;
+        }
+      }
+
+      activeTopConfidence = maxCalProb;
+      activePredictedClass = topCalClass;
+    } else {
+      calibrationReason = validation.reason || 'CALIBRATION_CONFIG_MISMATCH';
+    }
+  }
+
+  const entropy = normalizedShannonEntropy(activeProbabilities, 3);
+  const uncertaintyLabel = getUncertaintyLabel(entropy);
+  const predictedToken = TOKEN_MAPPING[activePredictedClass] || 'C';
+
+  const result = {
+    predictedClass: activePredictedClass,
+    predictedToken,
+    classLogScores,
+    rawProbabilities,
+    rawClassProbability: Number(maxRawProb.toFixed(4)),
+    probabilities: activeProbabilities,
+    normalizedEntropy: Number(entropy.toFixed(4)),
+    uncertaintyLabel,
+    confidenceAvailable: true,
+    calibrated: isCalibrated,
+    temperature,
+    classifierModel,
+    modelStableForCalibration: true,
+    method: isCalibrated
+      ? 'Local MobileNetV2 classifier + temperature scaling'
+      : 'Local MobileNetV2 classifier',
+    classes: CLASS_DESCRIPTIONS,
+  };
+
+  if (isCalibrated) {
+    result.calibratedConfidence = Number(activeTopConfidence.toFixed(4));
+  }
+
+  if (calibrationReason) {
+    result.calibrationReason = calibrationReason;
+  }
+
+  return result;
 }
 
 /**
  * Finds the decoding step index that corresponds to the first meaningful class output (A, B, or C).
- *
- * @param {object} logprobsResult - The logprobsResult object from Gemini candidates.
- * @returns {number} The 0-based decoding step index, or -1 if not found.
  */
 function findClassDecodingStep(logprobsResult) {
-  if (
-    !logprobsResult ||
-    !Array.isArray(logprobsResult.topCandidates) ||
-    logprobsResult.topCandidates.length === 0
-  ) {
-    return -1;
-  }
-
+  if (!logprobsResult || !Array.isArray(logprobsResult.topCandidates)) return -1;
   const validClasses = new Set(['A', 'B', 'C']);
-
   for (let step = 0; step < logprobsResult.topCandidates.length; step++) {
-    const stepData = logprobsResult.topCandidates[step];
-    const candidates = stepData?.candidates || [];
-
-    const hasClassCandidate = candidates.some(c => {
-      const normalized = String(c.token || '').trim().toUpperCase();
-      return validClasses.has(normalized);
-    });
-
-    if (hasClassCandidate) {
+    const candidates = logprobsResult.topCandidates[step]?.candidates || [];
+    if (candidates.some(c => validClasses.has(String(c.token || '').trim().toUpperCase()))) {
       return step;
     }
   }
-
   return -1;
 }
 
 /**
  * Extracts and combines competing log scores for classes A, B, and C at a given decoding step.
- * If multiple candidate tokens normalize to the same class (e.g. "A" and " A"), their probability mass
- * is combined using logSumExp.
- *
- * If any of A, B, or C is missing from the returned candidates, returns success: false.
- * NEVER fabricates an arbitrary floor score for missing tokens.
- *
- * @param {Array<{token: string, logProbability: number}>} candidates - Candidate tokens at the step.
- * @returns {{success: boolean, logScores?: Record<string, number>, missingClasses?: string[], reason?: string}}
  */
 function extractClassLogScores(candidates) {
   if (!Array.isArray(candidates) || candidates.length === 0) {
-    return {
-      success: false,
-      reason: 'NO_CANDIDATES_AT_STEP',
-    };
+    return { success: false, reason: 'NO_CANDIDATES_AT_STEP' };
   }
-
   const validClasses = ['A', 'B', 'C'];
   const classScores = { A: [], B: [], C: [] };
-
   for (const cand of candidates) {
     const normalized = String(cand.token || '').trim().toUpperCase();
     if (validClasses.includes(normalized) && typeof cand.logProbability === 'number') {
       classScores[normalized].push(cand.logProbability);
     }
   }
-
   const missingClasses = validClasses.filter(c => classScores[c].length === 0);
   if (missingClasses.length > 0) {
-    return {
-      success: false,
-      reason: 'MISSING_CLASS_LOGPROB',
-      missingClasses,
-    };
+    return { success: false, reason: 'MISSING_CLASS_LOGPROB', missingClasses };
   }
-
-  const combinedLogScores = {
-    A: logSumExp(classScores.A),
-    B: logSumExp(classScores.B),
-    C: logSumExp(classScores.C),
-  };
-
   return {
     success: true,
-    logScores: combinedLogScores,
+    logScores: {
+      A: logSumExp(classScores.A),
+      B: logSumExp(classScores.B),
+      C: logSumExp(classScores.C),
+    },
   };
 }
 
 /**
- * Processes logprobsResult and builds the Phase-1 uncalibrated device classification result.
- *
- * @param {object} logprobsResult - Raw logprobsResult from Gemini candidate.
- * @param {string} rawText - Raw text returned by Gemini.
- * @param {string} classifierModel - Exact model string used.
- * @param {boolean} modelStableForCalibration - Whether a fixed pinned model identifier was used.
- * @returns {object} Standardized deviceClassification result object.
+ * Backward-compatibility wrapper for token logprob tests.
  */
-function processClassificationLogprobs(
-  logprobsResult,
-  rawText,
-  classifierModel,
-  modelStableForCalibration,
-) {
+function processClassificationLogprobs(logprobsResult, rawText, model, stable, artifact) {
   const chosenTokenRaw = String(rawText || '').trim();
   const normalizedChosenToken = chosenTokenRaw.toUpperCase().charAt(0);
   const predictedClassFromToken = CLASS_MAPPING[normalizedChosenToken] || 'other';
+
+  if (!logprobsResult || !logprobsResult.topCandidates) {
+    return {
+      predictedClass: predictedClassFromToken,
+      predictedToken: normalizedChosenToken || null,
+      confidenceAvailable: false,
+      calibrated: false,
+      reason: 'NO_CLASS_TOKEN_FOUND_IN_LOGPROBS',
+      classifierModel: model,
+      classes: CLASS_DESCRIPTIONS,
+    };
+  }
 
   const stepIndex = findClassDecodingStep(logprobsResult);
   if (stepIndex === -1) {
@@ -168,15 +274,13 @@ function processClassificationLogprobs(
       confidenceAvailable: false,
       calibrated: false,
       reason: 'NO_CLASS_TOKEN_FOUND_IN_LOGPROBS',
-      classifierModel,
-      modelStableForCalibration,
-      method: 'Gemini token log-probabilities',
+      classifierModel: model,
       classes: CLASS_DESCRIPTIONS,
     };
   }
 
-  const stepCandidates = logprobsResult.topCandidates[stepIndex]?.candidates || [];
-  const scoreResult = extractClassLogScores(stepCandidates);
+  const candidates = logprobsResult.topCandidates[stepIndex]?.candidates || [];
+  const scoreResult = extractClassLogScores(candidates);
 
   if (!scoreResult.success) {
     return {
@@ -186,58 +290,22 @@ function processClassificationLogprobs(
       calibrated: false,
       reason: scoreResult.reason || 'MISSING_CLASS_LOGPROB',
       missingClasses: scoreResult.missingClasses || [],
-      classifierModel,
-      modelStableForCalibration,
-      method: 'Gemini token log-probabilities',
+      classifierModel: model,
       classes: CLASS_DESCRIPTIONS,
     };
   }
 
-  // Softmax normalization over competing classes A, B, and C
-  const normalizedScores = stableSoftmax(scoreResult.logScores);
-
-  const probabilities = {
-    mouse: normalizedScores.A ?? 0,
-    pendrive: normalizedScores.B ?? 0,
-    other: normalizedScores.C ?? 0,
+  const classLogScores = {
+    mouse: scoreResult.logScores.A,
+    pendrive: scoreResult.logScores.B,
+    other: scoreResult.logScores.C,
   };
 
-  // Determine top class by highest probability mass
-  let maxProb = -1;
-  let topClassKey = 'C';
-
-  for (const tokenKey of ['A', 'B', 'C']) {
-    const classKey = CLASS_MAPPING[tokenKey];
-    if (probabilities[classKey] > maxProb) {
-      maxProb = probabilities[classKey];
-      topClassKey = tokenKey;
-    }
-  }
-
-  const predictedClass = CLASS_MAPPING[topClassKey];
-  const entropy = normalizedShannonEntropy(probabilities, 3);
-  const uncertaintyLabel = getUncertaintyLabel(entropy);
-
-  return {
-    predictedClass,
-    predictedToken: topClassKey,
-    probabilities,
-    rawClassProbability: maxProb,
-    normalizedEntropy: Number(entropy.toFixed(4)),
-    uncertaintyLabel,
-    confidenceAvailable: true,
-    calibrated: false,
-    temperature: null,
-    classifierModel,
-    modelStableForCalibration,
-    decodingStep: stepIndex,
-    method: 'Gemini token log-probabilities',
-    classes: CLASS_DESCRIPTIONS,
-  };
+  return processLocalClassificationLogits(classLogScores, model, artifact);
 }
 
 /**
- * Performs closed-set device classification using token log-probabilities.
+ * Performs closed-set device classification using the local MobileNetV2 classifier server.
  *
  * @param {Array<{path: string, mimeType: string}>} imageFiles - Array of image file objects.
  * @param {object} [options] - Optional override settings.
@@ -247,107 +315,96 @@ async function classifyDevice(imageFiles, options = {}) {
   if (!Array.isArray(imageFiles) || imageFiles.length === 0) {
     return {
       predictedClass: null,
+      predictedToken: null,
       confidenceAvailable: false,
       calibrated: false,
+      temperature: null,
       reason: 'NO_IMAGES_PROVIDED',
-      classifierModel: null,
-      modelStableForCalibration: false,
+      classifierModel: 'MobileNetV2',
+      modelStableForCalibration: true,
+      method: 'Local MobileNetV2 classifier',
+      classes: CLASS_DESCRIPTIONS,
     };
   }
 
-  const explicitModel = process.env.GEMINI_CLASSIFIER_MODEL;
-  const fallbackModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-  const classifierModel = explicitModel || fallbackModel;
-  const modelStableForCalibration = Boolean(explicitModel);
-
-  if (!modelStableForCalibration) {
-    logger.warn(
-      `[DeviceClassifier] GEMINI_CLASSIFIER_MODEL is not set. Falling back to "${classifierModel}". Mark: modelStableForCalibration=false.`,
-    );
-  }
+  const fastApiUrl = config.fastApiUrl || 'http://127.0.0.1:8000';
+  const endpoint = `${fastApiUrl}/classify-device`;
 
   try {
-    const ai = getAiClient();
+    const FormData = require('form-data');
+    const form = new FormData();
 
-    const parts = [
-      {
-        text: CLASSIFIER_PROMPT,
-      },
-    ];
-
-    const buffers = await Promise.all(
-      imageFiles.map(img => fs.readFile(img.path)),
-    );
-
-    buffers.forEach((buffer, index) => {
-      parts.push({
-        inlineData: {
-          mimeType: imageFiles[index].mimeType,
-          data: buffer.toString('base64'),
-        },
+    for (const img of imageFiles) {
+      const fileBuffer = await fs.readFile(img.path);
+      const filename = path.basename(img.path);
+      form.append('files', fileBuffer, {
+        filename,
+        contentType: img.mimeType || 'image/jpeg',
       });
+    }
+
+    logger.info(`[DeviceClassifier] Requesting local classification (${imageFiles.length} images) from ${endpoint}...`);
+
+    const response = await axios.post(endpoint, form, {
+      headers: form.getHeaders(),
+      timeout: 5000,
     });
 
-    logger.info(
-      `[DeviceClassifier] Requesting classification (model=${classifierModel}, temperature=1.0, logprobs=20)...`,
-    );
+    if (response.data && response.data.confidenceAvailable && response.data.classLogScores) {
+      const calibrationArtifact = options.calibrationArtifact !== undefined
+        ? options.calibrationArtifact
+        : loadCalibrationArtifact();
 
-    const response = await ai.models.generateContent({
-      model: classifierModel,
-      contents: [
-        {
-          role: 'user',
-          parts,
-        },
-      ],
-      config: {
-        temperature: 1.0,
-        maxOutputTokens: 32,
-        responseLogprobs: true,
-        logprobs: 20,
-      },
-    });
+      return processLocalClassificationLogits(
+        response.data.classLogScores,
+        'MobileNetV2',
+        calibrationArtifact,
+      );
+    } else {
+      const reason = response.data?.reason || 'LOCAL_CLASSIFIER_NOT_READY';
+      logger.warn(`[DeviceClassifier] Local classifier returned unavailable: ${reason}`);
 
-    const rawText = response.text || '';
-    const candidate = response.candidates?.[0];
-    const logprobsResult = candidate?.logprobsResult;
-
-    const result = processClassificationLogprobs(
-      logprobsResult,
-      rawText,
-      classifierModel,
-      modelStableForCalibration,
-    );
-
-    // Development-safe sanitised log summary (no base64 data, no secrets)
-    logger.info(
-      `[DeviceClassifier] Output: token=${result.predictedToken} class=${result.predictedClass} prob=${result.rawClassProbability !== undefined ? result.rawClassProbability.toFixed(4) : 'N/A'} entropy=${result.normalizedEntropy !== undefined ? result.normalizedEntropy : 'N/A'} confidenceAvailable=${result.confidenceAvailable}`,
-    );
-
-    return result;
+      return {
+        predictedClass: null,
+        predictedToken: null,
+        confidenceAvailable: false,
+        calibrated: false,
+        temperature: null,
+        reason,
+        classifierModel: 'MobileNetV2',
+        modelStableForCalibration: true,
+        method: 'Local MobileNetV2 classifier',
+        classes: CLASS_DESCRIPTIONS,
+      };
+    }
   } catch (err) {
-    logger.error('[DeviceClassifier] Execution error:', err.message || err);
+    logger.warn(`[DeviceClassifier] Local classifier endpoint error: ${err.message}`);
 
     return {
       predictedClass: null,
       predictedToken: null,
       confidenceAvailable: false,
       calibrated: false,
-      reason: `API_ERROR: ${err.message || 'Unknown error'}`,
-      classifierModel,
-      modelStableForCalibration,
-      method: 'Gemini token log-probabilities',
+      temperature: null,
+      reason: 'LOCAL_CLASSIFIER_NOT_READY',
+      classifierModel: 'MobileNetV2',
+      modelStableForCalibration: true,
+      method: 'Local MobileNetV2 classifier',
       classes: CLASS_DESCRIPTIONS,
     };
   }
 }
 
 module.exports = {
-  CLASSIFIER_PROMPT,
+  CLASSIFIER_CONFIG_VERSION,
   CLASS_MAPPING,
+  TOKEN_MAPPING,
   CLASS_DESCRIPTIONS,
+  getClassifierConfig,
+  loadCalibrationArtifact,
   findClassDecodingStep,
   extractClassLogScores,
   processClassificationLogprobs,
+  processLocalClassificationLogits,
   classifyDevice,
 };

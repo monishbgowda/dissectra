@@ -16,6 +16,8 @@ import type { Inspection } from "../../../storage/inspectionTypes";
 import { resolveSupported3DDevice } from "../../../utils/resolveSupported3DDevice";
 
 
+import { DeviceClassificationCard } from "../../components/DeviceClassificationCard";
+
 type AnalysisRouteProp = RouteProp<RootStackParamList, "Analysis">;
 
 type AnalysisNavigationProp =
@@ -558,6 +560,9 @@ export default function AnalysisScreen() {
                 </Text>
 
             </View>
+
+            {/* Separate Local MobileNetV2 Device Identification */}
+            <DeviceClassificationCard deviceClassification={analysis?.deviceClassification} />
 
             {/* 3D Dissection Action / Unsupported Notice */}
             <View style={styles.view3dContainer}>
